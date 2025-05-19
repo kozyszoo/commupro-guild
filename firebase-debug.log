@@ -1,56 +1,56 @@
-[debug] [2025-05-19T14:15:00.668Z] ----------------------------------------------------------------------
-[debug] [2025-05-19T14:15:00.671Z] Command:       /opt/homebrew/Cellar/node/23.10.0_1/bin/node /opt/homebrew/bin/firebase serve
-[debug] [2025-05-19T14:15:00.671Z] CLI Version:   14.2.1
-[debug] [2025-05-19T14:15:00.671Z] Platform:      darwin
-[debug] [2025-05-19T14:15:00.671Z] Node Version:  v23.10.0
-[debug] [2025-05-19T14:15:00.671Z] Time:          Mon May 19 2025 23:15:00 GMT+0900 (日本標準時)
-[debug] [2025-05-19T14:15:00.672Z] ----------------------------------------------------------------------
+[debug] [2025-05-19T14:15:46.913Z] ----------------------------------------------------------------------
+[debug] [2025-05-19T14:15:46.920Z] Command:       /opt/homebrew/Cellar/node/23.10.0_1/bin/node /opt/homebrew/bin/firebase serve
+[debug] [2025-05-19T14:15:46.920Z] CLI Version:   14.2.1
+[debug] [2025-05-19T14:15:46.920Z] Platform:      darwin
+[debug] [2025-05-19T14:15:46.920Z] Node Version:  v23.10.0
+[debug] [2025-05-19T14:15:46.920Z] Time:          Mon May 19 2025 23:15:46 GMT+0900 (日本標準時)
+[debug] [2025-05-19T14:15:46.920Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-05-19T14:15:00.926Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2025-05-19T14:15:00.926Z] > authorizing via signed-in user (k.yamaoka0919@gmail.com)
-[debug] [2025-05-19T14:15:00.926Z] [iam] checking project nyanco-bot for permissions ["firebase.projects.get"]
-[debug] [2025-05-19T14:15:00.927Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:00.927Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:00.927Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions [none]
-[debug] [2025-05-19T14:15:00.928Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions x-goog-quota-user=projects/nyanco-bot
-[debug] [2025-05-19T14:15:00.928Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2025-05-19T14:15:01.625Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions 200
-[debug] [2025-05-19T14:15:01.625Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
-[debug] [2025-05-19T14:15:01.626Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.626Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.626Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot [none]
-[debug] [2025-05-19T14:15:01.807Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot 200
-[debug] [2025-05-19T14:15:01.807Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot {"projectNumber":"242432500390","projectId":"nyanco-bot","lifecycleState":"ACTIVE","name":"nyanco-bot","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-05-19T14:03:31.642907Z"}
+[debug] [2025-05-19T14:15:47.060Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-05-19T14:15:47.060Z] > authorizing via signed-in user (k.yamaoka0919@gmail.com)
+[debug] [2025-05-19T14:15:47.060Z] [iam] checking project nyanco-bot for permissions ["firebase.projects.get"]
+[debug] [2025-05-19T14:15:47.061Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.061Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.061Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions [none]
+[debug] [2025-05-19T14:15:47.061Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions x-goog-quota-user=projects/nyanco-bot
+[debug] [2025-05-19T14:15:47.061Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-05-19T14:15:47.738Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions 200
+[debug] [2025-05-19T14:15:47.738Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-05-19T14:15:47.738Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.738Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.738Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot [none]
+[debug] [2025-05-19T14:15:47.929Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot 200
+[debug] [2025-05-19T14:15:47.929Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot {"projectNumber":"242432500390","projectId":"nyanco-bot","lifecycleState":"ACTIVE","name":"nyanco-bot","labels":{"firebase":"enabled","firebase-core":"disabled"},"createTime":"2025-05-19T14:03:31.642907Z"}
 [info] 
 [info] === Serving from '/Users/kozzy/src/commupro-guild'...
 [info] 
-[debug] [2025-05-19T14:15:01.810Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.810Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.813Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 
-[debug] [2025-05-19T14:15:01.818Z] defaultcredentials: writing to file /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json
-[debug] [2025-05-19T14:15:01.821Z] Setting GAC to /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json"}}
-[debug] [2025-05-19T14:15:01.823Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.823Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:01.823Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig [none]
-[debug] [2025-05-19T14:15:02.221Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig 200
-[debug] [2025-05-19T14:15:02.222Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig {"projectId":"nyanco-bot","storageBucket":"nyanco-bot.firebasestorage.app"}
-[debug] [2025-05-19T14:15:02.600Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 200
-[debug] [2025-05-19T14:15:02.600Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites {"sites":[{"name":"projects/nyanco-bot/sites/nyanco-bot","defaultUrl":"https://nyanco-bot.web.app","appId":"1:242432500390:web:73cbabfb788522326e0a67","type":"DEFAULT_SITE"}]}
-[debug] [2025-05-19T14:15:02.601Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:02.601Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:02.602Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config [none]
-[debug] [2025-05-19T14:15:03.244Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config 200
-[debug] [2025-05-19T14:15:03.244Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config {"projectId":"nyanco-bot","appId":"1:242432500390:web:73cbabfb788522326e0a67","storageBucket":"nyanco-bot.firebasestorage.app","apiKey":"AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo","authDomain":"nyanco-bot.firebaseapp.com","messagingSenderId":"242432500390","measurementId":"G-VR49RLP5NX"}
-[debug] [2025-05-19T14:15:03.256Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:03.256Z] Checked if tokens are valid: true, expires at: 1747667150794
-[debug] [2025-05-19T14:15:03.257Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot [none]
-[debug] [2025-05-19T14:15:03.556Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot 200
-[debug] [2025-05-19T14:15:03.556Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot {"projectId":"nyanco-bot","projectNumber":"242432500390","displayName":"nyanco-bot","name":"projects/nyanco-bot","resources":{"hostingSite":"nyanco-bot"},"state":"ACTIVE","etag":"1_c0b179d6-d260-45b4-b4ec-9b84346ac258"}
+[debug] [2025-05-19T14:15:47.935Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.935Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.938Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 
+[debug] [2025-05-19T14:15:47.944Z] defaultcredentials: writing to file /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json
+[debug] [2025-05-19T14:15:47.946Z] Setting GAC to /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to /Users/kozzy/.config/firebase/k_yamaoka0919_gmail.com_application_default_credentials.json"}}
+[debug] [2025-05-19T14:15:47.946Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.947Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:47.947Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig [none]
+[debug] [2025-05-19T14:15:48.291Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig 200
+[debug] [2025-05-19T14:15:48.291Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/adminSdkConfig {"projectId":"nyanco-bot","storageBucket":"nyanco-bot.firebasestorage.app"}
+[debug] [2025-05-19T14:15:48.662Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 200
+[debug] [2025-05-19T14:15:48.662Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites {"sites":[{"name":"projects/nyanco-bot/sites/nyanco-bot","defaultUrl":"https://nyanco-bot.web.app","appId":"1:242432500390:web:73cbabfb788522326e0a67","type":"DEFAULT_SITE"}]}
+[debug] [2025-05-19T14:15:48.663Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:48.663Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:48.663Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config [none]
+[debug] [2025-05-19T14:15:49.269Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config 200
+[debug] [2025-05-19T14:15:49.269Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config {"projectId":"nyanco-bot","appId":"1:242432500390:web:73cbabfb788522326e0a67","storageBucket":"nyanco-bot.firebasestorage.app","apiKey":"AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo","authDomain":"nyanco-bot.firebaseapp.com","messagingSenderId":"242432500390","measurementId":"G-VR49RLP5NX"}
+[debug] [2025-05-19T14:15:49.278Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:49.278Z] Checked if tokens are valid: true, expires at: 1747667150794
+[debug] [2025-05-19T14:15:49.279Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot [none]
+[debug] [2025-05-19T14:15:49.556Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot 200
+[debug] [2025-05-19T14:15:49.557Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot {"projectId":"nyanco-bot","projectNumber":"242432500390","displayName":"nyanco-bot","name":"projects/nyanco-bot","resources":{"hostingSite":"nyanco-bot"},"state":"ACTIVE","etag":"1_c0b179d6-d260-45b4-b4ec-9b84346ac258"}
 [info] i  functions: Watching "/Users/kozzy/src/commupro-guild/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/kozzy/src/commupro-guild/functions\" for Cloud Functions..."}}
 [info] i  hosting[nyanco-bot]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: \u001b[1mpublic\u001b[22m"}}
 [info] ✔  hosting[nyanco-bot]: Local server: http://localhost:5002 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: \u001b[4m\u001b[1mhttp://localhost:5002\u001b[22m\u001b[24m"}}
-[debug] [2025-05-19T14:15:03.629Z] Validating nodejs source
-[debug] [2025-05-19T14:15:04.200Z] > [functions] package.json contents: {
+[debug] [2025-05-19T14:15:49.628Z] Validating nodejs source
+[debug] [2025-05-19T14:15:50.470Z] > [functions] package.json contents: {
   "name": "functions",
   "scripts": {
     "build": "tsc",
@@ -74,12 +74,12 @@
   },
   "private": true
 }
-[debug] [2025-05-19T14:15:04.200Z] Building nodejs source
-[debug] [2025-05-19T14:15:04.201Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[debug] [2025-05-19T14:15:50.470Z] Building nodejs source
+[debug] [2025-05-19T14:15:50.471Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
 [warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
-[debug] [2025-05-19T14:15:04.202Z] Could not find functions.yaml. Must use http discovery
-[debug] [2025-05-19T14:15:04.207Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
-[info] Serving at port 8814
+[debug] [2025-05-19T14:15:50.474Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:15:50.481Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8093
 
 [error] TypeError: functions.firestore.document is not a function
     at Object.<anonymous> (/Users/kozzy/src/commupro-guild/functions/lib/index.js:46:6)
@@ -93,5 +93,245 @@
     at require (node:internal/modules/helpers:135:16)
     at loadModule (/Users/kozzy/src/commupro-guild/functions/node_modules/firebase-functions/lib/runtime/loader.js:40:16)
 
-[debug] [2025-05-19T14:15:04.710Z] Got response code 400; body Failed to generate manifest from function source: TypeError: functions.firestore.document is not a function
+[debug] [2025-05-19T14:15:51.906Z] Got response code 400; body Failed to generate manifest from function source: TypeError: functions.firestore.document is not a function
 [error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2025-05-19T14:16:20.657Z] File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:20.853Z] File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:21.855Z] Validating nodejs source
+[debug] [2025-05-19T14:16:22.577Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:16:22.579Z] Building nodejs source
+[debug] [2025-05-19T14:16:22.580Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:16:22.586Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:16:22.589Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8054
+
+[error] TypeError: functions.firestore.document is not a function
+    at Object.<anonymous> (/Users/kozzy/src/commupro-guild/functions/lib/index.js:46:6)
+    at Module._compile (node:internal/modules/cjs/loader:1734:14)
+    at Object..js (node:internal/modules/cjs/loader:1899:10)
+    at Module.load (node:internal/modules/cjs/loader:1469:32)
+    at Function._load (node:internal/modules/cjs/loader:1286:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1491:12)
+    at require (node:internal/modules/helpers:135:16)
+    at loadModule (/Users/kozzy/src/commupro-guild/functions/node_modules/firebase-functions/lib/runtime/loader.js:40:16)
+
+[debug] [2025-05-19T14:16:22.969Z] Got response code 400; body Failed to generate manifest from function source: TypeError: functions.firestore.document is not a function
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2025-05-19T14:16:31.563Z] File /Users/kozzy/src/commupro-guild/functions/package.json changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/package.json changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:32.567Z] Validating nodejs source
+[debug] [2025-05-19T14:16:33.395Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:16:33.396Z] Building nodejs source
+[debug] [2025-05-19T14:16:33.397Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:16:33.400Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:16:33.401Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8380
+
+[error] TypeError: functions.firestore.document is not a function
+    at Object.<anonymous> (/Users/kozzy/src/commupro-guild/functions/lib/index.js:46:6)
+    at Module._compile (node:internal/modules/cjs/loader:1734:14)
+    at Object..js (node:internal/modules/cjs/loader:1899:10)
+    at Module.load (node:internal/modules/cjs/loader:1469:32)
+    at Function._load (node:internal/modules/cjs/loader:1286:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1491:12)
+    at require (node:internal/modules/helpers:135:16)
+    at loadModule (/Users/kozzy/src/commupro-guild/functions/node_modules/firebase-functions/lib/runtime/loader.js:40:16)
+
+[debug] [2025-05-19T14:16:33.782Z] Got response code 400; body Failed to generate manifest from function source: TypeError: functions.firestore.document is not a function
+[error] ⬢  functions: Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error {"metadata":{"emulator":{"name":"functions"},"message":"Failed to load function definition from source: FirebaseError: Functions codebase could not be analyzed successfully. It may have a syntax or runtime error"}}
+[debug] [2025-05-19T14:16:39.362Z] File /Users/kozzy/src/commupro-guild/functions/lib/index.js.map changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/lib/index.js.map changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:39.363Z] File /Users/kozzy/src/commupro-guild/functions/lib/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/lib/index.js changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:40.365Z] Validating nodejs source
+[debug] [2025-05-19T14:16:41.102Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:16:41.102Z] Building nodejs source
+[debug] [2025-05-19T14:16:41.102Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:16:41.103Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:16:41.104Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8366
+
+[debug] [2025-05-19T14:16:41.408Z] Got response from /__/functions.yaml {"endpoints":{"welcomeNewMember":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"users/{userId}"},"retry":false},"entryPoint":"welcomeNewMember"},"reengageInactiveUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 12 * * *","retryConfig":{},"timeZone":"Asia/Tokyo"},"entryPoint":"reengageInactiveUsers"},"matchSimilarUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"matchSimilarUsers"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers."}}
+[info] i  functions[us-central1-welcomeNewMember]: function ignored because the firestore emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the firestore emulator does not exist or is not running."}}
+[info] i  functions[us-central1-reengageInactiveUsers]: function ignored because the pubsub emulator does not exist or is not running. {"metadata":{"emulator":{"name":"functions"},"message":"function ignored because the pubsub emulator does not exist or is not running."}}
+[info] ✔  functions[us-central1-matchSimilarUsers]: http function initialized (http://localhost:5001/nyanco-bot/us-central1/matchSimilarUsers). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://localhost:5001/nyanco-bot/us-central1/matchSimilarUsers)."}}
+[debug] [2025-05-19T14:16:57.549Z] File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:57.648Z] File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers"}}
+[debug] [2025-05-19T14:16:58.650Z] Validating nodejs source
+[debug] [2025-05-19T14:16:59.226Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:16:59.226Z] Building nodejs source
+[debug] [2025-05-19T14:16:59.226Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:16:59.227Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:16:59.228Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[debug] [2025-05-19T14:16:59.231Z] File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/src/index.ts changed, reloading triggers"}}
+[info] Serving at port 8399
+
+[debug] [2025-05-19T14:16:59.533Z] Got response from /__/functions.yaml {"endpoints":{"welcomeNewMember":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"users/{userId}"},"retry":false},"entryPoint":"welcomeNewMember"},"reengageInactiveUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 12 * * *","retryConfig":{},"timeZone":"Asia/Tokyo"},"entryPoint":"reengageInactiveUsers"},"matchSimilarUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"matchSimilarUsers"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[debug] [2025-05-19T14:17:00.236Z] Validating nodejs source
+[debug] [2025-05-19T14:17:00.751Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:17:00.751Z] Building nodejs source
+[debug] [2025-05-19T14:17:00.751Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:17:00.752Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:17:00.753Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8158
+
+[debug] [2025-05-19T14:17:00.943Z] Got response from /__/functions.yaml {"endpoints":{"welcomeNewMember":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"users/{userId}"},"retry":false},"entryPoint":"welcomeNewMember"},"reengageInactiveUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 12 * * *","retryConfig":{},"timeZone":"Asia/Tokyo"},"entryPoint":"reengageInactiveUsers"},"matchSimilarUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"matchSimilarUsers"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers."}}
+[info] ✔  functions: Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: welcomeNewMember, reengageInactiveUsers, matchSimilarUsers."}}
+[debug] [2025-05-19T14:17:06.014Z] File /Users/kozzy/src/commupro-guild/functions/lib/index.js.map changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/lib/index.js.map changed, reloading triggers"}}
+[debug] [2025-05-19T14:17:06.075Z] File /Users/kozzy/src/commupro-guild/functions/lib/index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File /Users/kozzy/src/commupro-guild/functions/lib/index.js changed, reloading triggers"}}
+[debug] [2025-05-19T14:17:07.078Z] Validating nodejs source
+[debug] [2025-05-19T14:17:07.564Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "build": "tsc",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^4.7.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}
+[debug] [2025-05-19T14:17:07.564Z] Building nodejs source
+[debug] [2025-05-19T14:17:07.564Z] Failed to find version of module node: reached end of search path /Users/kozzy/src/commupro-guild/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "18" doesn't match your global version "23". Using node@23 from host. 
+[debug] [2025-05-19T14:17:07.565Z] Could not find functions.yaml. Must use http discovery
+[debug] [2025-05-19T14:17:07.565Z] Found firebase-functions binary at '/Users/kozzy/src/commupro-guild/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8969
+
+[debug] [2025-05-19T14:17:07.752Z] Got response from /__/functions.yaml {"endpoints":{"welcomeNewMember":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"eventTrigger":{"eventType":"google.cloud.firestore.document.v1.created","eventFilters":{"database":"(default)","namespace":"(default)"},"eventFilterPathPatterns":{"document":"users/{userId}"},"retry":false},"entryPoint":"welcomeNewMember"},"reengageInactiveUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"0 12 * * *","retryConfig":{},"timeZone":"Asia/Tokyo"},"entryPoint":"reengageInactiveUsers"},"matchSimilarUsers":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"callableTrigger":{},"entryPoint":"matchSimilarUsers"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}],"extensions":{}}
