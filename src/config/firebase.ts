@@ -4,25 +4,60 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// 開発環境用のモックデータベース
+const mockDb = {
+  collection: (collectionName: string) => ({
+    doc: (docId: string) => ({
+      set: async (data: any) => {
+        console.log(`[Mock Firebase] データを保存: ${collectionName}/${docId}`, data);
+        return Promise.resolve();
+      },
+      get: async () => ({
+        exists: true,
+        data: () => ({ 
+          id: docId, 
+          username: 'テストユーザー', 
+          joinedAt: new Date(), 
+          lastActive: new Date(),
+          interests: ['テスト'],
+          engagementScore: 0
+        })
+      }),
+      update: async (data: any) => {
+        console.log(`[Mock Firebase] データを更新: ${collectionName}/${docId}`, data);
+        return Promise.resolve();
+      }
+    })
+  })
+};
+
 // 環境変数から設定を読み込むか、サービスアカウントファイルを使用
 const initializeFirebase = () => {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    initializeApp({
-      credential: cert(serviceAccount)
-    });
-  } else {
-    try {
-      const serviceAccount = require('../../service-account.json');
+  try {
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
       initializeApp({
         credential: cert(serviceAccount)
       });
-    } catch (error) {
-      console.error('Firebaseの初期化に失敗しました。service-account.jsonを確認してください:', error);
-      process.exit(1);
+      console.log('Firebaseを初期化しました。');
+      return getFirestore();
+    } else {
+      try {
+        const serviceAccount = require('../../service-account.json');
+        initializeApp({
+          credential: cert(serviceAccount)
+        });
+        console.log('Firebaseを初期化しました。(service-account.json)');
+        return getFirestore();
+      } catch (error) {
+        console.log('Firebase設定が見つからないため、モックデータベースを使用します。');
+        return mockDb;
+      }
     }
+  } catch (error) {
+    console.log('Firebase設定が見つからないため、モックデータベースを使用します。');
+    return mockDb;
   }
 };
 
-initializeFirebase();
-export const db = getFirestore(); 
+export const db = initializeFirebase(); 

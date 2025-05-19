@@ -38,8 +38,15 @@ export const initializeBot = (token: string): Client => {
     // ここに他のメッセージ処理ロジックを実装
   });
 
-  // ボットのログイン
-  client.login(token);
+  // 開発トークンの場合は実際にログインしない
+  if (token !== 'development_token') {
+    // ボットのログイン
+    client.login(token).catch(error => {
+      console.error('Discordボットのログインに失敗しました:', error);
+    });
+  } else {
+    console.log('開発モードで実行中のため、Discordへの接続はスキップします。');
+  }
   
   return client;
 }; 
