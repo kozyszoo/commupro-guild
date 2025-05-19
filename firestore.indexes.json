@@ -13,17 +13,23 @@
           "order": "DESCENDING"
         }
       ]
-    },
+    }
+  ],
+  "fieldOverrides": [
     {
       "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
+      "fieldPath": "lastActive",
+      "ttl": false,
+      "indexes": [
         {
-          "fieldPath": "lastActive",
-          "order": "ASCENDING"
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
         }
       ]
     }
-  ],
-  "fieldOverrides": []
+  ]
 }
