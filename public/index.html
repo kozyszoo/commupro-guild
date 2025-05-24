@@ -27,6 +27,9 @@
           <div class="dashboard-section" id="dashboard-podcasts"></div>
           <div class="dashboard-section" id="dashboard-events"></div>
           <div class="dashboard-section" id="dashboard-user-matches"></div>
+          <div class="dashboard-section" id="dashboard-admin-users"></div>
+          <div class="dashboard-section" id="dashboard-bot-actions"></div>
+          <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
         </div>
       </div>
     </section>
@@ -34,13 +37,16 @@
       // ダッシュボード描画用
       async function loadDashboard() {
         // fetchでローカルjsonを取得
-        const [users, guilds, interactions, podcasts, events, userMatches] = await Promise.all([
+        const [users, guilds, interactions, podcasts, events, userMatches, adminUsers, botActions, analyticsSessions] = await Promise.all([
           fetch('/data/users.json').then(r => r.json()),
           fetch('/data/guilds.json').then(r => r.json()),
           fetch('/data/interactions.json').then(r => r.json()),
           fetch('/data/podcasts.json').then(r => r.json()),
           fetch('/data/events.json').then(r => r.json()),
           fetch('/data/user_matches.json').then(r => r.json()),
+          fetch('/data/admin_users.json').then(r => r.json()),
+          fetch('/data/bot_actions.json').then(r => r.json()),
+          fetch('/data/analytics_sessions.json').then(r => r.json()),
         ]);
 
         // ユーザー統計
@@ -157,6 +163,59 @@
                     ${matchList.map(m => `<tr><td>${m.user1Id}</td><td>${m.user2Id}</td><td>${(m.commonInterests||[]).join(', ')}</td><td>${m.matchScore}</td><td>${m.status}</td></tr>`).join('')}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // 管理者ユーザー
+        const adminList = Object.values(adminUsers.admin_users || {});
+        document.getElementById('dashboard-admin-users').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🛠️ 管理者ユーザー</p></header>
+            <div class="card-content">
+              <div class="content">
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>Email</th><th>ロール</th><th>最終ログイン</th><th>権限</th></tr></thead>
+                  <tbody>
+                    ${adminList.map(a => `<tr><td>${a.email}</td><td>${a.role}</td><td>${a.lastLogin?.replace('T',' ').replace('Z','')}</td><td>${Object.entries(a.permissions||{}).filter(([k,v])=>v).map(([k])=>k).join(', ')}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // ボットアクション
+        const botActionList = Object.values(botActions.bot_actions || {});
+        document.getElementById('dashboard-bot-actions').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🤖 ボットアクション履歴</p></header>
+            <div class="card-content">
+              <div class="content">
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>タイプ</th><th>ユーザー</th><th>日時</th><th>状態</th><th>結果</th></tr></thead>
+                  <tbody>
+                    ${botActionList.map(b => `<tr><td>${b.actionType}</td><td>${b.userId}</td><td>${b.timestamp?.replace('T',' ').replace('Z','')}</td><td>${b.status}</td><td>${b.result ? Object.entries(b.result).map(([k,v])=>`${k}:${v}`).join(' / ') : '-'}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // アナリティクスセッション
+        const analyticsList = Object.values(analyticsSessions.analytics_sessions || {});
+        document.getElementById('dashboard-analytics-sessions').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">📊 日次アナリティクス</p></header>
+            <div class="card-content">
+              <div class="content">
+                ${analyticsList.length ? analyticsList.map(a => `
+                  <strong>${a.date}</strong>：アクティブ <strong>${a.activeUsers}</strong>人 ／ メッセージ <strong>${a.messageCount}</strong> ／ 新規 <strong>${a.newMembers}</strong> ／ 再エンゲージ <strong>${a.reengagements}</strong><br>
+                  <span class="is-size-7">トップトピック: ${Object.entries(a.topTopics||{}).map(([k,v])=>`${k}(${v})`).join(', ')}<br>チャンネル活動: ${Object.entries(a.channelActivity||{}).map(([k,v])=>`${k}(${v})`).join(', ')}</span>
+                  <hr>
+                `).join('') : 'データなし'}
               </div>
             </div>
           </div>
