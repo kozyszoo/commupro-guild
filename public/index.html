@@ -27,6 +27,7 @@
           <div class="dashboard-section" id="dashboard-podcasts"></div>
           <div class="dashboard-section" id="dashboard-events"></div>
           <div class="dashboard-section" id="dashboard-user-matches"></div>
+          <div class="dashboard-section" id="dashboard-topics"></div>
           <div class="dashboard-section" id="dashboard-admin-users"></div>
           <div class="dashboard-section" id="dashboard-bot-actions"></div>
           <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
@@ -37,13 +38,14 @@
       // ダッシュボード描画用
       async function loadDashboard() {
         // fetchでローカルjsonを取得
-        const [users, guilds, interactions, podcasts, events, userMatches, adminUsers, botActions, analyticsSessions] = await Promise.all([
+        const [users, guilds, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
           fetch('/data/users.json').then(r => r.json()),
           fetch('/data/guilds.json').then(r => r.json()),
           fetch('/data/interactions.json').then(r => r.json()),
           fetch('/data/podcasts.json').then(r => r.json()),
           fetch('/data/events.json').then(r => r.json()),
           fetch('/data/user_matches.json').then(r => r.json()),
+          fetch('/data/topics.json').then(r => r.json()),
           fetch('/data/admin_users.json').then(r => r.json()),
           fetch('/data/bot_actions.json').then(r => r.json()),
           fetch('/data/analytics_sessions.json').then(r => r.json()),
@@ -161,6 +163,24 @@
                   <thead><tr><th>ユーザー1</th><th>ユーザー2</th><th>共通関心</th><th>スコア</th><th>状態</th></tr></thead>
                   <tbody>
                     ${matchList.map(m => `<tr><td>${m.user1Id}</td><td>${m.user2Id}</td><td>${(m.commonInterests||[]).join(', ')}</td><td>${m.matchScore}</td><td>${m.status}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // トピック一覧
+        const topicList = Object.values(topics.topics || {});
+        document.getElementById('dashboard-topics').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🏷️ トピック一覧</p></header>
+            <div class="card-content">
+              <div class="content">
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>トピック名</th><th>人気度</th><th>トレンド</th><th>キーワード</th><th>関連トピック</th></tr></thead>
+                  <tbody>
+                    ${topicList.map(t => `<tr><td>${t.name}</td><td>${t.popularity}</td><td>${t.trendScore}</td><td>${(t.keywords||[]).join(', ')}</td><td>${t.relatedTopics ? Object.entries(t.relatedTopics).map(([k,v])=>`${k}(${v})`).join(', ') : ''}</td></tr>`).join('')}
                   </tbody>
                 </table>
               </div>
