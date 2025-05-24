@@ -1,0 +1,44 @@
+{
+  "podcasts": {
+    "podcast_20240520_001": {
+      "id": "podcast_20240520_001",
+      "guildId": "987654321098765432",
+      "title": "今週のテックトーク - React 19の新機能とコミュニティ動向",
+      "content": "🐈 **トラにゃん**: みなさん、こんにちはだにゃ！今週のホットトピックをお届けするにゃ！\n\n🐱 **クロにゃん**: こんにちはですにゃ。今週はReact 19の話題で盛り上がっていたのにゃ。\n\n🐈 **トラにゃん**: そうそう！特に@DevMasterさんの投稿が大人気だったにゃ！React Server Componentsについて詳しく解説してくれたにゃ〜\n\n🐱 **クロにゃん**: 分析によると、今週はフロントエンド関連の話題が全体の42%を占めていたのにゃ。特にReact、TypeScript、Next.jsについての議論が活発でしたにゃ。\n\n🐈 **トラにゃん**: そして今度の水曜日には「もくもく会」があるにゃ！現在8名の方が参加予定だにゃ。興味ある人は #events チャンネルをチェックするにゃ〜\n\n🐱 **クロにゃん**: また、@DesignProさんがFigmaの新機能について質問されていたのにゃ。UI/UXデザインに興味がある方同士で情報交換すると良いかもしれませんにゃ。\n\n🐈 **トラにゃん**: 来週も楽しいトピックがたくさんありそうだにゃ！みんなの参加を待ってるにゃ〜😺",
+      "topics": [
+        "topic_react_001",
+        "topic_typescript_006",
+        "topic_design_002"
+      ],
+      "publishedAt": "2024-05-20T18:00:00Z",
+      "channelId": "channel_podcast_456",
+      "views": 45,
+      "reactions": [
+        {
+          "emoji": "😺",
+          "count": 12
+        },
+        {
+          "emoji": "👍",
+          "count": 8
+        },
+        {
+          "emoji": "❤️",
+          "count": 6
+        }
+      ],
+      "metadata": {
+        "generationTime": "2024-05-20T17:45:00Z",
+        "weeklyDataRange": {
+          "start": "2024-05-13T00:00:00Z",
+          "end": "2024-05-19T23:59:59Z"
+        },
+        "topContributors": [
+          "DevMaster",
+          "DesignPro",
+          "CodeNinja"
+        ]
+      }
+    }
+  }
+}

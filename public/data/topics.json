@@ -1,0 +1,57 @@
+{
+    "topics": {
+      "topic_react_001": {
+        "id": "topic_react_001",
+        "guildId": "987654321098765432",
+        "name": "React開発",
+        "keywords": [
+          "React",
+          "JavaScript",
+          "コンポーネント",
+          "hooks",
+          "useState",
+          "useEffect",
+          "JSX"
+        ],
+        "channelIds": [
+          "channel_tech_talk_789",
+          "channel_frontend_dev_123"
+        ],
+        "popularity": 78.5,
+        "trendScore": 85.2,
+        "createdAt": "2024-01-10T00:00:00Z",
+        "updatedAt": "2024-05-24T14:22:00Z",
+        "relatedTopics": {
+          "topic_javascript_002": 0.8,
+          "topic_frontend_003": 0.7,
+          "topic_typescript_004": 0.6
+        }
+      },
+      "topic_design_002": {
+        "id": "topic_design_002",
+        "guildId": "987654321098765432",
+        "name": "UI/UXデザイン",
+        "keywords": [
+          "UI",
+          "UX",
+          "デザイン",
+          "ユーザビリティ",
+          "プロトタイプ",
+          "Figma",
+          "デザインシステム"
+        ],
+        "channelIds": [
+          "channel_design_101",
+          "channel_ux_research_456"
+        ],
+        "popularity": 65.3,
+        "trendScore": 72.1,
+        "createdAt": "2024-01-15T00:00:00Z",
+        "updatedAt": "2024-05-23T16:45:00Z",
+        "relatedTopics": {
+          "topic_frontend_003": 0.6,
+          "topic_accessibility_005": 0.7
+        }
+      }
+    }
+  }

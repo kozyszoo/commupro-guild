@@ -1,0 +1,50 @@
+{
+    "guilds": {
+      "987654321098765432": {
+        "id": "987654321098765432",
+        "name": "Tech Community Japan",
+        "ownerId": "111222333444555666",
+        "botSettings": {
+          "traNyanPersonality": {
+            "energyLevel": 0.8,
+            "friendliness": 0.9,
+            "endPhrases": ["だにゃ", "にゃ", "にゃ〜"],
+            "customMessages": {
+              "welcome": "ようこそだにゃ！一緒に楽しくお話ししよう！",
+              "reengagement": "久しぶりだにゃ！待ってたにゃ〜"
+            }
+          },
+          "kuroNyanPersonality": {
+            "analyticalLevel": 0.85,
+            "helpfulness": 0.75,
+            "endPhrases": ["のにゃ", "ですにゃ", "にゃ"],
+            "customMessages": {
+              "analysis": "データを分析してみたのにゃ。",
+              "recommendation": "こちらがおすすめですにゃ。"
+            }
+          },
+          "podcastFrequency": "0 18 * * MON",
+          "inactiveThreshold": 14,
+          "reengagementFrequency": 3,
+          "maxReengagementAttempts": 3,
+          "matchingEnabled": true,
+          "matchingThreshold": 0.7,
+          "analyticsEnabled": true
+        },
+        "welcomeChannelId": "channel_welcome_123",
+        "podcastChannelId": "channel_podcast_456",
+        "createdAt": "2023-12-01T00:00:00Z",
+        "updatedAt": "2024-05-24T12:00:00Z",
+        "analytics": {
+          "totalMembers": 150,
+          "activeMembers": 89,
+          "averageEngagement": 67.3,
+          "topChannels": [
+            "general",
+            "tech-talk",
+            "random"
+          ]
+        }
+      }
+    }
+  }

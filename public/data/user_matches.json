@@ -1,0 +1,36 @@
+{
+  "user_matches": {
+    "match_001": {
+      "id": "match_001",
+      "guildId": "987654321098765432",
+      "user1Id": "123456789012345678",
+      "user2Id": "345678901234567890",
+      "commonInterests": [
+        "React",
+        "JavaScript",
+        "Web開発"
+      ],
+      "matchScore": 0.85,
+      "status": "suggested",
+      "createdAt": "2024-05-24T09:30:00Z",
+      "lastInteraction": null,
+      "isIntroduced": false
+    },
+    "match_002": {
+      "id": "match_002",
+      "guildId": "987654321098765432",
+      "user1Id": "234567890123456789",
+      "user2Id": "456789012345678901",
+      "commonInterests": [
+        "UI/UX",
+        "デザイン",
+        "Figma"
+      ],
+      "matchScore": 0.78,
+      "status": "active",
+      "createdAt": "2024-05-20T14:15:00Z",
+      "lastInteraction": "2024-05-22T11:20:00Z",
+      "isIntroduced": true
+    }
+  }
+}

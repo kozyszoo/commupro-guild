@@ -1,0 +1,67 @@
+{
+    "interactions": {
+      "interaction_001": {
+        "id": "interaction_001",
+        "userId": "123456789012345678",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_tech_talk_789",
+        "messageId": "msg_987654321",
+        "content": "ReactのuseEffectについて質問があります",
+        "metadata": {
+          "messageLength": 22,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": true
+        },
+        "timestamp": "2024-05-24T14:22:00Z",
+        "sentiment": 0.1,
+        "keywords": [
+          "React",
+          "useEffect",
+          "質問"
+        ]
+      },
+      "interaction_002": {
+        "id": "interaction_002",
+        "userId": "234567890123456789",
+        "guildId": "987654321098765432",
+        "type": "reaction",
+        "channelId": "channel_design_101",
+        "messageId": "msg_876543210",
+        "content": null,
+        "metadata": {
+          "reactionType": "👍",
+          "targetUserId": "345678901234567890",
+          "targetMessageContent": "新しいデザインシステムを作成しました"
+        },
+        "timestamp": "2024-05-23T16:45:00Z",
+        "sentiment": 0.8,
+        "keywords": [
+          "デザイン",
+          "システム"
+        ]
+      },
+      "interaction_003": {
+        "id": "interaction_003",
+        "userId": "123456789012345678",
+        "guildId": "987654321098765432",
+        "type": "bot_interaction",
+        "channelId": "channel_general_000",
+        "messageId": null,
+        "content": "ありがとうございます、参考になりました！",
+        "metadata": {
+          "botActionId": "bot_action_456",
+          "botCharacter": "kuro_nyan",
+          "interactionType": "response_to_recommendation"
+        },
+        "timestamp": "2024-05-24T10:15:00Z",
+        "sentiment": 0.9,
+        "keywords": [
+          "感謝",
+          "参考"
+        ]
+      }
+    }
+  }

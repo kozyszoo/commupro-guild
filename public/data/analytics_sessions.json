@@ -1,0 +1,27 @@
+{
+  "analytics_sessions": {
+    "analytics_20240524": {
+      "id": "analytics_20240524",
+      "guildId": "987654321098765432",
+      "date": "2024-05-24",
+      "activeUsers": 34,
+      "messageCount": 127,
+      "newMembers": 2,
+      "reengagements": 1,
+      "topTopics": {
+        "React": 28,
+        "デザイン": 15,
+        "JavaScript": 23,
+        "AI": 12,
+        "ゲーム開発": 8
+      },
+      "channelActivity": {
+        "general": 45,
+        "tech-talk": 38,
+        "design": 22,
+        "random": 15,
+        "game-dev": 7
+      }
+    }
+  }
+}

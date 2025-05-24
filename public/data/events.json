@@ -1,0 +1,30 @@
+{
+  "events": {
+    "event_mokumoku_001": {
+      "id": "event_mokumoku_001",
+      "guildId": "987654321098765432",
+      "title": "週末もくもく会",
+      "description": "みんなで集まって各自の作業を進めましょう！質問や相談も大歓迎です。",
+      "startTime": "2024-05-25T13:00:00Z",
+      "endTime": "2024-05-25T17:00:00Z",
+      "channelId": "voice_mokumoku_room",
+      "attendees": [
+        "123456789012345678",
+        "345678901234567890",
+        "456789012345678901",
+        "567890123456789012",
+        "678901234567890123",
+        "789012345678901234",
+        "890123456789012345",
+        "901234567890123456"
+      ],
+      "createdBy": "111222333444555666",
+      "metadata": {
+        "eventType": "mokumoku",
+        "difficulty": "all_levels",
+        "requirements": [],
+        "materials": []
+      }
+    }
+  }
+}

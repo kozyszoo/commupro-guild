@@ -1,0 +1,53 @@
+{
+  "bot_actions": {
+    "bot_action_456": {
+      "id": "bot_action_456",
+      "guildId": "987654321098765432",
+      "userId": "123456789012345678",
+      "actionType": "topic_recommendation",
+      "targetId": null,
+      "payload": {
+        "character": "kuro_nyan",
+        "recommendedTopics": [
+          "React Hooks深堀り",
+          "TypeScript最新機能"
+        ],
+        "confidence": 0.78,
+        "baseInterests": [
+          "React",
+          "JavaScript"
+        ]
+      },
+      "timestamp": "2024-05-24T10:00:00Z",
+      "status": "completed",
+      "result": {
+        "userResponse": "positive",
+        "engagementGenerated": true,
+        "followUpNeeded": false
+      }
+    },
+    "bot_action_789": {
+      "id": "bot_action_789",
+      "guildId": "987654321098765432",
+      "userId": "234567890123456789",
+      "actionType": "reengagement_dm",
+      "targetId": null,
+      "payload": {
+        "character": "tra_nyan",
+        "message": "DesignLoverさん、久しぶりだにゃ！最近デザインシステムの話題が盛り上がってるにゃ。興味あるかにゃ？",
+        "reengagementAttempt": 1,
+        "personalizedContent": [
+          "デザインシステム",
+          "Figma新機能"
+        ]
+      },
+      "timestamp": "2024-05-23T09:00:00Z",
+      "status": "pending_response",
+      "result": {
+        "deliveryConfirmed": true,
+        "readConfirmed": false,
+        "responseReceived": false
+      }
+    }
+  }
+}

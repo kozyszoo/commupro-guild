@@ -1,0 +1,75 @@
+{
+  "users": {
+    "123456789012345678": {
+      "id": "123456789012345678",
+      "guildId": "987654321098765432",
+      "username": "TechUser2024",
+      "displayName": "Tech Enthusiast",
+      "joinedAt": "2024-01-15T09:30:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T14:22:00Z",
+      "interests": [
+        "JavaScript",
+        "React",
+        "ゲーム開発",
+        "AI/ML",
+        "Web開発"
+      ],
+      "channels": [
+        "general",
+        "tech-talk",
+        "game-dev",
+        "random"
+      ],
+      "engagementScore": 85.5,
+      "reengagementHistory": {
+        "totalAttempts": 2,
+        "successfulReengagements": 1,
+        "lastAttempt": "2024-04-10T10:00:00Z",
+        "lastSuccess": "2024-04-10T15:30:00Z"
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": false,
+        "language": "ja"
+      }
+    },
+    "234567890123456789": {
+      "id": "234567890123456789",
+      "guildId": "987654321098765432",
+      "username": "DesignLover",
+      "displayName": "Creative Designer",
+      "joinedAt": "2024-02-20T16:45:00Z",
+      "isActive": false,
+      "lastActivity": "2024-05-10T11:15:00Z",
+      "interests": [
+        "UI/UX",
+        "デザイン",
+        "Figma",
+        "アニメーション",
+        "ブランディング"
+      ],
+      "channels": [
+        "general",
+        "design",
+        "showcase"
+      ],
+      "engagementScore": 32.1,
+      "reengagementHistory": {
+        "totalAttempts": 1,
+        "successfulReengagements": 0,
+        "lastAttempt": "2024-05-23T09:00:00Z",
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    }
+  }
+}
