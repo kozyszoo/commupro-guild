@@ -7,294 +7,987 @@
     <!-- Materialize CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+      :root {
+        --primary-color: #1976d2;
+        --primary-light: #42a5f5;
+        --primary-dark: #1565c0;
+        --secondary-color: #ff6f00;
+        --success-color: #4caf50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+        --background-color: #f8fafc;
+        --card-background: #ffffff;
+        --text-primary: #2c3e50;
+        --text-secondary: #546e7a;
+        --border-color: #e1e8ed;
+        --shadow-light: 0 2px 8px rgba(0,0,0,0.08);
+        --shadow-medium: 0 4px 16px rgba(0,0,0,0.12);
+        --border-radius: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        background: #f7f7f9;
-      }
-      nav {
-        background: #1976d2 !important;
-      }
-      .dashboard-section {
-        margin-bottom: 2rem;
-      }
-      .dashboard-card {
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        background: #fff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
         padding: 0;
       }
-      .dashboard-title {
+
+      .main-container {
+        background: var(--background-color);
+        min-height: 100vh;
+        margin-top: 64px;
+        padding: 2rem 0;
+      }
+
+      nav {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        position: fixed;
+        top: 0;
+        z-index: 1000;
+      }
+
+      .nav-wrapper .brand-logo {
+        color: #fff !important;
         font-weight: 600;
-        font-size: 1.3rem;
-        margin-bottom: 0.5rem;
+        letter-spacing: 0.5px;
         display: flex;
         align-items: center;
       }
-      .dashboard-title i {
+
+      .brand-logo i {
         margin-right: 0.5rem;
-        color: #1976d2;
+        font-size: 2rem;
       }
-      .dashboard-table th, .dashboard-table td {
-        padding: 0.5rem 0.7rem;
+
+      .dashboard-section {
+        margin-bottom: 2rem;
       }
-      .dashboard-table th {
-        background: #f0f0f0;
-        color: #333;
+
+      .dashboard-card {
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-light);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
       }
-      .dashboard-table tr {
-        border-bottom: 1px solid #eee;
+
+      .dashboard-card:hover {
+        box-shadow: var(--shadow-medium);
+        transform: translateY(-2px);
       }
+
+      .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .dashboard-title {
+        font-weight: 600;
+        font-size: 1.4rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+      }
+
+      .dashboard-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1.8rem;
+        background: rgba(25, 118, 210, 0.1);
+        padding: 0.5rem;
+        border-radius: 50%;
+      }
+
+      .card-content {
+        padding: 1.5rem;
+        background: var(--card-background);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        display: block;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
+        font-weight: 500;
+      }
+
       .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-background);
         border-radius: 8px;
         overflow: hidden;
-        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       }
-      .new.badge.blue, .badge.blue {
-        background-color: #1976d2 !important;
-        color: #fff !important;
+
+      .dashboard-table th {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        color: #fff;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-align: left;
+        border: none;
       }
-      .material-icons.blue-text, .blue-text {
-        color: #1976d2 !important;
+
+      .dashboard-table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-size: 0.9rem;
       }
-      .divider {
-        background: #e0e0e0;
+
+      .dashboard-table tr:hover {
+        background: rgba(25, 118, 210, 0.05);
       }
-      .nav-wrapper .brand-logo {
-        color: #fff !important;
+
+      .dashboard-table tr:last-child td {
+        border-bottom: none;
       }
-      .card-content {
-        background: #fff;
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
-      .grey-text.text-darken-1 {
-        color: #666 !important;
+
+      .status-active {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
       }
-      .grey-text.text-lighten-1 {
-        color: #aaa !important;
+
+      .status-inactive {
+        background: rgba(158, 158, 158, 0.1);
+        color: #9e9e9e;
       }
+
+      .status-pending {
+        background: rgba(255, 152, 0, 0.1);
+        color: var(--warning-color);
+      }
+
+      .status-completed {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+      }
+
+      .engagement-score {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .score-high {
+        background: rgba(76, 175, 80, 0.1);
+        color: var(--success-color);
+      }
+
+      .score-medium {
+        background: rgba(255, 152, 0, 0.1);
+        color: var(--warning-color);
+      }
+
+      .score-low {
+        background: rgba(244, 67, 54, 0.1);
+        color: var(--error-color);
+      }
+
+      .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .info-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .info-value {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 200px;
+        margin: 1rem 0;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-secondary);
+        font-style: italic;
+      }
+
+      .tag {
+        display: inline-block;
+        background: rgba(25, 118, 210, 0.1);
+        color: var(--primary-color);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin: 0.125rem;
+        font-weight: 500;
+      }
+
+      .recent-activity {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .activity-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+
+      .activity-icon {
+        background: rgba(25, 118, 210, 0.1);
+        color: var(--primary-color);
+        padding: 0.5rem;
+        border-radius: 50%;
+        font-size: 1rem;
+        min-width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .activity-content {
+        flex: 1;
+      }
+
+      .activity-title {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+      }
+
+      .activity-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .activity-time {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+      }
+
       @media (max-width: 992px) {
-        .dashboard-section { margin-bottom: 1.2rem; }
+        .main-container {
+          padding: 1rem 0;
+        }
+        .dashboard-section {
+          margin-bottom: 1.5rem;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .card-content {
+          padding: 1rem;
+        }
+        .card-header {
+          padding: 1rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+        .dashboard-table {
+          font-size: 0.8rem;
+        }
+        .dashboard-table th,
+        .dashboard-table td {
+          padding: 0.5rem;
+        }
+      }
+
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: var(--text-secondary);
+      }
+
+      .spinner {
+        border: 3px solid var(--border-color);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-right: 1rem;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
     </style>
   </head>
   <body>
     <nav>
       <div class="nav-wrapper container">
-        <a href="#" class="brand-logo" style="font-size:1.5rem; letter-spacing:1px;">にゃんこエージェント管理パネル</a>
+        <a href="#" class="brand-logo">
+          <i class="material-icons">pets</i>
+          にゃんこエージェント管理パネル
+        </a>
       </div>
     </nav>
-    <main class="container" style="margin-top:2rem;">
-      <div class="row" id="dashboard-columns">
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-users"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-guilds"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-interactions"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-podcasts"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-events"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-user-matches"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-topics"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-admin-users"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-bot-actions"></div></div>
-        <div class="col s12 m6"><div class="dashboard-section" id="dashboard-analytics-sessions"></div></div>
+    
+    <div class="main-container">
+      <div class="container">
+        <div class="row" id="dashboard-columns">
+          <div class="col s12 m6 l4">
+            <div class="dashboard-section" id="dashboard-users"></div>
+          </div>
+          <div class="col s12 m6 l4">
+            <div class="dashboard-section" id="dashboard-guilds"></div>
+          </div>
+          <div class="col s12 m6 l4">
+            <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-interactions"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-events"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-podcasts"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-user-matches"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-topics"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-bot-actions"></div>
+          </div>
+          <div class="col s12">
+            <div class="dashboard-section" id="dashboard-admin-users"></div>
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-      async function loadDashboard() {
-        const [users, guilds, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
-          fetch('/data/users.json').then(r => r.json()),
-          fetch('/data/guilds.json').then(r => r.json()),
-          fetch('/data/interactions.json').then(r => r.json()),
-          fetch('/data/podcasts.json').then(r => r.json()),
-          fetch('/data/events.json').then(r => r.json()),
-          fetch('/data/user_matches.json').then(r => r.json()),
-          fetch('/data/topics.json').then(r => r.json()),
-          fetch('/data/admin_users.json').then(r => r.json()),
-          fetch('/data/bot_actions.json').then(r => r.json()),
-          fetch('/data/analytics_sessions.json').then(r => r.json()),
-        ]);
-
-        // ユーザー統計
-        const userList = Object.values(users.users || {});
-        const totalUsers = userList.length;
-        const activeUsers = userList.filter(u => u.isActive).length;
-        const avgEngagement = userList.length ? (userList.reduce((sum, u) => sum + (u.engagementScore || 0), 0) / userList.length).toFixed(1) : '-';
-        document.getElementById('dashboard-users').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">group</i>ユーザー統計</span>
-              <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総ユーザー数: <strong>${totalUsers}</strong> ／ アクティブ: <strong>${activeUsers}</strong> ／ 平均エンゲージメント: <strong>${avgEngagement}</strong></div>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>ユーザー名</th><th>表示名</th><th>アクティブ</th><th>スコア</th><th>関心</th></tr></thead>
-                  <tbody>
-                    ${userList.map(u => `<tr><td>${u.username}</td><td>${u.displayName||''}</td><td>${u.isActive ? '<i class=\'material-icons blue-text\'>check_circle</i>' : '<i class=\'material-icons\' style=\'color:#bbb\'>cancel</i>'}</td><td>${u.engagementScore||'-'}</td><td>${(u.interests||[]).join(', ')}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // ギルド統計
-        const guildList = Object.values(guilds.guilds || {});
-        document.getElementById('dashboard-guilds').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">dns</i>サーバー（ギルド）情報</span>
-              ${guildList.map(g => `
-                <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${g.name}</strong>（ID: ${g.id}）<br>
-                メンバー数: <strong>${g.analytics?.totalMembers||'-'}</strong> ／ アクティブ: <strong>${g.analytics?.activeMembers||'-'}</strong> ／ 平均エンゲージメント: <strong>${g.analytics?.averageEngagement||'-'}</strong><br>
-                トップチャンネル: ${(g.analytics?.topChannels||[]).join(', ')}<br>
-                <span class="new badge blue" data-badge-caption="Bot設定">${g.botSettings?.matchingEnabled ? 'マッチング有効' : '無効'}</span>
-                </div><div class="divider"></div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-
-        // インタラクション統計
-        const interactionList = Object.values(interactions.interactions || {});
-        const totalInteractions = interactionList.length;
-        const messageCount = interactionList.filter(i => i.type === 'message').length;
-        const reactionCount = interactionList.filter(i => i.type === 'reaction').length;
-        const botCount = interactionList.filter(i => i.type === 'bot_interaction').length;
-        document.getElementById('dashboard-interactions').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">chat</i>インタラクション統計</span>
-              <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総インタラクション: <strong>${totalInteractions}</strong> ／ メッセージ: <strong>${messageCount}</strong> ／ リアクション: <strong>${reactionCount}</strong> ／ ボット対話: <strong>${botCount}</strong></div>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>タイプ</th><th>ユーザー</th><th>内容</th><th>日時</th></tr></thead>
-                  <tbody>
-                    ${interactionList.slice(0,5).map(i => `<tr><td>${i.type}</td><td>${i.userId}</td><td>${i.content ? i.content.substring(0,30) : '-'}</td><td>${i.timestamp?.replace('T',' ').replace('Z','')}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // ポッドキャスト
-        const podcastList = Object.values(podcasts.podcasts || {});
-        document.getElementById('dashboard-podcasts').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">mic</i>最新ポッドキャスト</span>
-              ${podcastList.length ? podcastList.map(p => `
-                <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${p.title}</strong>（${p.publishedAt?.replace('T',' ').replace('Z','')}）<br>
-                閲覧数: <strong>${p.views||0}</strong> ／ リアクション: ${p.reactions?.map(r => `${r.emoji}×${r.count}`).join(' ')}<br>
-                <span class="grey-text text-lighten-1" style="font-size:0.95em;">${p.content.substring(0,80)}...</span>
-                </div><div class="divider"></div>
-              `).join('') : '<span class="grey-text">データなし</span>'}
-            </div>
-          </div>
-        `;
-
-        // イベント
-        const eventList = Object.values(events.events || {});
-        document.getElementById('dashboard-events').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">event</i>最新イベント</span>
-              ${eventList.length ? eventList.map(e => `
-                <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${e.title}</strong>（${e.startTime?.replace('T',' ').replace('Z','')}）<br>
-                参加予定: <strong>${(e.attendees||[]).length}</strong>人 ／ チャンネル: ${e.channelId}<br>
-                <span class="grey-text text-lighten-1" style="font-size:0.95em;">${e.description?.substring(0,60)}...</span>
-                </div><div class="divider"></div>
-              `).join('') : '<span class="grey-text">データなし</span>'}
-            </div>
-          </div>
-        `;
-
-        // ユーザーマッチング
-        const matchList = Object.values(userMatches.user_matches || {});
-        document.getElementById('dashboard-user-matches').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">people</i>ユーザーマッチング状況</span>
-              <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総マッチ数: <strong>${matchList.length}</strong></div>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>ユーザー1</th><th>ユーザー2</th><th>共通関心</th><th>スコア</th><th>状態</th></tr></thead>
-                  <tbody>
-                    ${matchList.map(m => `<tr><td>${m.user1Id}</td><td>${m.user2Id}</td><td>${(m.commonInterests||[]).join(', ')}</td><td>${m.matchScore}</td><td>${m.status}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // トピック一覧
-        const topicList = Object.values(topics.topics || {});
-        document.getElementById('dashboard-topics').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">local_offer</i>トピック一覧</span>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>トピック名</th><th>人気度</th><th>トレンド</th><th>キーワード</th><th>関連トピック</th></tr></thead>
-                  <tbody>
-                    ${topicList.map(t => `<tr><td>${t.name}</td><td>${t.popularity}</td><td>${t.trendScore}</td><td>${(t.keywords||[]).join(', ')}</td><td>${t.relatedTopics ? Object.entries(t.relatedTopics).map(([k,v])=>`${k}(${v})`).join(', ') : ''}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // 管理者ユーザー
-        const adminList = Object.values(adminUsers.admin_users || {});
-        document.getElementById('dashboard-admin-users').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">admin_panel_settings</i>管理者ユーザー</span>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>Email</th><th>ロール</th><th>最終ログイン</th><th>権限</th></tr></thead>
-                  <tbody>
-                    ${adminList.map(a => `<tr><td>${a.email}</td><td>${a.role}</td><td>${a.lastLogin?.replace('T',' ').replace('Z','')}</td><td>${Object.entries(a.permissions||{}).filter(([k,v])=>v).map(([k])=>k).join(', ')}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // ボットアクション
-        const botActionList = Object.values(botActions.bot_actions || {});
-        document.getElementById('dashboard-bot-actions').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">smart_toy</i>ボットアクション履歴</span>
-              <div style="overflow-x:auto;">
-                <table class="dashboard-table highlight responsive-table">
-                  <thead><tr><th>タイプ</th><th>ユーザー</th><th>日時</th><th>状態</th><th>結果</th></tr></thead>
-                  <tbody>
-                    ${botActionList.map(b => `<tr><td>${b.actionType}</td><td>${b.userId}</td><td>${b.timestamp?.replace('T',' ').replace('Z','')}</td><td>${b.status}</td><td>${b.result ? Object.entries(b.result).map(([k,v])=>`${k}:${v}`).join(' / ') : '-'}</td></tr>`).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        `;
-
-        // アナリティクスセッション
-        const analyticsList = Object.values(analyticsSessions.analytics_sessions || {});
-        document.getElementById('dashboard-analytics-sessions').innerHTML = `
-          <div class="dashboard-card z-depth-1">
-            <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons blue-text">insights</i>日次アナリティクス</span>
-              ${analyticsList.length ? analyticsList.map(a => `
-                <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${a.date}</strong>：アクティブ <strong>${a.activeUsers}</strong>人 ／ メッセージ <strong>${a.messageCount}</strong> ／ 新規 <strong>${a.newMembers}</strong> ／ 再エンゲージ <strong>${a.reengagements}</strong><br>
-                <span class="grey-text text-lighten-1" style="font-size:0.95em;">トップトピック: ${Object.entries(a.topTopics||{}).map(([k,v])=>`${k}(${v})`).join(', ')}<br>チャンネル活動: ${Object.entries(a.channelActivity||{}).map(([k,v])=>`${k}(${v})`).join(', ')}</span>
-                </div><div class="divider"></div>
-              `).join('') : '<span class="grey-text">データなし</span>'}
-            </div>
-          </div>
-        `;
+      function formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
       }
-      loadDashboard();
+
+      function getEngagementClass(score) {
+        if (score >= 80) return 'score-high';
+        if (score >= 50) return 'score-medium';
+        return 'score-low';
+      }
+
+      function getStatusClass(status) {
+        switch(status?.toLowerCase()) {
+          case 'active': case 'completed': case 'success': return 'status-active';
+          case 'pending': case 'in_progress': return 'status-pending';
+          default: return 'status-inactive';
+        }
+      }
+
+      function truncateText(text, maxLength = 50) {
+        if (!text) return '-';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      }
+
+      async function loadDashboard() {
+        // Show loading state
+        const sections = ['users', 'guilds', 'interactions', 'podcasts', 'events', 'user-matches', 'topics', 'admin-users', 'bot-actions', 'analytics-sessions'];
+        sections.forEach(section => {
+          document.getElementById(`dashboard-${section}`).innerHTML = `
+            <div class="dashboard-card">
+              <div class="loading">
+                <div class="spinner"></div>
+                データを読み込み中...
+              </div>
+            </div>
+          `;
+        });
+
+        try {
+          const [users, guilds, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
+            fetch('/data/users.json').then(r => r.json()),
+            fetch('/data/guilds.json').then(r => r.json()),
+            fetch('/data/interactions.json').then(r => r.json()),
+            fetch('/data/podcasts.json').then(r => r.json()),
+            fetch('/data/events.json').then(r => r.json()),
+            fetch('/data/user_matches.json').then(r => r.json()),
+            fetch('/data/topics.json').then(r => r.json()),
+            fetch('/data/admin_users.json').then(r => r.json()),
+            fetch('/data/bot_actions.json').then(r => r.json()),
+            fetch('/data/analytics_sessions.json').then(r => r.json()),
+          ]);
+
+          // ユーザー統計
+          const userList = Object.values(users.users || {});
+          const totalUsers = userList.length;
+          const activeUsers = userList.filter(u => u.isActive).length;
+          const avgEngagement = userList.length ? (userList.reduce((sum, u) => sum + (u.engagementScore || 0), 0) / userList.length).toFixed(1) : 0;
+          
+          document.getElementById('dashboard-users').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">group</i>
+                  ユーザー統計
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalUsers}</span>
+                    <span class="stat-label">総ユーザー</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${activeUsers}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${avgEngagement}</span>
+                    <span class="stat-label">平均スコア</span>
+                  </div>
+                </div>
+                ${userList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>ユーザー</th>
+                          <th>状態</th>
+                          <th>スコア</th>
+                          <th>関心分野</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${userList.slice(0, 5).map(u => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${u.username}</div>
+                              <div style="font-size: 0.8rem; color: var(--text-secondary);">${u.displayName || ''}</div>
+                            </td>
+                            <td>
+                              <span class="status-badge ${u.isActive ? 'status-active' : 'status-inactive'}">
+                                ${u.isActive ? 'アクティブ' : '非アクティブ'}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(u.engagementScore || 0)}">
+                                ${u.engagementScore || 0}
+                              </span>
+                            </td>
+                            <td>
+                              ${(u.interests || []).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data">ユーザーデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // ギルド統計
+          const guildList = Object.values(guilds.guilds || {});
+          document.getElementById('dashboard-guilds').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">dns</i>
+                  サーバー情報
+                </h3>
+              </div>
+              <div class="card-content">
+                ${guildList.length ? guildList.map(g => `
+                  <div class="info-item">
+                    <div>
+                      <div class="info-label">${g.name}</div>
+                      <div style="font-size: 0.8rem; color: var(--text-secondary);">ID: ${g.id}</div>
+                    </div>
+                  </div>
+                  <ul class="info-list">
+                    <li class="info-item">
+                      <span class="info-label">総メンバー数</span>
+                      <span class="info-value">${g.analytics?.totalMembers || '-'}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">アクティブメンバー</span>
+                      <span class="info-value">${g.analytics?.activeMembers || '-'}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">平均エンゲージメント</span>
+                      <span class="info-value">${g.analytics?.averageEngagement || '-'}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">マッチング機能</span>
+                      <span class="status-badge ${g.botSettings?.matchingEnabled ? 'status-active' : 'status-inactive'}">
+                        ${g.botSettings?.matchingEnabled ? '有効' : '無効'}
+                      </span>
+                    </li>
+                  </ul>
+                `).join('') : '<div class="no-data">ギルドデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // アナリティクス統計
+          const analyticsList = Object.values(analyticsSessions.analytics_sessions || {});
+          const latestAnalytics = analyticsList.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          
+          document.getElementById('dashboard-analytics-sessions').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">insights</i>
+                  日次アナリティクス
+                </h3>
+              </div>
+              <div class="card-content">
+                ${latestAnalytics ? `
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-number">${latestAnalytics.activeUsers}</span>
+                      <span class="stat-label">アクティブユーザー</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${latestAnalytics.messageCount}</span>
+                      <span class="stat-label">メッセージ数</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${latestAnalytics.newMembers}</span>
+                      <span class="stat-label">新規メンバー</span>
+                    </div>
+                  </div>
+                  <ul class="info-list">
+                    <li class="info-item">
+                      <span class="info-label">最新データ</span>
+                      <span class="info-value">${latestAnalytics.date}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">再エンゲージメント</span>
+                      <span class="info-value">${latestAnalytics.reengagements}</span>
+                    </li>
+                  </ul>
+                  <div style="margin-top: 1rem;">
+                    <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
+                    ${Object.entries(latestAnalytics.topTopics || {}).map(([topic, count]) => 
+                      `<span class="tag">${topic} (${count})</span>`
+                    ).join('')}
+                  </div>
+                ` : '<div class="no-data">アナリティクスデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // インタラクション統計
+          const interactionList = Object.values(interactions.interactions || {});
+          const totalInteractions = interactionList.length;
+          const messageCount = interactionList.filter(i => i.type === 'message').length;
+          const reactionCount = interactionList.filter(i => i.type === 'reaction').length;
+          const botCount = interactionList.filter(i => i.type === 'bot_interaction').length;
+          
+          document.getElementById('dashboard-interactions').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">chat</i>
+                  インタラクション統計
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalInteractions}</span>
+                    <span class="stat-label">総インタラクション</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${messageCount}</span>
+                    <span class="stat-label">メッセージ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${reactionCount}</span>
+                    <span class="stat-label">リアクション</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${botCount}</span>
+                    <span class="stat-label">ボット対話</span>
+                  </div>
+                </div>
+                ${interactionList.length ? `
+                  <div class="recent-activity">
+                    <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">最近のアクティビティ</div>
+                    ${interactionList.slice(0, 5).map(i => `
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <i class="material-icons">${i.type === 'message' ? 'message' : i.type === 'reaction' ? 'thumb_up' : 'smart_toy'}</i>
+                        </div>
+                        <div class="activity-content">
+                          <div class="activity-title">${i.userId}</div>
+                          <div class="activity-description">${truncateText(i.content)}</div>
+                          <div class="activity-time">${formatDate(i.timestamp)}</div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data">インタラクションデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // イベント
+          const eventList = Object.values(events.events || {});
+          document.getElementById('dashboard-events').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">event</i>
+                  イベント情報
+                </h3>
+              </div>
+              <div class="card-content">
+                ${eventList.length ? `
+                  <div class="recent-activity">
+                    ${eventList.slice(0, 4).map(e => `
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <i class="material-icons">event</i>
+                        </div>
+                        <div class="activity-content">
+                          <div class="activity-title">${e.title}</div>
+                          <div class="activity-description">${truncateText(e.description)}</div>
+                          <div class="activity-time">
+                            ${formatDate(e.startTime)} | 参加予定: ${(e.attendees || []).length}人
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data">イベントデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // ポッドキャスト
+          const podcastList = Object.values(podcasts.podcasts || {});
+          document.getElementById('dashboard-podcasts').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">mic</i>
+                  ポッドキャスト
+                </h3>
+              </div>
+              <div class="card-content">
+                ${podcastList.length ? `
+                  <div class="recent-activity">
+                    ${podcastList.slice(0, 3).map(p => `
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <i class="material-icons">mic</i>
+                        </div>
+                        <div class="activity-content">
+                          <div class="activity-title">${p.title}</div>
+                          <div class="activity-description">${truncateText(p.content)}</div>
+                          <div class="activity-time">
+                            ${formatDate(p.publishedAt)} | 閲覧数: ${p.views || 0}
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data">ポッドキャストデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // ユーザーマッチング
+          const matchList = Object.values(userMatches.user_matches || {});
+          document.getElementById('dashboard-user-matches').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">people</i>
+                  ユーザーマッチング
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${matchList.length}</span>
+                    <span class="stat-label">総マッチ数</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${matchList.filter(m => m.status === 'active').length}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                </div>
+                ${matchList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>ユーザー</th>
+                          <th>共通関心</th>
+                          <th>スコア</th>
+                          <th>状態</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${matchList.slice(0, 5).map(m => `
+                          <tr>
+                            <td>
+                              <div style="font-size: 0.85rem;">
+                                ${m.user1Id} ↔ ${m.user2Id}
+                              </div>
+                            </td>
+                            <td>
+                              ${(m.commonInterests || []).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(m.matchScore)}">
+                                ${m.matchScore}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="status-badge ${getStatusClass(m.status)}">
+                                ${m.status}
+                              </span>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data">マッチングデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // トピック一覧
+          const topicList = Object.values(topics.topics || {});
+          document.getElementById('dashboard-topics').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">local_offer</i>
+                  トピック一覧
+                </h3>
+              </div>
+              <div class="card-content">
+                ${topicList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>トピック名</th>
+                          <th>人気度</th>
+                          <th>トレンド</th>
+                          <th>キーワード</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${topicList.slice(0, 8).map(t => `
+                          <tr>
+                            <td style="font-weight: 600;">${t.name}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.popularity)}">
+                                ${t.popularity}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.trendScore)}">
+                                ${t.trendScore}
+                              </span>
+                            </td>
+                            <td>
+                              ${(t.keywords || []).slice(0, 3).map(keyword => `<span class="tag">${keyword}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data">トピックデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // ボットアクション
+          const botActionList = Object.values(botActions.bot_actions || {});
+          document.getElementById('dashboard-bot-actions').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">smart_toy</i>
+                  ボットアクション履歴
+                </h3>
+              </div>
+              <div class="card-content">
+                ${botActionList.length ? `
+                  <div class="recent-activity">
+                    ${botActionList.slice(0, 5).map(b => `
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <i class="material-icons">smart_toy</i>
+                        </div>
+                        <div class="activity-content">
+                          <div class="activity-title">${b.actionType}</div>
+                          <div class="activity-description">ユーザー: ${b.userId}</div>
+                          <div class="activity-time">
+                            ${formatDate(b.timestamp)} | 
+                            <span class="status-badge ${getStatusClass(b.status)}">${b.status}</span>
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data">ボットアクションデータがありません</div>'}
+              </div>
+            </div>
+          `;
+
+          // 管理者ユーザー
+          const adminList = Object.values(adminUsers.admin_users || {});
+          document.getElementById('dashboard-admin-users').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">admin_panel_settings</i>
+                  管理者ユーザー
+                </h3>
+              </div>
+              <div class="card-content">
+                ${adminList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>Email</th>
+                          <th>ロール</th>
+                          <th>最終ログイン</th>
+                          <th>権限</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${adminList.map(a => `
+                          <tr>
+                            <td style="font-weight: 600;">${a.email}</td>
+                            <td>
+                              <span class="status-badge status-active">${a.role}</span>
+                            </td>
+                            <td>${formatDate(a.lastLogin)}</td>
+                            <td>
+                              ${Object.entries(a.permissions || {})
+                                .filter(([k, v]) => v)
+                                .map(([k]) => `<span class="tag">${k}</span>`)
+                                .join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data">管理者データがありません</div>'}
+              </div>
+            </div>
+          `;
+
+        } catch (error) {
+          console.error('データの読み込みに失敗しました:', error);
+          sections.forEach(section => {
+            document.getElementById(`dashboard-${section}`).innerHTML = `
+              <div class="dashboard-card">
+                <div class="no-data">
+                  <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
+                  <div>データの読み込みに失敗しました</div>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+
+      // Initialize dashboard
+      document.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
   </body>
 </html>
