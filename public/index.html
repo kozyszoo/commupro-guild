@@ -6,6 +6,11 @@
     <title>Discord にゃんこエージェント 管理パネル</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <script defer src="https://use.fontawesome.com/releases/v6.4.0/js/all.js"></script>
+    <style>
+      .collection-card { cursor: pointer; }
+      .collection-detail { display: none; }
+      .collection-card.active .collection-detail { display: block; }
+    </style>
   </head>
   <body>
     <section class="section">
@@ -14,14 +19,204 @@
           Discord にゃんこエージェント
         </h1>
         <p class="subtitle">
-          管理パネル <strong>（開発中）</strong>
+          管理パネル <strong>データ構造一覧</strong>
         </p>
-        <div class="notification is-primary">
-          この管理パネルは現在開発中です。完全な機能は後日実装予定です。
+        <div class="columns is-multiline">
+          <!-- コレクションカード一覧 -->
+          <div class="column is-6" id="collection-users">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  1. Users
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> Discordサーバーの各ユーザー情報を管理。<br>
+                  <strong>主な用途:</strong> 新規参加者の歓迎、非アクティブ検出、マッチング、エンゲージメント分析<br>
+                  <strong>主フィールド:</strong> id, guildId, username, isActive, lastActivity, interests, engagementScore, preferences
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-guilds">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  2. Guilds
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> Discordサーバー（Guild）の設定情報を管理。<br>
+                  <strong>主な用途:</strong> ボット動作カスタマイズ、キャラクター設定、機能ON/OFF、チャンネル管理<br>
+                  <strong>主フィールド:</strong> id, name, ownerId, botSettings, welcomeChannelId, podcastChannelId, analytics
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-interactions">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  3. Interactions
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> ユーザーの全インタラクション（メッセージ・リアクション等）を記録。<br>
+                  <strong>主な用途:</strong> 関心分析、エンゲージメント測定、トレンド検出、ボット効果測定<br>
+                  <strong>主フィールド:</strong> id, userId, guildId, type, channelId, content, timestamp, sentiment, keywords
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-topics">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  4. Topics
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> 話題トピックの管理と人気・トレンドスコア算出。<br>
+                  <strong>主な用途:</strong> コンテンツ推薦、ポッドキャスト選定、マッチング、トレンド分析<br>
+                  <strong>主フィールド:</strong> id, guildId, name, keywords, popularity, trendScore, relatedTopics
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-podcasts">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  5. Podcasts
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> にゃんこキャラによるポッドキャスト内容・統計を保存。<br>
+                  <strong>主な用途:</strong> コミュニティ情報配信、エンゲージメント向上、活動可視化<br>
+                  <strong>主フィールド:</strong> id, guildId, title, content, topics, publishedAt, channelId, views, reactions
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-user-matches">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  6. User Matches
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> ユーザー同士のマッチング情報を管理。<br>
+                  <strong>主な用途:</strong> 紹介、ネットワーク形成、マッチング効果測定、孤立ユーザー発見<br>
+                  <strong>主フィールド:</strong> id, guildId, user1Id, user2Id, commonInterests, matchScore, status, createdAt
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-events">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  7. Events
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> サーバー内イベント情報・参加者を管理。<br>
+                  <strong>主な用途:</strong> イベント管理、参加者追跡、効果測定、活性化<br>
+                  <strong>主フィールド:</strong> id, guildId, title, description, startTime, endTime, channelId, attendees, metadata
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-analytics">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  8. Analytics Sessions
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> 日次・週次・月次の活動統計データ。<br>
+                  <strong>主な用途:</strong> ダッシュボード、トレンド分析、パフォーマンス測定、レポート生成<br>
+                  <strong>主フィールド:</strong> id, guildId, date, activeUsers, messageCount, newMembers, topTopics, channelActivity
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-bot-actions">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  9. Bot Actions
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> ボットが実行したアクション履歴と結果を記録。<br>
+                  <strong>主な用途:</strong> 効果測定、履歴追跡、失敗分析、最適化<br>
+                  <strong>主フィールド:</strong> id, guildId, userId, actionType, targetId, payload, timestamp, status, result
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="column is-6" id="collection-admin-users">
+            <div class="card collection-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  10. Admin Users
+                </p>
+                <span class="icon card-toggle"><i class="fas fa-angle-down"></i></span>
+              </header>
+              <div class="card-content collection-detail">
+                <div class="content">
+                  <strong>概要:</strong> 管理権限ユーザー情報・権限設定を管理。<br>
+                  <strong>主な用途:</strong> 管理画面アクセス制御、権限制限、監査ログ、セキュリティ管理<br>
+                  <strong>主フィールド:</strong> uid, guildIds, email, role, createdAt, lastLogin, permissions
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="notification is-info mt-5">
+          各コレクションカードをクリックすると詳細が展開されます。
         </div>
       </div>
     </section>
-
+    <script>
+      // カードのクリックで詳細をトグル
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.collection-card').forEach(function(card) {
+          card.addEventListener('click', function() {
+            card.classList.toggle('active');
+            const icon = card.querySelector('.card-toggle i');
+            if (card.classList.contains('active')) {
+              icon.classList.remove('fa-angle-down');
+              icon.classList.add('fa-angle-up');
+            } else {
+              icon.classList.remove('fa-angle-up');
+              icon.classList.add('fa-angle-down');
+            }
+          });
+        });
+      });
+    </script>
     <script src="/__/firebase/9.22.0/firebase-app-compat.js"></script>
     <script src="/__/firebase/9.22.0/firebase-auth-compat.js"></script>
     <script src="/__/firebase/9.22.0/firebase-firestore-compat.js"></script>
