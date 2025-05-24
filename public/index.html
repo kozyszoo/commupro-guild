@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
       body {
-        background: #f5f6fa;
+        background: #f7f7f9;
+      }
+      nav {
+        background: #1976d2 !important;
       }
       .dashboard-section {
         margin-bottom: 2rem;
@@ -46,13 +49,35 @@
         overflow: hidden;
         background: #fff;
       }
+      .new.badge.blue, .badge.blue {
+        background-color: #1976d2 !important;
+        color: #fff !important;
+      }
+      .material-icons.blue-text, .blue-text {
+        color: #1976d2 !important;
+      }
+      .divider {
+        background: #e0e0e0;
+      }
+      .nav-wrapper .brand-logo {
+        color: #fff !important;
+      }
+      .card-content {
+        background: #fff;
+      }
+      .grey-text.text-darken-1 {
+        color: #666 !important;
+      }
+      .grey-text.text-lighten-1 {
+        color: #aaa !important;
+      }
       @media (max-width: 992px) {
         .dashboard-section { margin-bottom: 1.2rem; }
       }
     </style>
   </head>
   <body>
-    <nav class="blue darken-2">
+    <nav>
       <div class="nav-wrapper container">
         <a href="#" class="brand-logo" style="font-size:1.5rem; letter-spacing:1px;">にゃんこエージェント管理パネル</a>
       </div>
@@ -95,13 +120,13 @@
         document.getElementById('dashboard-users').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">group</i>ユーザー統計</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">group</i>ユーザー統計</span>
               <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総ユーザー数: <strong>${totalUsers}</strong> ／ アクティブ: <strong>${activeUsers}</strong> ／ 平均エンゲージメント: <strong>${avgEngagement}</strong></div>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
                   <thead><tr><th>ユーザー名</th><th>表示名</th><th>アクティブ</th><th>スコア</th><th>関心</th></tr></thead>
                   <tbody>
-                    ${userList.map(u => `<tr><td>${u.username}</td><td>${u.displayName||''}</td><td>${u.isActive ? '<i class=\'material-icons green-text\'>check_circle</i>' : '<i class=\'material-icons red-text\'>cancel</i>'}</td><td>${u.engagementScore||'-'}</td><td>${(u.interests||[]).join(', ')}</td></tr>`).join('')}
+                    ${userList.map(u => `<tr><td>${u.username}</td><td>${u.displayName||''}</td><td>${u.isActive ? '<i class=\'material-icons blue-text\'>check_circle</i>' : '<i class=\'material-icons\' style=\'color:#bbb\'>cancel</i>'}</td><td>${u.engagementScore||'-'}</td><td>${(u.interests||[]).join(', ')}</td></tr>`).join('')}
                   </tbody>
                 </table>
               </div>
@@ -114,7 +139,7 @@
         document.getElementById('dashboard-guilds').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">dns</i>サーバー（ギルド）情報</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">dns</i>サーバー（ギルド）情報</span>
               ${guildList.map(g => `
                 <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${g.name}</strong>（ID: ${g.id}）<br>
                 メンバー数: <strong>${g.analytics?.totalMembers||'-'}</strong> ／ アクティブ: <strong>${g.analytics?.activeMembers||'-'}</strong> ／ 平均エンゲージメント: <strong>${g.analytics?.averageEngagement||'-'}</strong><br>
@@ -135,7 +160,7 @@
         document.getElementById('dashboard-interactions').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">chat</i>インタラクション統計</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">chat</i>インタラクション統計</span>
               <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総インタラクション: <strong>${totalInteractions}</strong> ／ メッセージ: <strong>${messageCount}</strong> ／ リアクション: <strong>${reactionCount}</strong> ／ ボット対話: <strong>${botCount}</strong></div>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
@@ -154,7 +179,7 @@
         document.getElementById('dashboard-podcasts').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">mic</i>最新ポッドキャスト</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">mic</i>最新ポッドキャスト</span>
               ${podcastList.length ? podcastList.map(p => `
                 <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${p.title}</strong>（${p.publishedAt?.replace('T',' ').replace('Z','')}）<br>
                 閲覧数: <strong>${p.views||0}</strong> ／ リアクション: ${p.reactions?.map(r => `${r.emoji}×${r.count}`).join(' ')}<br>
@@ -170,7 +195,7 @@
         document.getElementById('dashboard-events').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">event</i>最新イベント</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">event</i>最新イベント</span>
               ${eventList.length ? eventList.map(e => `
                 <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${e.title}</strong>（${e.startTime?.replace('T',' ').replace('Z','')}）<br>
                 参加予定: <strong>${(e.attendees||[]).length}</strong>人 ／ チャンネル: ${e.channelId}<br>
@@ -186,7 +211,7 @@
         document.getElementById('dashboard-user-matches').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">people</i>ユーザーマッチング状況</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">people</i>ユーザーマッチング状況</span>
               <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;">総マッチ数: <strong>${matchList.length}</strong></div>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
@@ -205,7 +230,7 @@
         document.getElementById('dashboard-topics').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">local_offer</i>トピック一覧</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">local_offer</i>トピック一覧</span>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
                   <thead><tr><th>トピック名</th><th>人気度</th><th>トレンド</th><th>キーワード</th><th>関連トピック</th></tr></thead>
@@ -223,7 +248,7 @@
         document.getElementById('dashboard-admin-users').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">admin_panel_settings</i>管理者ユーザー</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">admin_panel_settings</i>管理者ユーザー</span>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
                   <thead><tr><th>Email</th><th>ロール</th><th>最終ログイン</th><th>権限</th></tr></thead>
@@ -241,7 +266,7 @@
         document.getElementById('dashboard-bot-actions').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">smart_toy</i>ボットアクション履歴</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">smart_toy</i>ボットアクション履歴</span>
               <div style="overflow-x:auto;">
                 <table class="dashboard-table highlight responsive-table">
                   <thead><tr><th>タイプ</th><th>ユーザー</th><th>日時</th><th>状態</th><th>結果</th></tr></thead>
@@ -259,7 +284,7 @@
         document.getElementById('dashboard-analytics-sessions').innerHTML = `
           <div class="dashboard-card z-depth-1">
             <div class="card-content">
-              <span class="dashboard-title"><i class="material-icons">insights</i>日次アナリティクス</span>
+              <span class="dashboard-title"><i class="material-icons blue-text">insights</i>日次アナリティクス</span>
               ${analyticsList.length ? analyticsList.map(a => `
                 <div class="grey-text text-darken-1" style="margin-bottom:0.5rem;"><strong>${a.date}</strong>：アクティブ <strong>${a.activeUsers}</strong>人 ／ メッセージ <strong>${a.messageCount}</strong> ／ 新規 <strong>${a.newMembers}</strong> ／ 再エンゲージ <strong>${a.reengagements}</strong><br>
                 <span class="grey-text text-lighten-1" style="font-size:0.95em;">トップトピック: ${Object.entries(a.topTopics||{}).map(([k,v])=>`${k}(${v})`).join(', ')}<br>チャンネル活動: ${Object.entries(a.channelActivity||{}).map(([k,v])=>`${k}(${v})`).join(', ')}</span>
