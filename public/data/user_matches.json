@@ -31,6 +31,71 @@
       "createdAt": "2024-05-20T14:15:00Z",
       "lastInteraction": "2024-05-22T11:20:00Z",
       "isIntroduced": true
+    },
+    "match_003": {
+      "id": "match_003",
+      "guildId": "987654321098765432",
+      "user1Id": "567890123456789012",
+      "user2Id": "789012345678901234",
+      "commonInterests": [
+        "Python",
+        "セキュリティ",
+        "機械学習"
+      ],
+      "matchScore": 0.72,
+      "status": "suggested",
+      "createdAt": "2024-05-23T16:20:00Z",
+      "lastInteraction": null,
+      "isIntroduced": false
+    },
+    "match_004": {
+      "id": "match_004",
+      "guildId": "987654321098765432",
+      "user1Id": "890123456789012345",
+      "user2Id": "345678901234567890",
+      "commonInterests": [
+        "React",
+        "TypeScript",
+        "フロントエンド開発"
+      ],
+      "matchScore": 0.89,
+      "status": "active",
+      "createdAt": "2024-05-21T10:30:00Z",
+      "lastInteraction": "2024-05-24T15:45:00Z",
+      "isIntroduced": true
+    },
+    "match_005": {
+      "id": "match_005",
+      "guildId": "987654321098765432",
+      "user1Id": "678901234567890123",
+      "user2Id": "456789012345678901",
+      "commonInterests": [
+        "ゲームデザイン",
+        "3Dグラフィックス",
+        "Unity"
+      ],
+      "matchScore": 0.81,
+      "status": "pending",
+      "createdAt": "2024-05-22T14:15:00Z",
+      "lastInteraction": null,
+      "isIntroduced": false
+    },
+    "match_006": {
+      "id": "match_006",
+      "guildId": "987654321098765432",
+      "user1Id": "901234567890123456",
+      "user2Id": "345678901234567890",
+      "commonInterests": [
+        "Docker",
+        "AWS",
+        "DevOps",
+        "バックエンド開発"
+      ],
+      "matchScore": 0.76,
+      "status": "active",
+      "createdAt": "2024-05-19T09:45:00Z",
+      "lastInteraction": "2024-05-24T13:20:00Z",
+      "isIntroduced": true
     }
   }
 }

@@ -70,6 +70,315 @@
         "dmNotifications": true,
         "language": "ja"
       }
+    },
+    "345678901234567890": {
+      "id": "345678901234567890",
+      "guildId": "987654321098765432",
+      "username": "CodeNinja",
+      "displayName": "Full Stack Developer",
+      "joinedAt": "2024-01-08T12:00:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T16:45:00Z",
+      "interests": [
+        "Node.js",
+        "TypeScript",
+        "React",
+        "PostgreSQL",
+        "Docker",
+        "AWS",
+        "GraphQL"
+      ],
+      "channels": [
+        "general",
+        "tech-talk",
+        "backend-dev",
+        "devops"
+      ],
+      "engagementScore": 92.3,
+      "reengagementHistory": {
+        "totalAttempts": 0,
+        "successfulReengagements": 0,
+        "lastAttempt": null,
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": false,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    },
+    "456789012345678901": {
+      "id": "456789012345678901",
+      "guildId": "987654321098765432",
+      "username": "PixelArtist",
+      "displayName": "Creative Visual Designer",
+      "joinedAt": "2024-02-14T14:30:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T11:20:00Z",
+      "interests": [
+        "UI/UX",
+        "Figma",
+        "Adobe Creative Suite",
+        "3Dグラフィックス",
+        "Blender",
+        "アニメーション",
+        "ゲームデザイン"
+      ],
+      "channels": [
+        "general",
+        "design",
+        "3d-graphics",
+        "game-dev",
+        "showcase"
+      ],
+      "engagementScore": 78.9,
+      "reengagementHistory": {
+        "totalAttempts": 1,
+        "successfulReengagements": 1,
+        "lastAttempt": "2024-03-15T10:00:00Z",
+        "lastSuccess": "2024-03-15T14:20:00Z"
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": false,
+        "language": "ja"
+      }
+    },
+    "567890123456789012": {
+      "id": "567890123456789012",
+      "guildId": "987654321098765432",
+      "username": "DataScientist_AI",
+      "displayName": "AI Research Engineer",
+      "joinedAt": "2024-03-01T09:15:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T18:10:00Z",
+      "interests": [
+        "Python",
+        "機械学習",
+        "深層学習",
+        "TensorFlow",
+        "PyTorch",
+        "データ分析",
+        "自然言語処理"
+      ],
+      "channels": [
+        "general",
+        "ai-research",
+        "data-science",
+        "python-dev",
+        "tech-talk"
+      ],
+      "engagementScore": 95.7,
+      "reengagementHistory": {
+        "totalAttempts": 0,
+        "successfulReengagements": 0,
+        "lastAttempt": null,
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    },
+    "678901234567890123": {
+      "id": "678901234567890123",
+      "guildId": "987654321098765432",
+      "username": "GameDevMaster",
+      "displayName": "Indie Game Developer",
+      "joinedAt": "2024-01-25T16:45:00Z",
+      "isActive": false,
+      "lastActivity": "2024-05-18T13:30:00Z",
+      "interests": [
+        "Unity",
+        "C#",
+        "ゲームデザイン",
+        "3Dモデリング",
+        "ゲーム音楽",
+        "VR開発",
+        "インディーゲーム"
+      ],
+      "channels": [
+        "general",
+        "game-dev",
+        "unity-tips",
+        "3d-graphics",
+        "showcase"
+      ],
+      "engagementScore": 45.2,
+      "reengagementHistory": {
+        "totalAttempts": 2,
+        "successfulReengagements": 0,
+        "lastAttempt": "2024-05-20T09:00:00Z",
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": false,
+        "matchingNotifications": true,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    },
+    "789012345678901234": {
+      "id": "789012345678901234",
+      "guildId": "987654321098765432",
+      "username": "SecurityExpert",
+      "displayName": "Cybersecurity Specialist",
+      "joinedAt": "2024-04-10T11:20:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T15:55:00Z",
+      "interests": [
+        "セキュリティ",
+        "ペネトレーションテスト",
+        "暗号化",
+        "OWASP",
+        "ネットワークセキュリティ",
+        "Python",
+        "Linux"
+      ],
+      "channels": [
+        "general",
+        "security",
+        "backend-dev",
+        "tech-talk"
+      ],
+      "engagementScore": 73.4,
+      "reengagementHistory": {
+        "totalAttempts": 0,
+        "successfulReengagements": 0,
+        "lastAttempt": null,
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": false,
+        "dmNotifications": false,
+        "language": "ja"
+      }
+    },
+    "890123456789012345": {
+      "id": "890123456789012345",
+      "guildId": "987654321098765432",
+      "username": "FrontendGuru",
+      "displayName": "Frontend Architect",
+      "joinedAt": "2024-02-05T13:10:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T17:30:00Z",
+      "interests": [
+        "React",
+        "Vue.js",
+        "TypeScript",
+        "CSS",
+        "Webpack",
+        "Vite",
+        "パフォーマンス最適化"
+      ],
+      "channels": [
+        "general",
+        "frontend-dev",
+        "css-tips",
+        "tech-talk",
+        "typescript-advanced"
+      ],
+      "engagementScore": 88.1,
+      "reengagementHistory": {
+        "totalAttempts": 0,
+        "successfulReengagements": 0,
+        "lastAttempt": null,
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    },
+    "901234567890123456": {
+      "id": "901234567890123456",
+      "guildId": "987654321098765432",
+      "username": "DevOpsEngineer",
+      "displayName": "Cloud Infrastructure Expert",
+      "joinedAt": "2024-03-20T08:45:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T12:40:00Z",
+      "interests": [
+        "DevOps",
+        "AWS",
+        "Docker",
+        "Kubernetes",
+        "Terraform",
+        "CI/CD",
+        "インフラ自動化"
+      ],
+      "channels": [
+        "general",
+        "devops",
+        "cloud-tips",
+        "backend-dev"
+      ],
+      "engagementScore": 81.6,
+      "reengagementHistory": {
+        "totalAttempts": 1,
+        "successfulReengagements": 1,
+        "lastAttempt": "2024-04-25T10:00:00Z",
+        "lastSuccess": "2024-04-25T15:30:00Z"
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": false,
+        "dmNotifications": true,
+        "language": "ja"
+      }
+    },
+    "012345678901234567": {
+      "id": "012345678901234567",
+      "guildId": "987654321098765432",
+      "username": "MobileAppDev",
+      "displayName": "Mobile App Developer",
+      "joinedAt": "2024-04-01T10:30:00Z",
+      "isActive": true,
+      "lastActivity": "2024-05-24T14:15:00Z",
+      "interests": [
+        "React Native",
+        "Flutter",
+        "Swift",
+        "Kotlin",
+        "モバイルUI/UX",
+        "Firebase",
+        "アプリストア最適化"
+      ],
+      "channels": [
+        "general",
+        "mobile-dev",
+        "react-native",
+        "design",
+        "tech-talk"
+      ],
+      "engagementScore": 69.8,
+      "reengagementHistory": {
+        "totalAttempts": 0,
+        "successfulReengagements": 0,
+        "lastAttempt": null,
+        "lastSuccess": null
+      },
+      "timezone": "Asia/Tokyo",
+      "preferences": {
+        "podcastNotifications": true,
+        "matchingNotifications": true,
+        "dmNotifications": false,
+        "language": "ja"
+      }
     }
   }
 }

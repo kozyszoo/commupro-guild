@@ -62,6 +62,212 @@
           "感謝",
           "参考"
         ]
+      },
+      "interaction_004": {
+        "id": "interaction_004",
+        "userId": "345678901234567890",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_backend_dev_678",
+        "messageId": "msg_765432109",
+        "content": "Node.jsでGraphQL APIを作っているのですが、パフォーマンス最適化のコツがあれば教えてください",
+        "metadata": {
+          "messageLength": 58,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": true
+        },
+        "timestamp": "2024-05-24T16:45:00Z",
+        "sentiment": 0.2,
+        "keywords": [
+          "Node.js",
+          "GraphQL",
+          "API",
+          "パフォーマンス最適化"
+        ]
+      },
+      "interaction_005": {
+        "id": "interaction_005",
+        "userId": "456789012345678901",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_design_101",
+        "messageId": "msg_654321098",
+        "content": "Figmaでデザインシステムを作成中です。コンポーネントのバリエーション管理のベストプラクティスを教えてください！",
+        "metadata": {
+          "messageLength": 72,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": true
+        },
+        "timestamp": "2024-05-24T11:20:00Z",
+        "sentiment": 0.3,
+        "keywords": [
+          "Figma",
+          "デザインシステム",
+          "コンポーネント",
+          "ベストプラクティス"
+        ]
+      },
+      "interaction_006": {
+        "id": "interaction_006",
+        "userId": "567890123456789012",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_ai_research_012",
+        "messageId": "msg_543210987",
+        "content": "PyTorchでTransformerモデルを実装しています。ファインチューニングの際のハイパーパラメータ調整のコツを共有します。",
+        "metadata": {
+          "messageLength": 78,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": false
+        },
+        "timestamp": "2024-05-24T18:10:00Z",
+        "sentiment": 0.7,
+        "keywords": [
+          "PyTorch",
+          "Transformer",
+          "ファインチューニング",
+          "ハイパーパラメータ"
+        ]
+      },
+      "interaction_007": {
+        "id": "interaction_007",
+        "userId": "789012345678901234",
+        "guildId": "987654321098765432",
+        "type": "reaction",
+        "channelId": "channel_security_789",
+        "messageId": "msg_432109876",
+        "content": null,
+        "metadata": {
+          "reactionType": "🔒",
+          "targetUserId": "345678901234567890",
+          "targetMessageContent": "APIのセキュリティ対策について記事を書きました"
+        },
+        "timestamp": "2024-05-24T15:55:00Z",
+        "sentiment": 0.8,
+        "keywords": [
+          "API",
+          "セキュリティ"
+        ]
+      },
+      "interaction_008": {
+        "id": "interaction_008",
+        "userId": "890123456789012345",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_frontend_dev_123",
+        "messageId": "msg_321098765",
+        "content": "React 19の新機能であるServer Componentsを試してみました！パフォーマンスが大幅に改善されています。コード例を共有しますね。",
+        "metadata": {
+          "messageLength": 89,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": false
+        },
+        "timestamp": "2024-05-24T17:30:00Z",
+        "sentiment": 0.9,
+        "keywords": [
+          "React",
+          "Server Components",
+          "パフォーマンス",
+          "コード例"
+        ]
+      },
+      "interaction_009": {
+        "id": "interaction_009",
+        "userId": "901234567890123456",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_devops_123",
+        "messageId": "msg_210987654",
+        "content": "Kubernetesでマイクロサービスをデプロイする際のモニタリング設定について質問です。PrometheusとGrafanaの連携方法を教えてください。",
+        "metadata": {
+          "messageLength": 95,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": true
+        },
+        "timestamp": "2024-05-24T12:40:00Z",
+        "sentiment": 0.1,
+        "keywords": [
+          "Kubernetes",
+          "マイクロサービス",
+          "モニタリング",
+          "Prometheus",
+          "Grafana"
+        ]
+      },
+      "interaction_010": {
+        "id": "interaction_010",
+        "userId": "012345678901234567",
+        "guildId": "987654321098765432",
+        "type": "message",
+        "channelId": "channel_mobile_dev_456",
+        "messageId": "msg_109876543",
+        "content": "React Nativeでアプリを開発中です。iOSとAndroidでパフォーマンスの差が出ています。最適化のアドバイスをお願いします。",
+        "metadata": {
+          "messageLength": 82,
+          "hasCodeBlock": false,
+          "hasMentions": false,
+          "hasLinks": false,
+          "isQuestion": true
+        },
+        "timestamp": "2024-05-24T14:15:00Z",
+        "sentiment": 0.0,
+        "keywords": [
+          "React Native",
+          "iOS",
+          "Android",
+          "パフォーマンス",
+          "最適化"
+        ]
+      },
+      "interaction_011": {
+        "id": "interaction_011",
+        "userId": "678901234567890123",
+        "guildId": "987654321098765432",
+        "type": "bot_interaction",
+        "channelId": "channel_game_dev_345",
+        "messageId": null,
+        "content": "ゲームジャムの情報ありがとうございます！参加したいです。",
+        "metadata": {
+          "botActionId": "bot_action_789",
+          "botCharacter": "tra_nyan",
+          "interactionType": "response_to_reengagement"
+        },
+        "timestamp": "2024-05-23T14:30:00Z",
+        "sentiment": 0.8,
+        "keywords": [
+          "ゲームジャム",
+          "参加"
+        ]
+      },
+      "interaction_012": {
+        "id": "interaction_012",
+        "userId": "234567890123456789",
+        "guildId": "987654321098765432",
+        "type": "reaction",
+        "channelId": "channel_design_101",
+        "messageId": "msg_098765432",
+        "content": null,
+        "metadata": {
+          "reactionType": "🎨",
+          "targetUserId": "456789012345678901",
+          "targetMessageContent": "新しいデザインシステムのプロトタイプを作成しました"
+        },
+        "timestamp": "2024-05-23T16:45:00Z",
+        "sentiment": 0.9,
+        "keywords": [
+          "デザインシステム",
+          "プロトタイプ"
+        ]
       }
     }
   }

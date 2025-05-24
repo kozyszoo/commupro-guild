@@ -48,6 +48,129 @@
         "readConfirmed": false,
         "responseReceived": false
       }
+    },
+    "bot_action_101": {
+      "id": "bot_action_101",
+      "guildId": "987654321098765432",
+      "userId": "567890123456789012",
+      "actionType": "topic_recommendation",
+      "targetId": null,
+      "payload": {
+        "character": "kuro_nyan",
+        "recommendedTopics": [
+          "TensorFlow最新アップデート",
+          "自然言語処理のトレンド"
+        ],
+        "confidence": 0.92,
+        "baseInterests": [
+          "AI",
+          "機械学習",
+          "Python"
+        ]
+      },
+      "timestamp": "2024-05-24T18:00:00Z",
+      "status": "completed",
+      "result": {
+        "userResponse": "positive",
+        "engagementGenerated": true,
+        "followUpNeeded": false
+      }
+    },
+    "bot_action_102": {
+      "id": "bot_action_102",
+      "guildId": "987654321098765432",
+      "userId": "890123456789012345",
+      "actionType": "user_matching",
+      "targetId": "345678901234567890",
+      "payload": {
+        "character": "tra_nyan",
+        "matchReason": "ReactとTypeScriptに共通の興味を持っているにゃ！",
+        "suggestedTopic": "React 19の新機能について話してみるにゃ？",
+        "matchScore": 0.89
+      },
+      "timestamp": "2024-05-21T10:30:00Z",
+      "status": "completed",
+      "result": {
+        "userResponse": "positive",
+        "engagementGenerated": true,
+        "followUpNeeded": false
+      }
+    },
+    "bot_action_103": {
+      "id": "bot_action_103",
+      "guildId": "987654321098765432",
+      "userId": "678901234567890123",
+      "actionType": "reengagement_dm",
+      "targetId": null,
+      "payload": {
+        "character": "tra_nyan",
+        "message": "GameDevMasterさん、久しぶりだにゃ！来週の週末にゲームジャムがあるにゃ。参加してみないかにゃ？",
+        "reengagementAttempt": 2,
+        "personalizedContent": [
+          "ゲームジャム",
+          "Unityテクニック"
+        ]
+      },
+      "timestamp": "2024-05-20T09:00:00Z",
+      "status": "completed",
+      "result": {
+        "deliveryConfirmed": true,
+        "readConfirmed": true,
+        "responseReceived": true
+      }
+    },
+    "bot_action_104": {
+      "id": "bot_action_104",
+      "guildId": "987654321098765432",
+      "userId": "456789012345678901",
+      "actionType": "topic_recommendation",
+      "targetId": null,
+      "payload": {
+        "character": "kuro_nyan",
+        "recommendedTopics": [
+          "デザインシステムのベストプラクティス",
+          "Figmaの新機能活用法"
+        ],
+        "confidence": 0.85,
+        "baseInterests": [
+          "UI/UX",
+          "Figma",
+          "デザイン"
+        ]
+      },
+      "timestamp": "2024-05-24T11:00:00Z",
+      "status": "completed",
+      "result": {
+        "userResponse": "positive",
+        "engagementGenerated": true,
+        "followUpNeeded": false
+      }
+    },
+    "bot_action_105": {
+      "id": "bot_action_105",
+      "guildId": "987654321098765432",
+      "userId": "012345678901234567",
+      "actionType": "help_suggestion",
+      "targetId": null,
+      "payload": {
+        "character": "kuro_nyan",
+        "helpTopic": "React Nativeパフォーマンス最適化",
+        "suggestedResources": [
+          "React Native公式ドキュメント",
+          "パフォーマンスチューニングガイド"
+        ],
+        "relatedUsers": [
+          "345678901234567890",
+          "890123456789012345"
+        ]
+      },
+      "timestamp": "2024-05-24T14:20:00Z",
+      "status": "completed",
+      "result": {
+        "userResponse": "positive",
+        "engagementGenerated": true,
+        "followUpNeeded": true
+      }
     }
   }
 }

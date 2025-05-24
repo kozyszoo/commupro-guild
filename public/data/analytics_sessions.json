@@ -22,6 +22,121 @@
         "random": 15,
         "game-dev": 7
       }
+    },
+    "analytics_20240523": {
+      "id": "analytics_20240523",
+      "guildId": "987654321098765432",
+      "date": "2024-05-23",
+      "activeUsers": 41,
+      "messageCount": 156,
+      "newMembers": 1,
+      "reengagements": 2,
+      "topTopics": {
+        "AI": 35,
+        "Python": 28,
+        "React": 24,
+        "デザイン": 19,
+        "TypeScript": 16
+      },
+      "channelActivity": {
+        "general": 52,
+        "ai-research": 41,
+        "tech-talk": 35,
+        "design": 18,
+        "python-dev": 10
+      }
+    },
+    "analytics_20240522": {
+      "id": "analytics_20240522",
+      "guildId": "987654321098765432",
+      "date": "2024-05-22",
+      "activeUsers": 38,
+      "messageCount": 142,
+      "newMembers": 0,
+      "reengagements": 1,
+      "topTopics": {
+        "DevOps": 32,
+        "Kubernetes": 25,
+        "Node.js": 21,
+        "バックエンド": 18,
+        "GraphQL": 14
+      },
+      "channelActivity": {
+        "general": 48,
+        "devops": 38,
+        "backend-dev": 32,
+        "tech-talk": 24,
+        "random": 0
+      }
+    },
+    "analytics_20240521": {
+      "id": "analytics_20240521",
+      "guildId": "987654321098765432",
+      "date": "2024-05-21",
+      "activeUsers": 29,
+      "messageCount": 98,
+      "newMembers": 1,
+      "reengagements": 0,
+      "topTopics": {
+        "ゲーム開発": 22,
+        "Unity": 18,
+        "UI/UX": 16,
+        "Figma": 13,
+        "3Dグラフィックス": 11
+      },
+      "channelActivity": {
+        "general": 35,
+        "game-dev": 28,
+        "design": 20,
+        "3d-graphics": 15,
+        "showcase": 0
+      }
+    },
+    "analytics_20240520": {
+      "id": "analytics_20240520",
+      "guildId": "987654321098765432",
+      "date": "2024-05-20",
+      "activeUsers": 45,
+      "messageCount": 178,
+      "newMembers": 2,
+      "reengagements": 3,
+      "topTopics": {
+        "React": 42,
+        "TypeScript": 31,
+        "フロントエンド": 28,
+        "JavaScript": 25,
+        "CSS": 19
+      },
+      "channelActivity": {
+        "general": 58,
+        "frontend-dev": 45,
+        "tech-talk": 42,
+        "typescript-advanced": 23,
+        "css-tips": 10
+      }
+    },
+    "analytics_20240519": {
+      "id": "analytics_20240519",
+      "guildId": "987654321098765432",
+      "date": "2024-05-19",
+      "activeUsers": 32,
+      "messageCount": 115,
+      "newMembers": 0,
+      "reengagements": 1,
+      "topTopics": {
+        "セキュリティ": 28,
+        "OWASP": 19,
+        "暗号化": 16,
+        "Python": 14,
+        "ペネトレーションテスト": 12
+      },
+      "channelActivity": {
+        "general": 42,
+        "security": 35,
+        "tech-talk": 25,
+        "backend-dev": 13,
+        "random": 0
+      }
     }
   }
 }

@@ -39,6 +39,126 @@
           "CodeNinja"
         ]
       }
+    },
+    "podcast_20240513_002": {
+      "id": "podcast_20240513_002",
+      "guildId": "987654321098765432",
+      "title": "今週のテックトーク - AI技術の最新動向とコミュニティ活動",
+      "content": "🐈 **トラにゃん**: みなさん、こんにちはだにゃ！今週はAI関連の話題が熱かったにゃ！\n\n🐱 **クロにゃん**: こんにちはですにゃ。今週は@DataScientist_AIさんのPyTorchの投稿が大人気でしたにゃ。\n\n🐈 **トラにゃん**: そうそう！Transformerモデルの実装について詳しく解説してくれたにゃ。みんなからたくさん質問が出てたにゃ〜\n\n🐱 **クロにゃん**: 分析によると、今週はAI・機械学習関連の話題が全体の38%を占めていましたにゃ。特にPython、TensorFlow、PyTorchについての議論が活発でしたにゃ。\n\n🐈 **トラにゃん**: そして来週の土曜日には「AI・機械学習勉強会」があるにゃ！現在6名の方が参加予定だにゃ。\n\n🐱 **クロにゃん**: また、@SecurityExpertさんがセキュリティに関する記事を投稿されていたのにゃ。セキュアコーディングに興味がある方はチェックしてみてくださいにゃ。\n\n🐈 **トラにゃん**: 来週も楽しいトピックがたくさんありそうだにゃ！みんなの参加を待ってるにゃ〜😺",
+      "topics": [
+        "topic_ai_ml_010",
+        "topic_python_009",
+        "topic_security_016"
+      ],
+      "publishedAt": "2024-05-13T18:00:00Z",
+      "channelId": "channel_podcast_456",
+      "views": 62,
+      "reactions": [
+        {
+          "emoji": "🤖",
+          "count": 18
+        },
+        {
+          "emoji": "🐍",
+          "count": 14
+        },
+        {
+          "emoji": "🔒",
+          "count": 9
+        }
+      ],
+      "metadata": {
+        "generationTime": "2024-05-13T17:45:00Z",
+        "weeklyDataRange": {
+          "start": "2024-05-06T00:00:00Z",
+          "end": "2024-05-12T23:59:59Z"
+        },
+        "topContributors": [
+          "DataScientist_AI",
+          "SecurityExpert",
+          "CodeNinja"
+        ]
+      }
+    },
+    "podcast_20240506_003": {
+      "id": "podcast_20240506_003",
+      "guildId": "987654321098765432",
+      "title": "今週のテックトーク - ゲーム開発とデザインの世界",
+      "content": "🐈 **トラにゃん**: みなさん、こんにちはだにゃ！今週はクリエイティブな話題が盛り上がったにゃ！\n\n🐱 **クロにゃん**: こんにちはですにゃ。今週は@PixelArtistさんのFigmaデザインシステムの投稿が話題になっていましたにゃ。\n\n🐈 **トラにゃん**: そうそう！コンポーネントのバリエーション管理について詳しく教えてくれたにゃ。デザイナーのみんなが参考になったって言ってたにゃ〜\n\n🐱 **クロにゃん**: 分析によると、今週はUI/UXデザイン関連の話題が全体の32%、ゲーム開発関連が28%を占めていましたにゃ。\n\n🐈 **トラにゃん**: そして来週の木曜日には「UI/UXデザインレビュー会」があるにゃ！作品を持ち寄ってみんなでフィードバックしあうにゃ。\n\n🐱 **クロにゃん**: また、@GameDevMasterさんがUnityのテクニックについて質問されていたのにゃ。ゲーム開発に興味がある方はチェックしてみてくださいにゃ。\n\n🐈 **トラにゃん**: 来週もクリエイティブなトピックがたくさんありそうだにゃ！みんなの参加を待ってるにゃ〜🎨",
+      "topics": [
+        "topic_design_002",
+        "topic_game_dev_011",
+        "topic_graphics_013"
+      ],
+      "publishedAt": "2024-05-06T18:00:00Z",
+      "channelId": "channel_podcast_456",
+      "views": 38,
+      "reactions": [
+        {
+          "emoji": "🎨",
+          "count": 15
+        },
+        {
+          "emoji": "🎮",
+          "count": 12
+        },
+        {
+          "emoji": "😺",
+          "count": 8
+        }
+      ],
+      "metadata": {
+        "generationTime": "2024-05-06T17:45:00Z",
+        "weeklyDataRange": {
+          "start": "2024-04-29T00:00:00Z",
+          "end": "2024-05-05T23:59:59Z"
+        },
+        "topContributors": [
+          "PixelArtist",
+          "GameDevMaster",
+          "FrontendGuru"
+        ]
+      }
+    },
+    "podcast_20240429_004": {
+      "id": "podcast_20240429_004",
+      "guildId": "987654321098765432",
+      "title": "今週のテックトーク - DevOpsとインフラの最新トレンド",
+      "content": "🐈 **トラにゃん**: みなさん、こんにちはだにゃ！今週はインフラ関連の話題が熱かったにゃ！\n\n🐱 **クロにゃん**: こんにちはですにゃ。今週は@DevOpsEngineerさんのKubernetesの投稿が大人気でしたにゃ。\n\n🐈 **トラにゃん**: そうそう！マイクロサービスのモニタリング設定について詳しく解説してくれたにゃ。PrometheusとGrafanaの連携方法も紹介してたにゃ〜\n\n🐱 **クロにゃん**: 分析によると、今週はDevOps・インフラ関連の話題が全体の35%、バックエンド開発関連が29%を占めていましたにゃ。\n\n🐈 **トラにゃん**: そして@CodeNinjaさんがNode.jsでGraphQL APIのパフォーマンス最適化について質問してたにゃ。みんなからたくさんアドバイスがもらえたみたいだにゃ。\n\n🐱 **クロにゃん**: また、@MobileAppDevさんがReact Nativeのパフォーマンス問題について相談されていたのにゃ。モバイル開発に興味がある方はチェックしてみてくださいにゃ。\n\n🐈 **トラにゃん**: 来週も技術的なトピックがたくさんありそうだにゃ！みんなの参加を待ってるにゃ〜🚀",
+      "topics": [
+        "topic_devops_015",
+        "topic_backend_014",
+        "topic_nodejs_007"
+      ],
+      "publishedAt": "2024-04-29T18:00:00Z",
+      "channelId": "channel_podcast_456",
+      "views": 51,
+      "reactions": [
+        {
+          "emoji": "🚀",
+          "count": 16
+        },
+        {
+          "emoji": "⚙️",
+          "count": 13
+        },
+        {
+          "emoji": "📊",
+          "count": 7
+        }
+      ],
+      "metadata": {
+        "generationTime": "2024-04-29T17:45:00Z",
+        "weeklyDataRange": {
+          "start": "2024-04-22T00:00:00Z",
+          "end": "2024-04-28T23:59:59Z"
+        },
+        "topContributors": [
+          "DevOpsEngineer",
+          "CodeNinja",
+          "MobileAppDev"
+        ]
+      }
     }
   }
 }

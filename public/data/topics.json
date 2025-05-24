@@ -52,6 +52,375 @@
           "topic_frontend_003": 0.6,
           "topic_accessibility_005": 0.7
         }
+      },
+      "topic_javascript_002": {
+        "id": "topic_javascript_002",
+        "guildId": "987654321098765432",
+        "name": "JavaScript基礎",
+        "keywords": [
+          "JavaScript",
+          "ES6",
+          "非同期処理",
+          "Promise",
+          "async/await",
+          "DOM操作",
+          "イベント処理"
+        ],
+        "channelIds": [
+          "channel_tech_talk_789",
+          "channel_beginner_help_234"
+        ],
+        "popularity": 92.1,
+        "trendScore": 88.7,
+        "createdAt": "2024-01-05T00:00:00Z",
+        "updatedAt": "2024-05-24T18:30:00Z",
+        "relatedTopics": {
+          "topic_react_001": 0.8,
+          "topic_typescript_004": 0.9,
+          "topic_nodejs_007": 0.7
+        }
+      },
+      "topic_frontend_003": {
+        "id": "topic_frontend_003",
+        "guildId": "987654321098765432",
+        "name": "フロントエンド開発",
+        "keywords": [
+          "HTML",
+          "CSS",
+          "Sass",
+          "Webpack",
+          "Vite",
+          "レスポンシブデザイン",
+          "パフォーマンス最適化"
+        ],
+        "channelIds": [
+          "channel_frontend_dev_123",
+          "channel_css_tips_567"
+        ],
+        "popularity": 73.8,
+        "trendScore": 79.4,
+        "createdAt": "2024-01-12T00:00:00Z",
+        "updatedAt": "2024-05-24T12:15:00Z",
+        "relatedTopics": {
+          "topic_react_001": 0.7,
+          "topic_design_002": 0.6,
+          "topic_javascript_002": 0.8
+        }
+      },
+      "topic_typescript_004": {
+        "id": "topic_typescript_004",
+        "guildId": "987654321098765432",
+        "name": "TypeScript",
+        "keywords": [
+          "TypeScript",
+          "型安全",
+          "インターフェース",
+          "ジェネリクス",
+          "型推論",
+          "デコレータ",
+          "コンパイル"
+        ],
+        "channelIds": [
+          "channel_tech_talk_789",
+          "channel_typescript_advanced_890"
+        ],
+        "popularity": 81.2,
+        "trendScore": 86.9,
+        "createdAt": "2024-01-20T00:00:00Z",
+        "updatedAt": "2024-05-24T16:20:00Z",
+        "relatedTopics": {
+          "topic_javascript_002": 0.9,
+          "topic_react_001": 0.6,
+          "topic_nodejs_007": 0.7
+        }
+      },
+      "topic_accessibility_005": {
+        "id": "topic_accessibility_005",
+        "guildId": "987654321098765432",
+        "name": "Webアクセシビリティ",
+        "keywords": [
+          "アクセシビリティ",
+          "WCAG",
+          "スクリーンリーダー",
+          "キーボードナビゲーション",
+          "ARIA",
+          "セマンティックHTML",
+          "色彩コントラスト"
+        ],
+        "channelIds": [
+          "channel_design_101",
+          "channel_accessibility_help_345"
+        ],
+        "popularity": 45.7,
+        "trendScore": 52.3,
+        "createdAt": "2024-02-01T00:00:00Z",
+        "updatedAt": "2024-05-22T09:45:00Z",
+        "relatedTopics": {
+          "topic_design_002": 0.7,
+          "topic_frontend_003": 0.6
+        }
+      },
+      "topic_nodejs_007": {
+        "id": "topic_nodejs_007",
+        "guildId": "987654321098765432",
+        "name": "Node.js開発",
+        "keywords": [
+          "Node.js",
+          "Express",
+          "API開発",
+          "npm",
+          "パッケージ管理",
+          "サーバーサイド",
+          "非同期処理"
+        ],
+        "channelIds": [
+          "channel_backend_dev_678",
+          "channel_api_design_901"
+        ],
+        "popularity": 68.4,
+        "trendScore": 71.8,
+        "createdAt": "2024-02-10T00:00:00Z",
+        "updatedAt": "2024-05-24T14:30:00Z",
+        "relatedTopics": {
+          "topic_javascript_002": 0.7,
+          "topic_typescript_004": 0.7,
+          "topic_database_008": 0.8
+        }
+      },
+      "topic_database_008": {
+        "id": "topic_database_008",
+        "guildId": "987654321098765432",
+        "name": "データベース設計",
+        "keywords": [
+          "データベース",
+          "SQL",
+          "NoSQL",
+          "MongoDB",
+          "PostgreSQL",
+          "正規化",
+          "インデックス"
+        ],
+        "channelIds": [
+          "channel_backend_dev_678",
+          "channel_database_tips_234"
+        ],
+        "popularity": 56.9,
+        "trendScore": 62.1,
+        "createdAt": "2024-02-15T00:00:00Z",
+        "updatedAt": "2024-05-23T11:20:00Z",
+        "relatedTopics": {
+          "topic_nodejs_007": 0.8,
+          "topic_python_009": 0.6
+        }
+      },
+      "topic_python_009": {
+        "id": "topic_python_009",
+        "guildId": "987654321098765432",
+        "name": "Python開発",
+        "keywords": [
+          "Python",
+          "Django",
+          "Flask",
+          "データ分析",
+          "機械学習",
+          "pandas",
+          "numpy"
+        ],
+        "channelIds": [
+          "channel_python_dev_456",
+          "channel_data_science_789"
+        ],
+        "popularity": 74.3,
+        "trendScore": 77.6,
+        "createdAt": "2024-02-20T00:00:00Z",
+        "updatedAt": "2024-05-24T13:45:00Z",
+        "relatedTopics": {
+          "topic_ai_ml_010": 0.9,
+          "topic_database_008": 0.6
+        }
+      },
+      "topic_ai_ml_010": {
+        "id": "topic_ai_ml_010",
+        "guildId": "987654321098765432",
+        "name": "AI・機械学習",
+        "keywords": [
+          "AI",
+          "機械学習",
+          "深層学習",
+          "TensorFlow",
+          "PyTorch",
+          "自然言語処理",
+          "画像認識"
+        ],
+        "channelIds": [
+          "channel_ai_research_012",
+          "channel_data_science_789"
+        ],
+        "popularity": 89.7,
+        "trendScore": 94.2,
+        "createdAt": "2024-03-01T00:00:00Z",
+        "updatedAt": "2024-05-24T17:10:00Z",
+        "relatedTopics": {
+          "topic_python_009": 0.9,
+          "topic_game_dev_011": 0.4
+        }
+      },
+      "topic_game_dev_011": {
+        "id": "topic_game_dev_011",
+        "guildId": "987654321098765432",
+        "name": "ゲーム開発",
+        "keywords": [
+          "ゲーム開発",
+          "Unity",
+          "Unreal Engine",
+          "C#",
+          "C++",
+          "ゲームデザイン",
+          "3Dモデリング"
+        ],
+        "channelIds": [
+          "channel_game_dev_345",
+          "channel_unity_tips_678"
+        ],
+        "popularity": 63.2,
+        "trendScore": 68.5,
+        "createdAt": "2024-03-10T00:00:00Z",
+        "updatedAt": "2024-05-24T15:25:00Z",
+        "relatedTopics": {
+          "topic_csharp_012": 0.8,
+          "topic_graphics_013": 0.7
+        }
+      },
+      "topic_csharp_012": {
+        "id": "topic_csharp_012",
+        "guildId": "987654321098765432",
+        "name": "C#プログラミング",
+        "keywords": [
+          "C#",
+          ".NET",
+          "ASP.NET",
+          "LINQ",
+          "Entity Framework",
+          "WPF",
+          "Blazor"
+        ],
+        "channelIds": [
+          "channel_dotnet_dev_901",
+          "channel_csharp_tips_234"
+        ],
+        "popularity": 52.8,
+        "trendScore": 58.3,
+        "createdAt": "2024-03-15T00:00:00Z",
+        "updatedAt": "2024-05-23T14:40:00Z",
+        "relatedTopics": {
+          "topic_game_dev_011": 0.8,
+          "topic_backend_014": 0.6
+        }
+      },
+      "topic_graphics_013": {
+        "id": "topic_graphics_013",
+        "guildId": "987654321098765432",
+        "name": "グラフィックス・3D",
+        "keywords": [
+          "3Dグラフィックス",
+          "Blender",
+          "Maya",
+          "テクスチャ",
+          "シェーダー",
+          "レンダリング",
+          "アニメーション"
+        ],
+        "channelIds": [
+          "channel_3d_graphics_567",
+          "channel_blender_tips_890"
+        ],
+        "popularity": 41.6,
+        "trendScore": 46.9,
+        "createdAt": "2024-03-20T00:00:00Z",
+        "updatedAt": "2024-05-22T16:55:00Z",
+        "relatedTopics": {
+          "topic_game_dev_011": 0.7,
+          "topic_design_002": 0.5
+        }
+      },
+      "topic_backend_014": {
+        "id": "topic_backend_014",
+        "guildId": "987654321098765432",
+        "name": "バックエンド開発",
+        "keywords": [
+          "バックエンド",
+          "API設計",
+          "マイクロサービス",
+          "Docker",
+          "Kubernetes",
+          "クラウド",
+          "セキュリティ"
+        ],
+        "channelIds": [
+          "channel_backend_dev_678",
+          "channel_devops_123"
+        ],
+        "popularity": 67.1,
+        "trendScore": 72.4,
+        "createdAt": "2024-03-25T00:00:00Z",
+        "updatedAt": "2024-05-24T11:30:00Z",
+        "relatedTopics": {
+          "topic_nodejs_007": 0.7,
+          "topic_csharp_012": 0.6,
+          "topic_devops_015": 0.9
+        }
+      },
+      "topic_devops_015": {
+        "id": "topic_devops_015",
+        "guildId": "987654321098765432",
+        "name": "DevOps・インフラ",
+        "keywords": [
+          "DevOps",
+          "CI/CD",
+          "GitHub Actions",
+          "AWS",
+          "Azure",
+          "監視",
+          "自動化"
+        ],
+        "channelIds": [
+          "channel_devops_123",
+          "channel_cloud_tips_456"
+        ],
+        "popularity": 58.9,
+        "trendScore": 64.7,
+        "createdAt": "2024-04-01T00:00:00Z",
+        "updatedAt": "2024-05-24T09:15:00Z",
+        "relatedTopics": {
+          "topic_backend_014": 0.9,
+          "topic_security_016": 0.7
+        }
+      },
+      "topic_security_016": {
+        "id": "topic_security_016",
+        "guildId": "987654321098765432",
+        "name": "セキュリティ",
+        "keywords": [
+          "セキュリティ",
+          "認証",
+          "暗号化",
+          "脆弱性",
+          "ペネトレーションテスト",
+          "OWASP",
+          "セキュアコーディング"
+        ],
+        "channelIds": [
+          "channel_security_789",
+          "channel_backend_dev_678"
+        ],
+        "popularity": 49.3,
+        "trendScore": 55.8,
+        "createdAt": "2024-04-05T00:00:00Z",
+        "updatedAt": "2024-05-23T13:20:00Z",
+        "relatedTopics": {
+          "topic_devops_015": 0.7,
+          "topic_backend_014": 0.6
+        }
       }
     }
   }

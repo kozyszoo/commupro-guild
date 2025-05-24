@@ -25,6 +25,124 @@
         "requirements": [],
         "materials": []
       }
+    },
+    "event_react_workshop_002": {
+      "id": "event_react_workshop_002",
+      "guildId": "987654321098765432",
+      "title": "React Hooks ワークショップ",
+      "description": "React HooksのuseState、useEffect、useContextを実際に使いながら学ぶハンズオンワークショップです。初心者から中級者まで歓迎！",
+      "startTime": "2024-05-28T19:00:00Z",
+      "endTime": "2024-05-28T21:00:00Z",
+      "channelId": "voice_workshop_room",
+      "attendees": [
+        "123456789012345678",
+        "345678901234567890",
+        "567890123456789012",
+        "789012345678901234",
+        "901234567890123456"
+      ],
+      "createdBy": "234567890123456789",
+      "metadata": {
+        "eventType": "workshop",
+        "difficulty": "beginner_to_intermediate",
+        "requirements": ["Node.js", "基本的なJavaScript知識"],
+        "materials": ["React公式ドキュメント", "サンプルコード"]
+      }
+    },
+    "event_design_review_003": {
+      "id": "event_design_review_003",
+      "guildId": "987654321098765432",
+      "title": "UI/UXデザインレビュー会",
+      "description": "みんなで作品を持ち寄って、建設的なフィードバックを交換しましょう。デザインの改善点や新しいアイデアを共有する場です。",
+      "startTime": "2024-05-30T20:00:00Z",
+      "endTime": "2024-05-30T22:00:00Z",
+      "channelId": "voice_design_review",
+      "attendees": [
+        "234567890123456789",
+        "456789012345678901",
+        "678901234567890123",
+        "890123456789012345"
+      ],
+      "createdBy": "456789012345678901",
+      "metadata": {
+        "eventType": "review",
+        "difficulty": "all_levels",
+        "requirements": ["作品またはアイデア"],
+        "materials": ["Figmaファイル", "デザインガイドライン"]
+      }
+    },
+    "event_ai_study_004": {
+      "id": "event_ai_study_004",
+      "guildId": "987654321098765432",
+      "title": "AI・機械学習勉強会",
+      "description": "最新のAI技術について学び、実際にPythonでサンプルコードを動かしてみます。ChatGPT APIの活用方法も紹介予定！",
+      "startTime": "2024-06-01T14:00:00Z",
+      "endTime": "2024-06-01T17:00:00Z",
+      "channelId": "voice_study_room",
+      "attendees": [
+        "123456789012345678",
+        "567890123456789012",
+        "789012345678901234",
+        "901234567890123456",
+        "012345678901234567",
+        "234567890123456789"
+      ],
+      "createdBy": "567890123456789012",
+      "metadata": {
+        "eventType": "study_session",
+        "difficulty": "intermediate",
+        "requirements": ["Python基礎知識", "Jupyter Notebook"],
+        "materials": ["サンプルデータセット", "Pythonライブラリリスト"]
+      }
+    },
+    "event_game_jam_005": {
+      "id": "event_game_jam_005",
+      "guildId": "987654321098765432",
+      "title": "週末ゲームジャム",
+      "description": "48時間でミニゲームを作るチャレンジ！チーム戦でも個人戦でもOK。プログラマー、デザイナー、音楽制作者、みんな大歓迎です。",
+      "startTime": "2024-06-08T10:00:00Z",
+      "endTime": "2024-06-09T18:00:00Z",
+      "channelId": "voice_game_jam",
+      "attendees": [
+        "345678901234567890",
+        "456789012345678901",
+        "678901234567890123",
+        "890123456789012345",
+        "012345678901234567",
+        "234567890123456789",
+        "456789012345678901"
+      ],
+      "createdBy": "345678901234567890",
+      "metadata": {
+        "eventType": "game_jam",
+        "difficulty": "all_levels",
+        "requirements": ["開発環境", "やる気"],
+        "materials": ["Unity", "Unreal Engine", "フリー素材リンク集"]
+      }
+    },
+    "event_career_talk_006": {
+      "id": "event_career_talk_006",
+      "guildId": "987654321098765432",
+      "title": "エンジニアキャリア座談会",
+      "description": "現役エンジニアによるキャリア相談会。転職、スキルアップ、フリーランス、起業など、様々な働き方について語り合いましょう。",
+      "startTime": "2024-06-05T19:30:00Z",
+      "endTime": "2024-06-05T21:30:00Z",
+      "channelId": "voice_career_talk",
+      "attendees": [
+        "111222333444555666",
+        "123456789012345678",
+        "234567890123456789",
+        "567890123456789012",
+        "789012345678901234",
+        "901234567890123456"
+      ],
+      "createdBy": "111222333444555666",
+      "metadata": {
+        "eventType": "discussion",
+        "difficulty": "all_levels",
+        "requirements": [],
+        "materials": ["キャリア相談シート", "業界動向資料"]
+      }
     }
   }
 }
