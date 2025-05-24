@@ -10,6 +10,7 @@
       .collection-card { cursor: pointer; }
       .collection-detail { display: none; }
       .collection-card.active .collection-detail { display: block; }
+      .dashboard-section { margin-bottom: 2rem; }
     </style>
   </head>
   <body>
@@ -19,8 +20,18 @@
           Discord にゃんこエージェント
         </h1>
         <p class="subtitle">
-          管理パネル <strong>データ構造一覧</strong>
+          管理パネル <strong>ダッシュボード</strong>
         </p>
+        <!-- ダッシュボードセクション -->
+        <div id="dashboard">
+          <div class="dashboard-section" id="dashboard-users"></div>
+          <div class="dashboard-section" id="dashboard-guilds"></div>
+          <div class="dashboard-section" id="dashboard-interactions"></div>
+          <div class="dashboard-section" id="dashboard-podcasts"></div>
+          <div class="dashboard-section" id="dashboard-events"></div>
+          <div class="dashboard-section" id="dashboard-user-matches"></div>
+        </div>
+        <hr>
         <div class="columns is-multiline">
           <!-- コレクションカード一覧 -->
           <div class="column is-6" id="collection-users">
@@ -200,6 +211,139 @@
       </div>
     </section>
     <script>
+      // ダッシュボード描画用
+      async function loadDashboard() {
+        // fetchでローカルjsonを取得
+        const [users, guilds, interactions, podcasts, events, userMatches] = await Promise.all([
+          fetch('/data/users.json').then(r => r.json()),
+          fetch('/data/guilds.json').then(r => r.json()),
+          fetch('/data/interactions.json').then(r => r.json()),
+          fetch('/data/podcasts.json').then(r => r.json()),
+          fetch('/data/events.json').then(r => r.json()),
+          fetch('/data/user_matches.json').then(r => r.json()),
+        ]);
+
+        // ユーザー統計
+        const userList = Object.values(users.users || {});
+        const totalUsers = userList.length;
+        const activeUsers = userList.filter(u => u.isActive).length;
+        const avgEngagement = userList.length ? (userList.reduce((sum, u) => sum + (u.engagementScore || 0), 0) / userList.length).toFixed(1) : '-';
+        document.getElementById('dashboard-users').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">👤 ユーザー統計</p></header>
+            <div class="card-content">
+              <div class="content">
+                総ユーザー数: <strong>${totalUsers}</strong> ／ アクティブ: <strong>${activeUsers}</strong> ／ 平均エンゲージメント: <strong>${avgEngagement}</strong><br>
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>ユーザー名</th><th>表示名</th><th>アクティブ</th><th>スコア</th><th>関心</th></tr></thead>
+                  <tbody>
+                    ${userList.map(u => `<tr><td>${u.username}</td><td>${u.displayName||''}</td><td>${u.isActive ? '✅' : '❌'}</td><td>${u.engagementScore||'-'}</td><td>${(u.interests||[]).join(', ')}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // ギルド統計
+        const guildList = Object.values(guilds.guilds || {});
+        document.getElementById('dashboard-guilds').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🛡️ サーバー（ギルド）情報</p></header>
+            <div class="card-content">
+              <div class="content">
+                ${guildList.map(g => `
+                  <strong>${g.name}</strong>（ID: ${g.id}）<br>
+                  メンバー数: <strong>${g.analytics?.totalMembers||'-'}</strong> ／ アクティブ: <strong>${g.analytics?.activeMembers||'-'}</strong> ／ 平均エンゲージメント: <strong>${g.analytics?.averageEngagement||'-'}</strong><br>
+                  トップチャンネル: ${(g.analytics?.topChannels||[]).join(', ')}<br>
+                  <span class="tag is-info">Bot設定: ${g.botSettings?.matchingEnabled ? 'マッチング有効' : '無効'}</span>
+                  <hr>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // インタラクション統計
+        const interactionList = Object.values(interactions.interactions || {});
+        const totalInteractions = interactionList.length;
+        const messageCount = interactionList.filter(i => i.type === 'message').length;
+        const reactionCount = interactionList.filter(i => i.type === 'reaction').length;
+        const botCount = interactionList.filter(i => i.type === 'bot_interaction').length;
+        document.getElementById('dashboard-interactions').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">💬 インタラクション統計</p></header>
+            <div class="card-content">
+              <div class="content">
+                総インタラクション: <strong>${totalInteractions}</strong> ／ メッセージ: <strong>${messageCount}</strong> ／ リアクション: <strong>${reactionCount}</strong> ／ ボット対話: <strong>${botCount}</strong><br>
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>タイプ</th><th>ユーザー</th><th>内容</th><th>日時</th></tr></thead>
+                  <tbody>
+                    ${interactionList.slice(0,5).map(i => `<tr><td>${i.type}</td><td>${i.userId}</td><td>${i.content ? i.content.substring(0,30) : '-'}</td><td>${i.timestamp?.replace('T',' ').replace('Z','')}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // ポッドキャスト
+        const podcastList = Object.values(podcasts.podcasts || {});
+        document.getElementById('dashboard-podcasts').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🎙️ 最新ポッドキャスト</p></header>
+            <div class="card-content">
+              <div class="content">
+                ${podcastList.length ? podcastList.map(p => `
+                  <strong>${p.title}</strong>（${p.publishedAt?.replace('T',' ').replace('Z','')}）<br>
+                  閲覧数: <strong>${p.views||0}</strong> ／ リアクション: ${p.reactions?.map(r => `${r.emoji}×${r.count}`).join(' ')}<br>
+                  <span class="is-size-7">${p.content.substring(0,80)}...</span>
+                  <hr>
+                `).join('') : 'データなし'}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // イベント
+        const eventList = Object.values(events.events || {});
+        document.getElementById('dashboard-events').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">📅 最新イベント</p></header>
+            <div class="card-content">
+              <div class="content">
+                ${eventList.length ? eventList.map(e => `
+                  <strong>${e.title}</strong>（${e.startTime?.replace('T',' ').replace('Z','')}）<br>
+                  参加予定: <strong>${(e.attendees||[]).length}</strong>人 ／ チャンネル: ${e.channelId}<br>
+                  <span class="is-size-7">${e.description?.substring(0,60)}...</span>
+                  <hr>
+                `).join('') : 'データなし'}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // ユーザーマッチング
+        const matchList = Object.values(userMatches.user_matches || {});
+        document.getElementById('dashboard-user-matches').innerHTML = `
+          <div class="card">
+            <header class="card-header"><p class="card-header-title">🤝 ユーザーマッチング状況</p></header>
+            <div class="card-content">
+              <div class="content">
+                総マッチ数: <strong>${matchList.length}</strong><br>
+                <table class="table is-fullwidth is-striped is-narrow mt-2">
+                  <thead><tr><th>ユーザー1</th><th>ユーザー2</th><th>共通関心</th><th>スコア</th><th>状態</th></tr></thead>
+                  <tbody>
+                    ${matchList.map(m => `<tr><td>${m.user1Id}</td><td>${m.user2Id}</td><td>${(m.commonInterests||[]).join(', ')}</td><td>${m.matchScore}</td><td>${m.status}</td></tr>`).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      loadDashboard();
+
       // カードのクリックで詳細をトグル
       document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.collection-card').forEach(function(card) {
