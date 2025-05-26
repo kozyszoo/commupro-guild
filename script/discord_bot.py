@@ -19,7 +19,7 @@ bot = discord.Client(intents=intents)
 # --- Firebase Firestore の設定 ---
 # 環境変数またはサービスアカウントファイルから設定を読み込み
 FIREBASE_SERVICE_ACCOUNT_KEY_PATH = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH', 
-                                             '/home/mitz_matsuoka/bot_files/citric-goal-325101-5e32397a8375.json')
+                                             './nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
 
 db = None # Firestoreクライアントをグローバル変数として定義
 
@@ -28,13 +28,20 @@ def initialize_firebase():
     global db
     try:
         if not firebase_admin._apps: # まだ初期化されていなければ初期化
-            # 環境変数からサービスアカウント情報を取得
-            if os.getenv('FIREBASE_SERVICE_ACCOUNT'):
+            # まずファイルパスから読み込みを試行
+            if os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH') and os.path.exists(os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')):
+                key_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
+                print(f"🔑 Firebaseサービスアカウントキーファイルを読み込み中: {key_path}")
+                cred = credentials.Certificate(key_path)
+            elif os.path.exists(FIREBASE_SERVICE_ACCOUNT_KEY_PATH):
+                print(f"🔑 デフォルトのFirebaseサービスアカウントキーファイルを読み込み中: {FIREBASE_SERVICE_ACCOUNT_KEY_PATH}")
+                cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
+            elif os.getenv('FIREBASE_SERVICE_ACCOUNT'):
+                print("🔑 環境変数からFirebaseサービスアカウント情報を読み込み中...")
                 service_account_info = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
                 cred = credentials.Certificate(service_account_info)
             else:
-                # ファイルパスから読み込み
-                cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
+                raise FileNotFoundError("Firebaseサービスアカウントキーが見つかりません")
             
             firebase_admin.initialize_app(cred)
         
