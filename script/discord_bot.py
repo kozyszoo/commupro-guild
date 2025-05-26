@@ -502,7 +502,7 @@ async def on_scheduled_event_create(event: discord.ScheduledEvent):
         'entityType': event.entity_type.name if event.entity_type else 'unknown',
         'privacyLevel': event.privacy_level.name if event.privacy_level else 'unknown',
         'userCount': event.user_count or 0,
-        'createdAt': event.created_at.isoformat() if event.created_at else None,
+        'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'keywords': extract_keywords(f"{event.name} {event.description or ''}"),
         'isActive': True
     }
@@ -556,7 +556,7 @@ async def on_scheduled_event_update(before: discord.ScheduledEvent, after: disco
         'entityType': after.entity_type.name if after.entity_type else 'unknown',
         'privacyLevel': after.privacy_level.name if after.privacy_level else 'unknown',
         'userCount': after.user_count or 0,
-        'createdAt': after.created_at.isoformat() if after.created_at else None,
+        'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
         'keywords': extract_keywords(f"{after.name} {after.description or ''}"),
         'isActive': True
     }
