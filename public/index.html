@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
       :root {
         --primary-color: #6366f1;
@@ -655,6 +658,21 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
+      // Firebase設定
+      const firebaseConfig = {
+        apiKey: "AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo",
+        authDomain: "nyanco-bot.firebaseapp.com",
+        projectId: "nyanco-bot",
+        storageBucket: "nyanco-bot.firebasestorage.app",
+        messagingSenderId: "242432500390",
+        appId: "1:242432500390:web:73cbabfb788522326e0a67",
+        measurementId: "G-VR49RLP5NX"
+      };
+
+      // Firebase初期化
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
       function formatDate(dateString) {
         if (!dateString) return '-';
         const date = new Date(dateString);
@@ -680,6 +698,21 @@
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
       }
 
+      // Firestoreからコレクションデータを取得
+      async function getCollectionData(collectionName) {
+        try {
+          const snapshot = await db.collection(collectionName).get();
+          const data = {};
+          snapshot.forEach(doc => {
+            data[doc.id] = doc.data();
+          });
+          return data;
+        } catch (error) {
+          console.error(`${collectionName}コレクションの取得エラー:`, error);
+          return {};
+        }
+      }
+
       async function loadDashboard() {
         // Show loading state
         const sections = ['users', 'guilds', 'interactions', 'podcasts', 'events', 'user-matches', 'topics', 'admin-users', 'bot-actions', 'analytics-sessions'];
@@ -688,28 +721,29 @@
             <div class="dashboard-card">
               <div class="loading">
                 <div class="spinner"></div>
-                データを読み込み中...
+                Firestoreからデータを読み込み中...
               </div>
             </div>
           `;
         });
 
         try {
+          // Firestoreからデータを並列取得
           const [users, guilds, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
-            fetch('/data/users.json').then(r => r.json()),
-            fetch('/data/guilds.json').then(r => r.json()),
-            fetch('/data/interactions.json').then(r => r.json()),
-            fetch('/data/podcasts.json').then(r => r.json()),
-            fetch('/data/events.json').then(r => r.json()),
-            fetch('/data/user_matches.json').then(r => r.json()),
-            fetch('/data/topics.json').then(r => r.json()),
-            fetch('/data/admin_users.json').then(r => r.json()),
-            fetch('/data/bot_actions.json').then(r => r.json()),
-            fetch('/data/analytics_sessions.json').then(r => r.json()),
+            getCollectionData('users'),
+            getCollectionData('guilds'),
+            getCollectionData('interactions'),
+            getCollectionData('podcasts'),
+            getCollectionData('events'),
+            getCollectionData('user_matches'),
+            getCollectionData('topics'),
+            getCollectionData('admin_users'),
+            getCollectionData('bot_actions'),
+            getCollectionData('analytics_sessions'),
           ]);
 
           // ユーザー統計
-          const userList = Object.values(users.users || {});
+          const userList = Object.values(users || {});
           const totalUsers = userList.length;
           const activeUsers = userList.filter(u => u.isActive).length;
           const avgEngagement = userList.length ? (userList.reduce((sum, u) => sum + (u.engagementScore || 0), 0) / userList.length).toFixed(1) : 0;
@@ -779,7 +813,7 @@
           `;
 
           // ギルド統計
-          const guildList = Object.values(guilds.guilds || {});
+          const guildList = Object.values(guilds || {});
           document.getElementById('dashboard-guilds').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -822,7 +856,7 @@
           `;
 
           // アナリティクス統計
-          const analyticsList = Object.values(analyticsSessions.analytics_sessions || {});
+          const analyticsList = Object.values(analyticsSessions || {});
           const latestAnalytics = analyticsList.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
           
           document.getElementById('dashboard-analytics-sessions').innerHTML = `
@@ -871,7 +905,7 @@
           `;
 
           // インタラクション統計
-          const interactionList = Object.values(interactions.interactions || {});
+          const interactionList = Object.values(interactions || {});
           const totalInteractions = interactionList.length;
           const messageCount = interactionList.filter(i => i.type === 'message').length;
           const reactionCount = interactionList.filter(i => i.type === 'reaction').length;
@@ -926,7 +960,7 @@
           `;
 
           // イベント
-          const eventList = Object.values(events.events || {});
+          const eventList = Object.values(events || {});
           document.getElementById('dashboard-events').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -959,7 +993,7 @@
           `;
 
           // ポッドキャスト
-          const podcastList = Object.values(podcasts.podcasts || {});
+          const podcastList = Object.values(podcasts || {});
           document.getElementById('dashboard-podcasts').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -992,7 +1026,7 @@
           `;
 
           // ユーザーマッチング
-          const matchList = Object.values(userMatches.user_matches || {});
+          const matchList = Object.values(userMatches || {});
           document.getElementById('dashboard-user-matches').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1055,7 +1089,7 @@
           `;
 
           // トピック一覧
-          const topicList = Object.values(topics.topics || {});
+          const topicList = Object.values(topics || {});
           document.getElementById('dashboard-topics').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1104,7 +1138,7 @@
           `;
 
           // ボットアクション
-          const botActionList = Object.values(botActions.bot_actions || {});
+          const botActionList = Object.values(botActions || {});
           document.getElementById('dashboard-bot-actions').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1138,7 +1172,7 @@
           `;
 
           // 管理者ユーザー
-          const adminList = Object.values(adminUsers.admin_users || {});
+          const adminList = Object.values(adminUsers || {});
           document.getElementById('dashboard-admin-users').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1184,13 +1218,14 @@
           `;
 
         } catch (error) {
-          console.error('データの読み込みに失敗しました:', error);
+          console.error('Firestoreからのデータ読み込みに失敗しました:', error);
           sections.forEach(section => {
             document.getElementById(`dashboard-${section}`).innerHTML = `
               <div class="dashboard-card">
                 <div class="no-data">
                   <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
-                  <div>データの読み込みに失敗しました</div>
+                  <div>Firestoreからのデータ読み込みに失敗しました</div>
+                  <div style="font-size: 0.8rem; margin-top: 0.5rem;">Firebase設定を確認してください</div>
                 </div>
               </div>
             `;

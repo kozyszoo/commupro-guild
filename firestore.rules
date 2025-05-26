@@ -16,8 +16,11 @@ service cloud.firestore {
     // Make sure to write security rules for your app before that time, or else
     // all client requests to your Firestore database will be denied until you Update
     // your rules
+    // 管理パネル用の読み取り許可（一時的）
+    // 本番環境では適切な認証を実装してください
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
