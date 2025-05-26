@@ -3,3 +3,5 @@ dist/
 .env
 service-account.json
 .DS_Store 
+
+public/nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json
