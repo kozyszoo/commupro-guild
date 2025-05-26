@@ -18,6 +18,7 @@ intents.messages = True
 intents.message_content = True
 intents.members = True
 intents.reactions = True
+intents.guild_scheduled_events = True  # スケジュールイベント権限を追加
 bot = discord.Client(intents=intents)
 
 # --- Firebase Firestore の設定 ---
@@ -96,7 +97,8 @@ async def update_user_info(user_id: str, guild_id: str, username: str, action_ty
                     'MESSAGE_CREATE': 1,
                     'MESSAGE_EDIT': 0.5,
                     'REACTION_ADD': 0.3,
-                    'MEMBER_JOIN': 5
+                    'MEMBER_JOIN': 5,
+                    'EVENT_JOIN': 2  # イベント参加でスコア+2
                 }.get(action_type, 0)
                 
                 update_data['engagementScore'] = current_score + score_increment
@@ -145,6 +147,42 @@ async def log_interaction_to_firestore(interaction_data: dict):
     except Exception as e:
         print(f'❌ Firestoreへの書き込みエラー: {e}')
         print(f'❌ 書き込もうとしたデータ: {interaction_data}')
+
+# --- イベント情報をFirestoreに保存/更新する関数 ---
+async def save_event_to_firestore(event_data: dict):
+    """イベント情報をFirestoreの'events'コレクションに保存/更新する"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。イベント保存をスキップしました。")
+        return
+
+    try:
+        event_id = event_data.get('eventId')
+        if not event_id:
+            print("❌ イベントIDが見つかりません")
+            return
+        
+        event_ref = db.collection('events').document(event_id)
+        event_data['updatedAt'] = firestore.SERVER_TIMESTAMP
+        
+        await asyncio.to_thread(event_ref.set, event_data, merge=True)
+        print(f"📅 イベント情報をFirestoreに保存: {event_data.get('name', 'Unknown Event')}")
+        
+    except Exception as e:
+        print(f'❌ イベント保存エラー: {e}')
+        print(f'❌ 保存しようとしたデータ: {event_data}')
+
+async def delete_event_from_firestore(event_id: str):
+    """イベント情報をFirestoreから削除する"""
+    if db is None:
+        return
+
+    try:
+        event_ref = db.collection('events').document(event_id)
+        await asyncio.to_thread(event_ref.delete)
+        print(f"🗑️ イベントをFirestoreから削除: {event_id}")
+        
+    except Exception as e:
+        print(f'❌ イベント削除エラー: {e}')
 
 # --- Discordイベントを待ち受けるコード ---
 @bot.event
@@ -437,6 +475,223 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
     }
     
     asyncio.create_task(log_interaction_to_firestore(interaction_data))
+
+# --- スケジュールイベント関連のリスナー ---
+
+# スケジュールイベントが作成されたとき
+@bot.event
+async def on_scheduled_event_create(event: discord.ScheduledEvent):
+    guild_id = str(event.guild.id)
+    guild_name = event.guild.name
+    creator_id = str(event.creator.id) if event.creator else None
+    creator_name = event.creator.display_name if event.creator else 'Unknown User'
+
+    # イベントデータの作成
+    event_data = {
+        'eventId': str(event.id),
+        'name': event.name,
+        'description': event.description or '',
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'creatorId': creator_id,
+        'creatorName': creator_name,
+        'startTime': event.start_time.isoformat() if event.start_time else None,
+        'endTime': event.end_time.isoformat() if event.end_time else None,
+        'location': event.location or '',
+        'status': event.status.name if event.status else 'unknown',
+        'entityType': event.entity_type.name if event.entity_type else 'unknown',
+        'privacyLevel': event.privacy_level.name if event.privacy_level else 'unknown',
+        'userCount': event.user_count or 0,
+        'createdAt': event.created_at.isoformat() if event.created_at else None,
+        'keywords': extract_keywords(f"{event.name} {event.description or ''}"),
+        'isActive': True
+    }
+
+    # Firestoreに保存
+    await save_event_to_firestore(event_data)
+
+    # インタラクションとしても記録
+    interaction_data = {
+        'type': 'scheduled_event_create',
+        'userId': creator_id,
+        'username': creator_name,
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'eventId': str(event.id),
+        'eventName': event.name,
+        'keywords': ['イベント作成', 'スケジュール'] + extract_keywords(event.name),
+        'metadata': {
+            'eventDescription': event.description or '',
+            'startTime': event.start_time.isoformat() if event.start_time else None,
+            'endTime': event.end_time.isoformat() if event.end_time else None,
+            'location': event.location or '',
+            'entityType': event.entity_type.name if event.entity_type else 'unknown'
+        }
+    }
+
+    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+    print(f"📅 新しいイベントが作成されました: {event.name}")
+
+# スケジュールイベントが更新されたとき
+@bot.event
+async def on_scheduled_event_update(before: discord.ScheduledEvent, after: discord.ScheduledEvent):
+    guild_id = str(after.guild.id)
+    guild_name = after.guild.name
+    creator_id = str(after.creator.id) if after.creator else None
+    creator_name = after.creator.display_name if after.creator else 'Unknown User'
+
+    # 更新されたイベントデータ
+    event_data = {
+        'eventId': str(after.id),
+        'name': after.name,
+        'description': after.description or '',
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'creatorId': creator_id,
+        'creatorName': creator_name,
+        'startTime': after.start_time.isoformat() if after.start_time else None,
+        'endTime': after.end_time.isoformat() if after.end_time else None,
+        'location': after.location or '',
+        'status': after.status.name if after.status else 'unknown',
+        'entityType': after.entity_type.name if after.entity_type else 'unknown',
+        'privacyLevel': after.privacy_level.name if after.privacy_level else 'unknown',
+        'userCount': after.user_count or 0,
+        'createdAt': after.created_at.isoformat() if after.created_at else None,
+        'keywords': extract_keywords(f"{after.name} {after.description or ''}"),
+        'isActive': True
+    }
+
+    # Firestoreに更新保存
+    await save_event_to_firestore(event_data)
+
+    # 変更内容を記録
+    changes = []
+    if before.name != after.name:
+        changes.append(f"名前: {before.name} → {after.name}")
+    if before.description != after.description:
+        changes.append(f"説明: {before.description or '(なし)'} → {after.description or '(なし)'}")
+    if before.start_time != after.start_time:
+        changes.append(f"開始時間: {before.start_time} → {after.start_time}")
+    if before.status != after.status:
+        changes.append(f"ステータス: {before.status.name if before.status else 'unknown'} → {after.status.name if after.status else 'unknown'}")
+
+    # インタラクションとしても記録
+    interaction_data = {
+        'type': 'scheduled_event_update',
+        'userId': creator_id,
+        'username': creator_name,
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'eventId': str(after.id),
+        'eventName': after.name,
+        'keywords': ['イベント更新', 'スケジュール変更'] + extract_keywords(after.name),
+        'metadata': {
+            'changes': changes,
+            'beforeStatus': before.status.name if before.status else 'unknown',
+            'afterStatus': after.status.name if after.status else 'unknown',
+            'eventDescription': after.description or '',
+            'startTime': after.start_time.isoformat() if after.start_time else None,
+            'endTime': after.end_time.isoformat() if after.end_time else None
+        }
+    }
+
+    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+    print(f"📅 イベントが更新されました: {after.name} ({len(changes)}件の変更)")
+
+# スケジュールイベントが削除されたとき
+@bot.event
+async def on_scheduled_event_delete(event: discord.ScheduledEvent):
+    guild_id = str(event.guild.id)
+    guild_name = event.guild.name
+    creator_id = str(event.creator.id) if event.creator else None
+    creator_name = event.creator.display_name if event.creator else 'Unknown User'
+
+    # Firestoreから削除
+    await delete_event_from_firestore(str(event.id))
+
+    # インタラクションとして記録
+    interaction_data = {
+        'type': 'scheduled_event_delete',
+        'userId': creator_id,
+        'username': creator_name,
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'eventId': str(event.id),
+        'eventName': event.name,
+        'keywords': ['イベント削除', 'スケジュール削除'] + extract_keywords(event.name),
+        'metadata': {
+            'eventDescription': event.description or '',
+            'startTime': event.start_time.isoformat() if event.start_time else None,
+            'endTime': event.end_time.isoformat() if event.end_time else None,
+            'location': event.location or '',
+            'finalStatus': event.status.name if event.status else 'unknown',
+            'userCount': event.user_count or 0
+        }
+    }
+
+    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+    print(f"🗑️ イベントが削除されました: {event.name}")
+
+# ユーザーがスケジュールイベントに参加したとき
+@bot.event
+async def on_scheduled_event_user_add(event: discord.ScheduledEvent, user: discord.User):
+    guild_id = str(event.guild.id)
+    guild_name = event.guild.name
+    user_id = str(user.id)
+    user_name = user.display_name or user.name
+
+    # ユーザー情報の更新（イベント参加でエンゲージメントスコア+2）
+    await update_user_info(user_id, guild_id, user_name, 'EVENT_JOIN')
+
+    # インタラクションとして記録
+    interaction_data = {
+        'type': 'scheduled_event_user_add',
+        'userId': user_id,
+        'username': user_name,
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'eventId': str(event.id),
+        'eventName': event.name,
+        'keywords': ['イベント参加', 'スケジュール参加'] + extract_keywords(event.name),
+        'metadata': {
+            'eventDescription': event.description or '',
+            'startTime': event.start_time.isoformat() if event.start_time else None,
+            'eventStatus': event.status.name if event.status else 'unknown',
+            'currentUserCount': event.user_count or 0
+        }
+    }
+
+    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+    print(f"👥 {user_name} がイベント '{event.name}' に参加しました")
+
+# ユーザーがスケジュールイベントから退出したとき
+@bot.event
+async def on_scheduled_event_user_remove(event: discord.ScheduledEvent, user: discord.User):
+    guild_id = str(event.guild.id)
+    guild_name = event.guild.name
+    user_id = str(user.id)
+    user_name = user.display_name or user.name
+
+    # インタラクションとして記録
+    interaction_data = {
+        'type': 'scheduled_event_user_remove',
+        'userId': user_id,
+        'username': user_name,
+        'guildId': guild_id,
+        'guildName': guild_name,
+        'eventId': str(event.id),
+        'eventName': event.name,
+        'keywords': ['イベント退出', 'スケジュール退出'] + extract_keywords(event.name),
+        'metadata': {
+            'eventDescription': event.description or '',
+            'startTime': event.start_time.isoformat() if event.start_time else None,
+            'eventStatus': event.status.name if event.status else 'unknown',
+            'currentUserCount': event.user_count or 0
+        }
+    }
+
+    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+    print(f"👋 {user_name} がイベント '{event.name}' から退出しました")
 
 # --- ユーティリティ関数 ---
 def extract_keywords(content: str) -> list:

@@ -73,14 +73,9 @@ Firebase/Firestore、TypeScript、Node.js、Discord.jsを使用しています�
 - ドキュメント: `docs: ドキュメント更新内容`
 
 ### デプロイメント
-- `firebase deploy` でデプロイ
+- 変更を加える度に `firebase deploy` でデプロイ
 - 本番環境への変更は慎重に行う
 - デプロイ前にローカルテストを実施
-
-### テスト
-- 単体テストを Jest で実装
-- 統合テストを適切に実装
-- Firebase Emulator を活用
 
 ## 特記事項
 
@@ -123,20 +118,6 @@ async function getUserData(userId: string): Promise<UserData | null> {
     logger.error('ユーザーデータ取得エラー', { userId, error });
     throw new Error('ユーザーデータの取得に失敗しました');
   }
-}
-```
-
-### インターフェース定義
-```typescript
-interface UserData {
-  id: string;
-  username: string;
-  displayName?: string;
-  isActive: boolean;
-  engagementScore: number;
-  interests: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 ```
 
