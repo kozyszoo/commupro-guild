@@ -1,0 +1,143 @@
+# Discord にゃんこエージェント プロジェクト - Cursor ルール
+
+## プロジェクト概要
+このプロジェクトは、Discord上で動作するAIエージェント「にゃんこエージェント」の管理システムです。
+Firebase/Firestore、TypeScript、Node.js、Discord.jsを使用しています。
+
+## コーディング規約
+
+### 言語とフレームワーク
+- TypeScript を優先して使用
+- Node.js 18+ 対応
+- Firebase Functions v2 を使用
+- Discord.js v14 を使用
+
+### ファイル構成
+- `src/` - メインのソースコード
+- `functions/` - Firebase Functions
+- `public/` - 静的ファイル（管理パネル）
+- `dist/` - ビルド済みファイル
+
+### コーディングスタイル
+- インデント: 2スペース
+- セミコロン: 必須
+- クォート: シングルクォート優先
+- 関数名: camelCase
+- クラス名: PascalCase
+- 定数: UPPER_SNAKE_CASE
+- ファイル名: kebab-case
+
+### TypeScript 規約
+- 型定義を明示的に記述
+- `any` の使用を避ける
+- インターフェースは `I` プレフィックスなしで定義
+- 型ガードを適切に使用
+
+### Firebase/Firestore 規約
+- コレクション名: snake_case
+- ドキュメントID: 意味のある文字列
+- セキュリティルールを適切に設定
+- バッチ処理を活用してパフォーマンスを最適化
+
+### Discord.js 規約
+- スラッシュコマンドを優先
+- インタラクションの適切なハンドリング
+- エラーハンドリングを必須実装
+- レート制限を考慮した実装
+
+### エラーハンドリング
+- try-catch ブロックを適切に使用
+- ログ出力は構造化ログを使用
+- ユーザーフレンドリーなエラーメッセージ
+- 本番環境では詳細なエラー情報を隠蔽
+
+### セキュリティ
+- 環境変数で機密情報を管理
+- Firestore セキュリティルールを適切に設定
+- 入力値の検証を必須実装
+- CORS設定を適切に行う
+
+### パフォーマンス
+- Firestore クエリの最適化
+- 不要なデータ取得を避ける
+- キャッシュ戦略を適切に実装
+- バンドルサイズの最適化
+
+## 開発ワークフロー
+
+### Git 規約
+- コミットメッセージは日本語で記述
+- 機能追加: `feat: 新機能の説明`
+- バグ修正: `fix: 修正内容の説明`
+- リファクタリング: `refactor: リファクタリング内容`
+- ドキュメント: `docs: ドキュメント更新内容`
+
+### デプロイメント
+- `firebase deploy` でデプロイ
+- 本番環境への変更は慎重に行う
+- デプロイ前にローカルテストを実施
+
+### テスト
+- 単体テストを Jest で実装
+- 統合テストを適切に実装
+- Firebase Emulator を活用
+
+## 特記事項
+
+### 日本語対応
+- UIテキストは日本語で記述
+- コメントは日本語で記述
+- エラーメッセージも日本語対応
+
+### Discord 固有の考慮事項
+- ボットの権限設定を適切に管理
+- メッセージの文字数制限を考慮
+- 絵文字とリアクションの適切な使用
+
+### Firebase 固有の考慮事項
+- Firestore の読み書き回数を最適化
+- Cloud Functions の実行時間制限を考慮
+- 課金を意識した実装
+
+## 禁止事項
+- ハードコードされた機密情報
+- 不適切なエラーハンドリング
+- セキュリティルールの緩和
+- 不要な外部依存関係の追加
+
+## 推奨ライブラリ
+- ログ: winston
+- バリデーション: joi または zod
+- 日付処理: date-fns
+- ユーティリティ: lodash（必要最小限）
+
+## コード例
+
+### 関数定義
+```typescript
+async function getUserData(userId: string): Promise<UserData | null> {
+  try {
+    const doc = await db.collection('users').doc(userId).get();
+    return doc.exists ? doc.data() as UserData : null;
+  } catch (error) {
+    logger.error('ユーザーデータ取得エラー', { userId, error });
+    throw new Error('ユーザーデータの取得に失敗しました');
+  }
+}
+```
+
+### インターフェース定義
+```typescript
+interface UserData {
+  id: string;
+  username: string;
+  displayName?: string;
+  isActive: boolean;
+  engagementScore: number;
+  interests: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+このルールに従って、一貫性のある高品質なコードを維持してください。 
