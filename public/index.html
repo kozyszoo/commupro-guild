@@ -981,7 +981,8 @@
                           <div class="activity-title">${e.title}</div>
                           <div class="activity-description">${truncateText(e.description)}</div>
                           <div class="activity-time">
-                            ${formatDate(e.startTime)} | 参加予定: ${(e.attendees || []).length}人
+                            <div>${formatDate(e.startTime)}</div>
+                            <div>参加予定: ${(e.attendees || []).length}人</div>
                           </div>
                         </div>
                       </div>
