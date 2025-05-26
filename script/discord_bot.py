@@ -456,9 +456,28 @@ def extract_keywords(content: str) -> list:
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
 
 if __name__ == '__main__':
-    if not DISCORD_BOT_TOKEN:
-        print("❌ 致命的エラー: Discord Botトークンが設定されていません。")
-        print("環境変数 DISCORD_BOT_TOKEN を設定してください。")
+    if not DISCORD_BOT_TOKEN or DISCORD_BOT_TOKEN == 'your_discord_bot_token_here':
+        print("⚠️ Discord Botトークンが設定されていないか、仮の値です。")
+        print("📋 テストモード: Firebase接続のみ確認します。")
+        print()
+        
+        if firebase_initialized and db:
+            print("✅ Firebase Firestore接続テスト成功！")
+            print("📝 以下の機能が利用可能です:")
+            print("   - ユーザー情報管理 (usersコレクション)")
+            print("   - インタラクション記録 (interactionsコレクション)")
+            print("   - エンゲージメントスコア計算")
+            print("   - キーワード抽出")
+            print()
+            print("🔧 実際にボットを動作させるには:")
+            print("   1. Discord Developer Portalでボットを作成")
+            print("   2. Bot Tokenを取得")
+            print("   3. 環境変数 DISCORD_BOT_TOKEN に設定")
+            print("   4. ボットをDiscordサーバーに招待")
+            print("   5. 再度実行")
+        else:
+            print("❌ Firebase Firestore接続に問題があります。")
+            
     elif not firebase_initialized:
         print("❌ 致命的エラー: Firestoreが初期化されていないため、Botを起動できません。")
     else:
