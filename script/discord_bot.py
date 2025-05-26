@@ -749,3 +749,320 @@ if __name__ == '__main__':
             print(f"❌ ボットの起動中に予期せぬエラーが発生しました: {e}")
 
 print("🔚 ボットが終了しました。")
+
+# --- データ取得機能 ---
+
+async def get_all_users(guild_id: str = None):
+    """usersコレクションから全ユーザーデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        users_ref = db.collection('users')
+        if guild_id:
+            users_ref = users_ref.where('guildId', '==', guild_id)
+        
+        docs = await asyncio.to_thread(users_ref.get)
+        users = []
+        for doc in docs:
+            user_data = doc.to_dict()
+            user_data['id'] = doc.id
+            users.append(user_data)
+        
+        print(f"📊 ユーザーデータを取得: {len(users)}件")
+        return users
+    except Exception as e:
+        print(f"❌ ユーザーデータ取得エラー: {e}")
+        return []
+
+async def get_all_guilds():
+    """guildsコレクションから全サーバーデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        docs = await asyncio.to_thread(db.collection('guilds').get)
+        guilds = []
+        for doc in docs:
+            guild_data = doc.to_dict()
+            guild_data['id'] = doc.id
+            guilds.append(guild_data)
+        
+        print(f"📊 サーバーデータを取得: {len(guilds)}件")
+        return guilds
+    except Exception as e:
+        print(f"❌ サーバーデータ取得エラー: {e}")
+        return []
+
+async def get_all_interactions(guild_id: str = None, limit: int = None):
+    """interactionsコレクションから全インタラクションデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        interactions_ref = db.collection('interactions')
+        if guild_id:
+            interactions_ref = interactions_ref.where('guildId', '==', guild_id)
+        
+        interactions_ref = interactions_ref.order_by('timestamp', direction=firestore.Query.DESCENDING)
+        
+        if limit:
+            interactions_ref = interactions_ref.limit(limit)
+        
+        docs = await asyncio.to_thread(interactions_ref.get)
+        interactions = []
+        for doc in docs:
+            interaction_data = doc.to_dict()
+            interaction_data['id'] = doc.id
+            interactions.append(interaction_data)
+        
+        print(f"📊 インタラクションデータを取得: {len(interactions)}件")
+        return interactions
+    except Exception as e:
+        print(f"❌ インタラクションデータ取得エラー: {e}")
+        return []
+
+async def get_all_topics(guild_id: str = None):
+    """topicsコレクションから全トピックデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        topics_ref = db.collection('topics')
+        if guild_id:
+            topics_ref = topics_ref.where('guildId', '==', guild_id)
+        
+        topics_ref = topics_ref.order_by('popularity', direction=firestore.Query.DESCENDING)
+        
+        docs = await asyncio.to_thread(topics_ref.get)
+        topics = []
+        for doc in docs:
+            topic_data = doc.to_dict()
+            topic_data['id'] = doc.id
+            topics.append(topic_data)
+        
+        print(f"📊 トピックデータを取得: {len(topics)}件")
+        return topics
+    except Exception as e:
+        print(f"❌ トピックデータ取得エラー: {e}")
+        return []
+
+async def get_all_podcasts(guild_id: str = None):
+    """podcastsコレクションから全ポッドキャストデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        podcasts_ref = db.collection('podcasts')
+        if guild_id:
+            podcasts_ref = podcasts_ref.where('guildId', '==', guild_id)
+        
+        podcasts_ref = podcasts_ref.order_by('publishedAt', direction=firestore.Query.DESCENDING)
+        
+        docs = await asyncio.to_thread(podcasts_ref.get)
+        podcasts = []
+        for doc in docs:
+            podcast_data = doc.to_dict()
+            podcast_data['id'] = doc.id
+            podcasts.append(podcast_data)
+        
+        print(f"📊 ポッドキャストデータを取得: {len(podcasts)}件")
+        return podcasts
+    except Exception as e:
+        print(f"❌ ポッドキャストデータ取得エラー: {e}")
+        return []
+
+async def get_all_user_matches(guild_id: str = None):
+    """user_matchesコレクションから全マッチングデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        matches_ref = db.collection('user_matches')
+        if guild_id:
+            matches_ref = matches_ref.where('guildId', '==', guild_id)
+        
+        matches_ref = matches_ref.order_by('createdAt', direction=firestore.Query.DESCENDING)
+        
+        docs = await asyncio.to_thread(matches_ref.get)
+        matches = []
+        for doc in docs:
+            match_data = doc.to_dict()
+            match_data['id'] = doc.id
+            matches.append(match_data)
+        
+        print(f"📊 マッチングデータを取得: {len(matches)}件")
+        return matches
+    except Exception as e:
+        print(f"❌ マッチングデータ取得エラー: {e}")
+        return []
+
+async def get_all_events(guild_id: str = None):
+    """eventsコレクションから全イベントデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        events_ref = db.collection('events')
+        if guild_id:
+            events_ref = events_ref.where('guildId', '==', guild_id)
+        
+        events_ref = events_ref.order_by('updatedAt', direction=firestore.Query.DESCENDING)
+        
+        docs = await asyncio.to_thread(events_ref.get)
+        events = []
+        for doc in docs:
+            event_data = doc.to_dict()
+            event_data['id'] = doc.id
+            events.append(event_data)
+        
+        print(f"📊 イベントデータを取得: {len(events)}件")
+        return events
+    except Exception as e:
+        print(f"❌ イベントデータ取得エラー: {e}")
+        return []
+
+async def get_all_analytics_sessions(guild_id: str = None):
+    """analytics_sessionsコレクションから全分析データを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        analytics_ref = db.collection('analytics_sessions')
+        if guild_id:
+            analytics_ref = analytics_ref.where('guildId', '==', guild_id)
+        
+        analytics_ref = analytics_ref.order_by('date', direction=firestore.Query.DESCENDING)
+        
+        docs = await asyncio.to_thread(analytics_ref.get)
+        analytics = []
+        for doc in docs:
+            analytics_data = doc.to_dict()
+            analytics_data['id'] = doc.id
+            analytics.append(analytics_data)
+        
+        print(f"📊 分析データを取得: {len(analytics)}件")
+        return analytics
+    except Exception as e:
+        print(f"❌ 分析データ取得エラー: {e}")
+        return []
+
+async def get_all_bot_actions(guild_id: str = None, limit: int = None):
+    """bot_actionsコレクションから全ボットアクションデータを取得"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return []
+    
+    try:
+        actions_ref = db.collection('bot_actions')
+        if guild_id:
+            actions_ref = actions_ref.where('guildId', '==', guild_id)
+        
+        actions_ref = actions_ref.order_by('timestamp', direction=firestore.Query.DESCENDING)
+        
+        if limit:
+            actions_ref = actions_ref.limit(limit)
+        
+        docs = await asyncio.to_thread(actions_ref.get)
+        actions = []
+        for doc in docs:
+            action_data = doc.to_dict()
+            action_data['id'] = doc.id
+            actions.append(action_data)
+        
+        print(f"📊 ボットアクションデータを取得: {len(actions)}件")
+        return actions
+    except Exception as e:
+        print(f"❌ ボットアクションデータ取得エラー: {e}")
+        return []
+
+async def get_all_data(guild_id: str = None):
+    """全コレクションからデータを取得してまとめて返す"""
+    if db is None:
+        print("⚠️ Firebase Firestoreが初期化されていません。")
+        return {}
+    
+    print(f"📊 全データ取得を開始... (Guild ID: {guild_id or 'All'})")
+    
+    try:
+        # 並行してデータを取得
+        results = await asyncio.gather(
+            get_all_users(guild_id),
+            get_all_guilds() if not guild_id else asyncio.coroutine(lambda: [])(),
+            get_all_interactions(guild_id, limit=1000),  # 最新1000件に制限
+            get_all_topics(guild_id),
+            get_all_podcasts(guild_id),
+            get_all_user_matches(guild_id),
+            get_all_events(guild_id),
+            get_all_analytics_sessions(guild_id),
+            get_all_bot_actions(guild_id, limit=500),  # 最新500件に制限
+            return_exceptions=True
+        )
+        
+        all_data = {
+            'users': results[0] if not isinstance(results[0], Exception) else [],
+            'guilds': results[1] if not isinstance(results[1], Exception) else [],
+            'interactions': results[2] if not isinstance(results[2], Exception) else [],
+            'topics': results[3] if not isinstance(results[3], Exception) else [],
+            'podcasts': results[4] if not isinstance(results[4], Exception) else [],
+            'user_matches': results[5] if not isinstance(results[5], Exception) else [],
+            'events': results[6] if not isinstance(results[6], Exception) else [],
+            'analytics_sessions': results[7] if not isinstance(results[7], Exception) else [],
+            'bot_actions': results[8] if not isinstance(results[8], Exception) else [],
+        }
+        
+        # 統計情報を表示
+        total_records = sum(len(data) for data in all_data.values())
+        print(f"✅ 全データ取得完了: 合計 {total_records} 件")
+        print("📋 コレクション別件数:")
+        for collection_name, data in all_data.items():
+            print(f"   - {collection_name}: {len(data)}件")
+        
+        return all_data
+        
+    except Exception as e:
+        print(f"❌ 全データ取得エラー: {e}")
+        return {}
+
+async def export_data_to_json(guild_id: str = None, filename: str = None):
+    """全データをJSONファイルにエクスポート"""
+    if not filename:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        guild_suffix = f"_guild_{guild_id}" if guild_id else "_all_guilds"
+        filename = f"firestore_export{guild_suffix}_{timestamp}.json"
+    
+    print(f"📤 データエクスポートを開始: {filename}")
+    
+    try:
+        all_data = await get_all_data(guild_id)
+        
+        # タイムスタンプとメタデータを追加
+        export_data = {
+            'metadata': {
+                'exportedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'guildId': guild_id,
+                'totalRecords': sum(len(data) for data in all_data.values()),
+                'collections': list(all_data.keys())
+            },
+            'data': all_data
+        }
+        
+        # JSONファイルに保存
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(export_data, f, ensure_ascii=False, indent=2, default=str)
+        
+        print(f"✅ データエクスポート完了: {filename}")
+        print(f"📊 エクスポートされたレコード数: {export_data['metadata']['totalRecords']}件")
+        return filename
+        
+    except Exception as e:
+        print(f"❌ データエクスポートエラー: {e}")
+        return None
