@@ -7,6 +7,10 @@ from firebase_admin import firestore   # Firestoreを使うために必要
 import asyncio # 非同期処理のため (Botの他の処理を止めないように)
 import os # 環境変数からファイルパスを読み込むため
 import json # JSON設定ファイル読み込み用
+from dotenv import load_dotenv # .envファイル読み込み用
+
+# .envファイルから環境変数を読み込み
+load_dotenv()
 
 # --- Discord Bot の設定 ---
 intents = discord.Intents.default()
