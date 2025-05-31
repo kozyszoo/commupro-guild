@@ -684,10 +684,12 @@
       function formatDate(dateString) {
         if (!dateString) return '-';
         const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '-';
         return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
       }
 
       function getEngagementClass(score) {
+        if (!score && score !== 0) return 'score-low';
         if (score >= 80) return 'score-high';
         if (score >= 50) return 'score-medium';
         return 'score-low';
@@ -704,6 +706,14 @@
       function truncateText(text, maxLength = 50) {
         if (!text) return '-';
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      }
+
+      function safeGet(obj, path, defaultValue = '-') {
+        try {
+          return path.split('.').reduce((current, key) => current?.[key], obj) ?? defaultValue;
+        } catch {
+          return defaultValue;
+        }
       }
 
       // Firestoreからコレクションデータを取得
@@ -794,7 +804,7 @@
                         ${userList.slice(0, 5).map(u => `
                           <tr>
                             <td>
-                              <div style="font-weight: 600;">${u.username}</div>
+                              <div style="font-weight: 600;">${u.username || '-'}</div>
                               <div style="font-size: 0.8rem; color: var(--text-secondary);">${u.displayName || ''}</div>
                             </td>
                             <td>
@@ -808,7 +818,7 @@
                               </span>
                             </td>
                             <td>
-                              ${(u.interests || []).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                              ${(u.interests || []).slice(0, 3).map(interest => `<span class="tag">${interest}</span>`).join('')}
                             </td>
                           </tr>
                         `).join('')}
@@ -834,28 +844,32 @@
                 ${guildList.length ? guildList.map(g => `
                   <div class="info-item">
                     <div>
-                      <div class="info-label">${g.name}</div>
-                      <div style="font-size: 0.8rem; color: var(--text-secondary);">ID: ${g.id}</div>
+                      <div class="info-label">${g.name || '-'}</div>
+                      <div style="font-size: 0.8rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
                     </div>
                   </div>
                   <ul class="info-list">
                     <li class="info-item">
                       <span class="info-label">総メンバー数</span>
-                      <span class="info-value">${g.analytics?.totalMembers || '-'}</span>
+                      <span class="info-value">${safeGet(g, 'analytics.totalMembers')}</span>
                     </li>
                     <li class="info-item">
                       <span class="info-label">アクティブメンバー</span>
-                      <span class="info-value">${g.analytics?.activeMembers || '-'}</span>
+                      <span class="info-value">${safeGet(g, 'analytics.activeMembers')}</span>
                     </li>
                     <li class="info-item">
                       <span class="info-label">平均エンゲージメント</span>
-                      <span class="info-value">${g.analytics?.averageEngagement || '-'}</span>
+                      <span class="info-value">${safeGet(g, 'analytics.averageEngagement')}</span>
                     </li>
                     <li class="info-item">
                       <span class="info-label">マッチング機能</span>
-                      <span class="status-badge ${g.botSettings?.matchingEnabled ? 'status-active' : 'status-inactive'}">
-                        ${g.botSettings?.matchingEnabled ? '有効' : '無効'}
+                      <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}">
+                        ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
                       </span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">最終更新</span>
+                      <span class="info-value">${formatDate(g.updatedAt)}</span>
                     </li>
                   </ul>
                 `).join('') : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
@@ -915,8 +929,8 @@
           // インタラクション統計
           const interactionList = Object.values(interactions || {});
           const totalInteractions = interactionList.length;
-          const messageCount = interactionList.filter(i => i.type === 'message').length;
-          const reactionCount = interactionList.filter(i => i.type === 'reaction').length;
+          const messageCount = interactionList.filter(i => i.type === 'message' || i.type === 'MESSAGE_CREATE').length;
+          const reactionCount = interactionList.filter(i => i.type === 'reaction' || i.type === 'REACTION_ADD').length;
           const botCount = interactionList.filter(i => i.type === 'bot_interaction').length;
           
           document.getElementById('dashboard-interactions').innerHTML = `
@@ -952,10 +966,10 @@
                     ${interactionList.slice(0, 5).map(i => `
                       <div class="activity-item">
                         <div class="activity-icon">
-                          <i class="material-icons">${i.type === 'message' ? 'message' : i.type === 'reaction' ? 'thumb_up' : 'smart_toy'}</i>
+                          <i class="material-icons">${i.type === 'message' || i.type === 'MESSAGE_CREATE' ? 'message' : i.type === 'reaction' || i.type === 'REACTION_ADD' ? 'thumb_up' : 'smart_toy'}</i>
                         </div>
                         <div class="activity-content">
-                          <div class="activity-title">${i.userId}</div>
+                          <div class="activity-title">${i.username || i.userId || '-'}</div>
                           <div class="activity-description">${truncateText(i.content)}</div>
                           <div class="activity-time">${formatDate(i.timestamp)}</div>
                         </div>
@@ -986,7 +1000,7 @@
                           <i class="material-icons">event</i>
                         </div>
                         <div class="activity-content">
-                          <div class="activity-title">${e.title}</div>
+                          <div class="activity-title">${e.title || e.name || '-'}</div>
                           <div class="activity-description">${truncateText(e.description)}</div>
                           <div class="activity-time">
                             <div>${formatDate(e.startTime)}</div>
@@ -1020,7 +1034,7 @@
                           <i class="material-icons">mic</i>
                         </div>
                         <div class="activity-content">
-                          <div class="activity-title">${p.title}</div>
+                          <div class="activity-title">${p.title || '-'}</div>
                           <div class="activity-description">${truncateText(p.content)}</div>
                           <div class="activity-time">
                             ${formatDate(p.publishedAt)} | 閲覧数: ${p.views || 0}
@@ -1071,20 +1085,20 @@
                           <tr>
                             <td>
                               <div style="font-size: 0.85rem;">
-                                ${m.user1Id} ↔ ${m.user2Id}
+                                ${m.user1Id || '-'} ↔ ${m.user2Id || '-'}
                               </div>
                             </td>
                             <td>
-                              ${(m.commonInterests || []).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                              ${(m.commonInterests || []).slice(0, 2).map(interest => `<span class="tag">${interest}</span>`).join('')}
                             </td>
                             <td>
-                              <span class="engagement-score ${getEngagementClass(m.matchScore)}">
-                                ${m.matchScore}
+                              <span class="engagement-score ${getEngagementClass((m.matchScore || 0) * 100)}">
+                                ${((m.matchScore || 0) * 100).toFixed(0)}
                               </span>
                             </td>
                             <td>
                               <span class="status-badge ${getStatusClass(m.status)}">
-                                ${m.status}
+                                ${m.status || '-'}
                               </span>
                             </td>
                           </tr>
@@ -1122,15 +1136,15 @@
                       <tbody>
                         ${topicList.slice(0, 8).map(t => `
                           <tr>
-                            <td style="font-weight: 600;">${t.name}</td>
+                            <td style="font-weight: 600;">${t.name || '-'}</td>
                             <td>
                               <span class="engagement-score ${getEngagementClass(t.popularity)}">
-                                ${t.popularity}
+                                ${(t.popularity || 0).toFixed(0)}
                               </span>
                             </td>
                             <td>
                               <span class="engagement-score ${getEngagementClass(t.trendScore)}">
-                                ${t.trendScore}
+                                ${(t.trendScore || 0).toFixed(0)}
                               </span>
                             </td>
                             <td>
