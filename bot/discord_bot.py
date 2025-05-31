@@ -165,7 +165,7 @@ async def save_event_to_firestore(event_data: dict):
         event_data['updatedAt'] = firestore.SERVER_TIMESTAMP
         
         await asyncio.to_thread(event_ref.set, event_data, merge=True)
-        print(f"📅 イベント情報をFirestoreに保存: {event_data.get('name', 'Unknown Event')}")
+        print(f"📅 イベント情報をFirestoreに保存: {event_data.get('name', 'イベント名不明')}")
         
     except Exception as e:
         print(f'❌ イベント保存エラー: {e}')
@@ -202,54 +202,55 @@ async def on_message(message: discord.Message):
     if message.author.bot:
         return
     
-    # DMの場合はguild_idをNoneに設定
-    guild_id = str(message.guild.id) if message.guild else None
-    guild_name = message.guild.name if message.guild else 'DM'
-    
-    # チャンネル名の取得
-    channel_name = 'Unknown Channel'
-    if isinstance(message.channel, discord.TextChannel) or \
-       isinstance(message.channel, discord.VoiceChannel) or \
-       isinstance(message.channel, discord.Thread):
-        channel_name = message.channel.name
-    elif isinstance(message.channel, discord.DMChannel):
-        channel_name = f'DM with {message.channel.recipient.name if message.channel.recipient else "Unknown User"}'
+    try:
+        # ギルド情報の取得
+        guild_id, guild_name = get_guild_info_safe(message.guild)
+        
+        # チャンネル名の取得
+        channel_name = get_channel_name_safe(message.channel)
+        
+        # ユーザー情報の取得
+        user_name = get_user_name_safe(message.author)
+        user_id = str(message.author.id)
+        message_id = str(message.id)
+        content = message.clean_content
 
-    user_name = message.author.display_name or message.author.name
-    user_id = str(message.author.id)
-    message_id = str(message.id)
-    content = message.clean_content
+        # ユーザー情報の更新
+        if guild_id:
+            await update_user_info(user_id, guild_id, user_name, 'MESSAGE_CREATE')
 
-    # ユーザー情報の更新
-    if guild_id:
-        await update_user_info(user_id, guild_id, user_name, 'MESSAGE_CREATE')
+        # ボットがメンションされた場合の応答処理
+        if bot.user in message.mentions:
+            await handle_mention_response(message)
 
-    # ボットがメンションされた場合の応答処理
-    if bot.user in message.mentions:
-        await handle_mention_response(message)
-
-    # インタラクションデータの作成
-    interaction_data = {
-        'type': 'message',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'channelId': str(message.channel.id),
-        'channelName': channel_name,
-        'messageId': message_id,
-        'content': content,
-        'keywords': extract_keywords(content),  # キーワード抽出
-        'metadata': {
-            'hasAttachments': len(message.attachments) > 0,
-            'hasEmbeds': len(message.embeds) > 0,
-            'mentionCount': len(message.mentions),
-            'reactionCount': len(message.reactions) if message.reactions else 0,
-            'isMention': bot.user in message.mentions
+        # インタラクションデータの作成
+        interaction_data = {
+            'type': 'message',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'channelId': str(message.channel.id),
+            'channelName': channel_name,
+            'messageId': message_id,
+            'content': content,
+            'keywords': extract_keywords(content),  # キーワード抽出
+            'metadata': {
+                'hasAttachments': len(message.attachments) > 0,
+                'hasEmbeds': len(message.embeds) > 0,
+                'mentionCount': len(message.mentions),
+                'reactionCount': len(message.reactions) if message.reactions else 0,
+                'isMention': bot.user in message.mentions,
+                'channelType': type(message.channel).__name__
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ メッセージ処理エラー: {e}')
+        print(f'   メッセージID: {getattr(message, "id", "unknown")}')
+        print(f'   ユーザーID: {getattr(message.author, "id", "unknown") if hasattr(message, "author") else "unknown"}')
 
 # メッセージが編集されたとき
 @bot.event
@@ -259,42 +260,43 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
     if before.content == after.content:
         return
 
-    guild_id = str(after.guild.id) if after.guild else None
-    guild_name = after.guild.name if after.guild else 'DM'
-    
-    channel_name = 'Unknown Channel'
-    if isinstance(after.channel, discord.TextChannel) or \
-       isinstance(after.channel, discord.VoiceChannel) or \
-       isinstance(after.channel, discord.Thread):
-        channel_name = after.channel.name
-    elif isinstance(after.channel, discord.DMChannel):
-        channel_name = f'DM with {after.channel.recipient.name if after.channel.recipient else "Unknown User"}'
+    try:
+        # ギルド情報の取得
+        guild_id, guild_name = get_guild_info_safe(after.guild)
+        
+        # チャンネル名の取得
+        channel_name = get_channel_name_safe(after.channel)
+        
+        # ユーザー情報の取得
+        user_name = get_user_name_safe(after.author)
+        user_id = str(after.author.id)
 
-    user_name = after.author.display_name or after.author.name
-    user_id = str(after.author.id)
+        # ユーザー情報の更新
+        if guild_id:
+            await update_user_info(user_id, guild_id, user_name, 'MESSAGE_EDIT')
 
-    # ユーザー情報の更新
-    if guild_id:
-        await update_user_info(user_id, guild_id, user_name, 'MESSAGE_EDIT')
-
-    interaction_data = {
-        'type': 'message_edit',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'channelId': str(after.channel.id),
-        'channelName': channel_name,
-        'messageId': str(after.id),
-        'content': after.clean_content,
-        'keywords': extract_keywords(after.clean_content),
-        'metadata': {
-            'contentBefore': before.clean_content,
-            'contentAfter': after.clean_content
+        interaction_data = {
+            'type': 'message_edit',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'channelId': str(after.channel.id),
+            'channelName': channel_name,
+            'messageId': str(after.id),
+            'content': after.clean_content,
+            'keywords': extract_keywords(after.clean_content),
+            'metadata': {
+                'contentBefore': before.clean_content,
+                'contentAfter': after.clean_content,
+                'channelType': type(after.channel).__name__
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ メッセージ編集処理エラー: {e}')
 
 # メッセージが削除されたとき
 @bot.event
@@ -302,96 +304,107 @@ async def on_message_delete(message: discord.Message):
     if message.author.bot:
         return
 
-    guild_id = str(message.guild.id) if message.guild else None
-    guild_name = message.guild.name if message.guild else 'DM'
-    
-    channel_name = 'Unknown Channel'
-    if isinstance(message.channel, discord.TextChannel) or \
-       isinstance(message.channel, discord.VoiceChannel) or \
-       isinstance(message.channel, discord.Thread):
-        channel_name = message.channel.name
-    elif isinstance(message.channel, discord.DMChannel):
-        channel_name = f'DM with {message.channel.recipient.name if message.channel.recipient else "Unknown User"}'
+    try:
+        # ギルド情報の取得
+        guild_id, guild_name = get_guild_info_safe(message.guild)
+        
+        # チャンネル名の取得
+        channel_name = get_channel_name_safe(message.channel)
+        
+        # ユーザー情報の取得
+        user_name = get_user_name_safe(message.author)
+        user_id = str(message.author.id)
+        content = message.clean_content if message.clean_content else "(コンテンツ取得不可)"
 
-    user_name = message.author.display_name or message.author.name
-    user_id = str(message.author.id)
-    content = message.clean_content if message.clean_content else "(Content not available)"
-
-    interaction_data = {
-        'type': 'message_delete',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'channelId': str(message.channel.id),
-        'channelName': channel_name,
-        'messageId': str(message.id),
-        'content': content,
-        'keywords': extract_keywords(content) if content != "(Content not available)" else [],
-        'metadata': {
-            'deletedContent': content
+        interaction_data = {
+            'type': 'message_delete',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'channelId': str(message.channel.id),
+            'channelName': channel_name,
+            'messageId': str(message.id),
+            'content': content,
+            'keywords': extract_keywords(content) if content != "(コンテンツ取得不可)" else [],
+            'metadata': {
+                'deletedContent': content,
+                'channelType': type(message.channel).__name__
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ メッセージ削除処理エラー: {e}')
 
 # メンバーがサーバーに参加したとき
 @bot.event
 async def on_member_join(member: discord.Member):
-    guild_id = str(member.guild.id)
-    user_name = member.display_name or member.name
-    user_id = str(member.id)
+    try:
+        guild_id = str(member.guild.id)
+        user_name = get_user_name_safe(member)
+        user_id = str(member.id)
 
-    # ユーザー情報の作成
-    await update_user_info(user_id, guild_id, user_name, 'MEMBER_JOIN')
+        # ユーザー情報の作成
+        await update_user_info(user_id, guild_id, user_name, 'MEMBER_JOIN')
 
-    interaction_data = {
-        'type': 'member_join',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': member.guild.name,
-        'keywords': ['新規参加', 'ウェルカム'],
-        'metadata': {
-            'accountCreated': member.created_at.isoformat(),
-            'isBot': member.bot,
-            'roles': [role.name for role in member.roles if role.name != '@everyone']
+        interaction_data = {
+            'type': 'member_join',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': member.guild.name,
+            'keywords': ['新規参加', 'ウェルカム'],
+            'metadata': {
+                'accountCreated': member.created_at.isoformat(),
+                'isBot': member.bot,
+                'roles': [role.name for role in member.roles if role.name != '@everyone'],
+                'joinedAt': member.joined_at.isoformat() if member.joined_at else None
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ メンバー参加処理エラー: {e}')
 
 # メンバーがサーバーから退出したとき
 @bot.event
 async def on_member_remove(member: discord.Member):
-    guild_id = str(member.guild.id)
-    user_name = member.display_name or member.name
-    user_id = str(member.id)
+    try:
+        guild_id = str(member.guild.id)
+        user_name = get_user_name_safe(member)
+        user_id = str(member.id)
 
-    # ユーザーを非アクティブに設定
-    if db:
-        try:
-            user_ref = db.collection('users').document(user_id)
-            await asyncio.to_thread(user_ref.update, {
-                'isActive': False,
-                'leftAt': datetime.datetime.now(datetime.timezone.utc)
-            })
-        except Exception as e:
-            print(f'❌ ユーザー退出処理エラー: {e}')
+        # ユーザーを非アクティブに設定
+        if db:
+            try:
+                user_ref = db.collection('users').document(user_id)
+                await asyncio.to_thread(user_ref.update, {
+                    'isActive': False,
+                    'leftAt': datetime.datetime.now(datetime.timezone.utc)
+                })
+            except Exception as e:
+                print(f'❌ ユーザー退出処理エラー: {e}')
 
-    interaction_data = {
-        'type': 'member_leave',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': member.guild.name,
-        'keywords': ['退出', 'さようなら'],
-        'metadata': {
-            'roles': [role.name for role in member.roles if role.name != '@everyone']
+        interaction_data = {
+            'type': 'member_leave',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': member.guild.name,
+            'keywords': ['退出', 'さようなら'],
+            'metadata': {
+                'roles': [role.name for role in member.roles if role.name != '@everyone'],
+                'leftAt': datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ メンバー退出処理エラー: {e}')
 
 # リアクションが追加されたとき
 @bot.event
@@ -399,45 +412,48 @@ async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
     if payload.user_id == bot.user.id:
         return
 
-    guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
-    guild_id = str(payload.guild_id) if payload.guild_id else None
-    guild_name = guild.name if guild else 'DM'
+    try:
+        guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
+        guild_id, guild_name = get_guild_info_safe(guild)
 
-    channel = bot.get_channel(payload.channel_id)
-    channel_name = 'Unknown Channel'
-    if isinstance(channel, discord.TextChannel) or \
-       isinstance(channel, discord.VoiceChannel) or \
-       isinstance(channel, discord.Thread):
-        channel_name = channel.name
-    elif isinstance(channel, discord.DMChannel):
-        channel_name = 'DM'
+        channel = bot.get_channel(payload.channel_id)
+        channel_name = get_channel_name_safe(channel)
 
-    user = bot.get_user(payload.user_id)
-    user_name = user.display_name if user else 'Unknown User'
-    user_id = str(payload.user_id)
+        user = bot.get_user(payload.user_id)
+        user_name = get_user_name_safe(user)
+        user_id = str(payload.user_id)
 
-    # ユーザー情報の更新
-    if guild_id and user:
-        await update_user_info(user_id, guild_id, user_name, 'REACTION_ADD')
+        # ユーザー情報の更新
+        if guild_id and user:
+            await update_user_info(user_id, guild_id, user_name, 'REACTION_ADD')
 
-    interaction_data = {
-        'type': 'reaction_add',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'channelId': str(payload.channel_id),
-        'channelName': channel_name,
-        'messageId': str(payload.message_id),
-        'keywords': ['リアクション', payload.emoji.name],
-        'metadata': {
-            'emojiName': payload.emoji.name,
-            'emojiId': str(payload.emoji.id) if payload.emoji.is_custom_emoji() else None,
-            'isCustomEmoji': payload.emoji.is_custom_emoji()
+        # 絵文字情報の安全な取得
+        emoji_name = getattr(payload.emoji, 'name', '絵文字名不明')
+        emoji_id = str(payload.emoji.id) if hasattr(payload.emoji, 'id') and payload.emoji.id else None
+        is_custom = hasattr(payload.emoji, 'is_custom_emoji') and payload.emoji.is_custom_emoji()
+
+        interaction_data = {
+            'type': 'reaction_add',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'channelId': str(payload.channel_id),
+            'channelName': channel_name,
+            'messageId': str(payload.message_id),
+            'keywords': ['リアクション', emoji_name],
+            'metadata': {
+                'emojiName': emoji_name,
+                'emojiId': emoji_id,
+                'isCustomEmoji': is_custom,
+                'channelType': type(channel).__name__ if channel else 'チャンネル不明'
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ リアクション追加処理エラー: {e}')
 
 # リアクションが削除されたとき
 @bot.event
@@ -445,260 +461,399 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
     if payload.user_id == bot.user.id:
         return
 
-    guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
-    guild_id = str(payload.guild_id) if payload.guild_id else None
-    guild_name = guild.name if guild else 'DM'
+    try:
+        guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
+        guild_id, guild_name = get_guild_info_safe(guild)
 
-    channel = bot.get_channel(payload.channel_id)
-    channel_name = 'Unknown Channel'
-    if isinstance(channel, discord.TextChannel) or \
-       isinstance(channel, discord.VoiceChannel) or \
-       isinstance(channel, discord.Thread):
-        channel_name = channel.name
-    elif isinstance(channel, discord.DMChannel):
-        channel_name = 'DM'
+        channel = bot.get_channel(payload.channel_id)
+        channel_name = get_channel_name_safe(channel)
 
-    user = bot.get_user(payload.user_id)
-    user_name = user.display_name if user else 'Unknown User'
-    user_id = str(payload.user_id)
+        user = bot.get_user(payload.user_id)
+        user_name = get_user_name_safe(user)
+        user_id = str(payload.user_id)
 
-    interaction_data = {
-        'type': 'reaction_remove',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'channelId': str(payload.channel_id),
-        'channelName': channel_name,
-        'messageId': str(payload.message_id),
-        'keywords': ['リアクション削除', payload.emoji.name],
-        'metadata': {
-            'emojiName': payload.emoji.name,
-            'emojiId': str(payload.emoji.id) if payload.emoji.is_custom_emoji() else None,
-            'isCustomEmoji': payload.emoji.is_custom_emoji()
+        # 絵文字情報の安全な取得
+        emoji_name = getattr(payload.emoji, 'name', '絵文字名不明')
+        emoji_id = str(payload.emoji.id) if hasattr(payload.emoji, 'id') and payload.emoji.id else None
+        is_custom = hasattr(payload.emoji, 'is_custom_emoji') and payload.emoji.is_custom_emoji()
+
+        interaction_data = {
+            'type': 'reaction_remove',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'channelId': str(payload.channel_id),
+            'channelName': channel_name,
+            'messageId': str(payload.message_id),
+            'keywords': ['リアクション削除', emoji_name],
+            'metadata': {
+                'emojiName': emoji_name,
+                'emojiId': emoji_id,
+                'isCustomEmoji': is_custom,
+                'channelType': type(channel).__name__ if channel else 'チャンネル不明'
+            }
         }
-    }
-    
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        
+    except Exception as e:
+        print(f'❌ リアクション削除処理エラー: {e}')
 
 # --- スケジュールイベント関連のリスナー ---
 
 # スケジュールイベントが作成されたとき
 @bot.event
 async def on_scheduled_event_create(event: discord.ScheduledEvent):
-    guild_id = str(event.guild.id)
-    guild_name = event.guild.name
-    creator_id = str(event.creator.id) if event.creator else None
-    creator_name = event.creator.display_name if event.creator else 'Unknown User'
+    try:
+        guild_id = str(event.guild.id)
+        guild_name = event.guild.name
+        creator_id = str(event.creator.id) if event.creator else None
+        creator_name = get_user_name_safe(event.creator)
 
-    # イベントデータの作成
-    event_data = {
-        'eventId': str(event.id),
-        'name': event.name,
-        'description': event.description or '',
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'creatorId': creator_id,
-        'creatorName': creator_name,
-        'startTime': event.start_time.isoformat() if event.start_time else None,
-        'endTime': event.end_time.isoformat() if event.end_time else None,
-        'location': event.location or '',
-        'status': event.status.name if event.status else 'unknown',
-        'entityType': event.entity_type.name if event.entity_type else 'unknown',
-        'privacyLevel': event.privacy_level.name if event.privacy_level else 'unknown',
-        'userCount': event.user_count or 0,
-        'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        'keywords': extract_keywords(f"{event.name} {event.description or ''}"),
-        'isActive': True
-    }
+        # イベントステータス情報の安全な取得
+        status_info = get_event_status_safe(event)
 
-    # Firestoreに保存
-    await save_event_to_firestore(event_data)
-
-    # インタラクションとしても記録
-    interaction_data = {
-        'type': 'scheduled_event_create',
-        'userId': creator_id,
-        'username': creator_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'eventId': str(event.id),
-        'eventName': event.name,
-        'keywords': ['イベント作成', 'スケジュール'] + extract_keywords(event.name),
-        'metadata': {
-            'eventDescription': event.description or '',
+        # イベントデータの作成
+        event_data = {
+            'eventId': str(event.id),
+            'name': event.name or 'イベント名不明',
+            'description': event.description or '',
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'creatorId': creator_id,
+            'creatorName': creator_name,
             'startTime': event.start_time.isoformat() if event.start_time else None,
             'endTime': event.end_time.isoformat() if event.end_time else None,
             'location': event.location or '',
-            'entityType': event.entity_type.name if event.entity_type else 'unknown'
+            'status': status_info['status'],
+            'entityType': status_info['entityType'],
+            'privacyLevel': status_info['privacyLevel'],
+            'userCount': event.user_count or 0,
+            'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'keywords': extract_keywords(f"{event.name or ''} {event.description or ''}"),
+            'isActive': True
         }
-    }
 
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
-    print(f"📅 新しいイベントが作成されました: {event.name}")
+        # Firestoreに保存
+        await save_event_to_firestore(event_data)
+
+        # インタラクションとしても記録
+        interaction_data = {
+            'type': 'scheduled_event_create',
+            'userId': creator_id,
+            'username': creator_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'eventId': str(event.id),
+            'eventName': event.name or 'イベント名不明',
+            'keywords': ['イベント作成', 'スケジュール'] + extract_keywords(event.name or ''),
+            'metadata': {
+                'eventDescription': event.description or '',
+                'startTime': event.start_time.isoformat() if event.start_time else None,
+                'endTime': event.end_time.isoformat() if event.end_time else None,
+                'location': event.location or '',
+                'entityType': status_info['entityType']
+            }
+        }
+
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        print(f"📅 新しいイベントが作成されました: {event.name or 'イベント名不明'}")
+        
+    except Exception as e:
+        print(f'❌ イベント作成処理エラー: {e}')
 
 # スケジュールイベントが更新されたとき
 @bot.event
 async def on_scheduled_event_update(before: discord.ScheduledEvent, after: discord.ScheduledEvent):
-    guild_id = str(after.guild.id)
-    guild_name = after.guild.name
-    creator_id = str(after.creator.id) if after.creator else None
-    creator_name = after.creator.display_name if after.creator else 'Unknown User'
+    try:
+        guild_id = str(after.guild.id)
+        guild_name = after.guild.name
+        creator_id = str(after.creator.id) if after.creator else None
+        creator_name = get_user_name_safe(after.creator)
 
-    # 更新されたイベントデータ
-    event_data = {
-        'eventId': str(after.id),
-        'name': after.name,
-        'description': after.description or '',
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'creatorId': creator_id,
-        'creatorName': creator_name,
-        'startTime': after.start_time.isoformat() if after.start_time else None,
-        'endTime': after.end_time.isoformat() if after.end_time else None,
-        'location': after.location or '',
-        'status': after.status.name if after.status else 'unknown',
-        'entityType': after.entity_type.name if after.entity_type else 'unknown',
-        'privacyLevel': after.privacy_level.name if after.privacy_level else 'unknown',
-        'userCount': after.user_count or 0,
-        'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        'keywords': extract_keywords(f"{after.name} {after.description or ''}"),
-        'isActive': True
-    }
+        # イベントステータス情報の安全な取得
+        status_info = get_event_status_safe(after)
 
-    # Firestoreに更新保存
-    await save_event_to_firestore(event_data)
-
-    # 変更内容を記録
-    changes = []
-    if before.name != after.name:
-        changes.append(f"名前: {before.name} → {after.name}")
-    if before.description != after.description:
-        changes.append(f"説明: {before.description or '(なし)'} → {after.description or '(なし)'}")
-    if before.start_time != after.start_time:
-        changes.append(f"開始時間: {before.start_time} → {after.start_time}")
-    if before.status != after.status:
-        changes.append(f"ステータス: {before.status.name if before.status else 'unknown'} → {after.status.name if after.status else 'unknown'}")
-
-    # インタラクションとしても記録
-    interaction_data = {
-        'type': 'scheduled_event_update',
-        'userId': creator_id,
-        'username': creator_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'eventId': str(after.id),
-        'eventName': after.name,
-        'keywords': ['イベント更新', 'スケジュール変更'] + extract_keywords(after.name),
-        'metadata': {
-            'changes': changes,
-            'beforeStatus': before.status.name if before.status else 'unknown',
-            'afterStatus': after.status.name if after.status else 'unknown',
-            'eventDescription': after.description or '',
+        # 更新されたイベントデータ
+        event_data = {
+            'eventId': str(after.id),
+            'name': after.name or 'イベント名不明',
+            'description': after.description or '',
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'creatorId': creator_id,
+            'creatorName': creator_name,
             'startTime': after.start_time.isoformat() if after.start_time else None,
-            'endTime': after.end_time.isoformat() if after.end_time else None
+            'endTime': after.end_time.isoformat() if after.end_time else None,
+            'location': after.location or '',
+            'status': status_info['status'],
+            'entityType': status_info['entityType'],
+            'privacyLevel': status_info['privacyLevel'],
+            'userCount': after.user_count or 0,
+            'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'keywords': extract_keywords(f"{after.name or ''} {after.description or ''}"),
+            'isActive': True
         }
-    }
 
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
-    print(f"📅 イベントが更新されました: {after.name} ({len(changes)}件の変更)")
+        # Firestoreに更新保存
+        await save_event_to_firestore(event_data)
+
+        # 変更内容を記録
+        changes = []
+        if before.name != after.name:
+            changes.append(f"名前: {before.name or '(なし)'} → {after.name or '(なし)'}")
+        if before.description != after.description:
+            changes.append(f"説明: {before.description or '(なし)'} → {after.description or '(なし)'}")
+        if before.start_time != after.start_time:
+            changes.append(f"開始時間: {before.start_time} → {after.start_time}")
+        
+        # ステータス変更の安全な記録
+        before_status = get_event_status_safe(before)
+        after_status = get_event_status_safe(after)
+        if before_status['status'] != after_status['status']:
+            changes.append(f"ステータス: {before_status['status']} → {after_status['status']}")
+
+        # インタラクションとしても記録
+        interaction_data = {
+            'type': 'scheduled_event_update',
+            'userId': creator_id,
+            'username': creator_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'eventId': str(after.id),
+            'eventName': after.name or 'イベント名不明',
+            'keywords': ['イベント更新', 'スケジュール変更'] + extract_keywords(after.name or ''),
+            'metadata': {
+                'changes': changes,
+                'beforeStatus': before_status['status'],
+                'afterStatus': after_status['status'],
+                'eventDescription': after.description or '',
+                'startTime': after.start_time.isoformat() if after.start_time else None,
+                'endTime': after.end_time.isoformat() if after.end_time else None
+            }
+        }
+
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        print(f"📅 イベントが更新されました: {after.name or 'イベント名不明'} ({len(changes)}件の変更)")
+        
+    except Exception as e:
+        print(f'❌ イベント更新処理エラー: {e}')
 
 # スケジュールイベントが削除されたとき
 @bot.event
 async def on_scheduled_event_delete(event: discord.ScheduledEvent):
-    guild_id = str(event.guild.id)
-    guild_name = event.guild.name
-    creator_id = str(event.creator.id) if event.creator else None
-    creator_name = event.creator.display_name if event.creator else 'Unknown User'
+    try:
+        guild_id = str(event.guild.id)
+        guild_name = event.guild.name
+        creator_id = str(event.creator.id) if event.creator else None
+        creator_name = get_user_name_safe(event.creator)
 
-    # Firestoreから削除
-    await delete_event_from_firestore(str(event.id))
+        # イベントステータス情報の安全な取得
+        status_info = get_event_status_safe(event)
 
-    # インタラクションとして記録
-    interaction_data = {
-        'type': 'scheduled_event_delete',
-        'userId': creator_id,
-        'username': creator_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'eventId': str(event.id),
-        'eventName': event.name,
-        'keywords': ['イベント削除', 'スケジュール削除'] + extract_keywords(event.name),
-        'metadata': {
-            'eventDescription': event.description or '',
-            'startTime': event.start_time.isoformat() if event.start_time else None,
-            'endTime': event.end_time.isoformat() if event.end_time else None,
-            'location': event.location or '',
-            'finalStatus': event.status.name if event.status else 'unknown',
-            'userCount': event.user_count or 0
+        # Firestoreから削除
+        await delete_event_from_firestore(str(event.id))
+
+        # インタラクションとして記録
+        interaction_data = {
+            'type': 'scheduled_event_delete',
+            'userId': creator_id,
+            'username': creator_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'eventId': str(event.id),
+            'eventName': event.name or 'イベント名不明',
+            'keywords': ['イベント削除', 'スケジュール削除'] + extract_keywords(event.name or ''),
+            'metadata': {
+                'eventDescription': event.description or '',
+                'startTime': event.start_time.isoformat() if event.start_time else None,
+                'endTime': event.end_time.isoformat() if event.end_time else None,
+                'location': event.location or '',
+                'finalStatus': status_info['status'],
+                'userCount': event.user_count or 0
+            }
         }
-    }
 
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
-    print(f"🗑️ イベントが削除されました: {event.name}")
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        print(f"🗑️ イベントが削除されました: {event.name or 'イベント名不明'}")
+        
+    except Exception as e:
+        print(f'❌ イベント削除処理エラー: {e}')
 
 # ユーザーがスケジュールイベントに参加したとき
 @bot.event
 async def on_scheduled_event_user_add(event: discord.ScheduledEvent, user: discord.User):
-    guild_id = str(event.guild.id)
-    guild_name = event.guild.name
-    user_id = str(user.id)
-    user_name = user.display_name or user.name
+    try:
+        guild_id = str(event.guild.id)
+        guild_name = event.guild.name
+        user_id = str(user.id)
+        user_name = get_user_name_safe(user)
 
-    # ユーザー情報の更新（イベント参加でエンゲージメントスコア+2）
-    await update_user_info(user_id, guild_id, user_name, 'EVENT_JOIN')
+        # ユーザー情報の更新（イベント参加でエンゲージメントスコア+2）
+        await update_user_info(user_id, guild_id, user_name, 'EVENT_JOIN')
 
-    # インタラクションとして記録
-    interaction_data = {
-        'type': 'scheduled_event_user_add',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'eventId': str(event.id),
-        'eventName': event.name,
-        'keywords': ['イベント参加', 'スケジュール参加'] + extract_keywords(event.name),
-        'metadata': {
-            'eventDescription': event.description or '',
-            'startTime': event.start_time.isoformat() if event.start_time else None,
-            'eventStatus': event.status.name if event.status else 'unknown',
-            'currentUserCount': event.user_count or 0
+        # イベントステータス情報の安全な取得
+        status_info = get_event_status_safe(event)
+
+        # インタラクションとして記録
+        interaction_data = {
+            'type': 'scheduled_event_user_add',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'eventId': str(event.id),
+            'eventName': event.name or 'イベント名不明',
+            'keywords': ['イベント参加', 'スケジュール参加'] + extract_keywords(event.name or ''),
+            'metadata': {
+                'eventDescription': event.description or '',
+                'startTime': event.start_time.isoformat() if event.start_time else None,
+                'eventStatus': status_info['status'],
+                'currentUserCount': event.user_count or 0
+            }
         }
-    }
 
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
-    print(f"👥 {user_name} がイベント '{event.name}' に参加しました")
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        print(f"👥 {user_name} がイベント '{event.name or 'イベント名不明'}' に参加しました")
+        
+    except Exception as e:
+        print(f'❌ イベント参加処理エラー: {e}')
 
 # ユーザーがスケジュールイベントから退出したとき
 @bot.event
 async def on_scheduled_event_user_remove(event: discord.ScheduledEvent, user: discord.User):
-    guild_id = str(event.guild.id)
-    guild_name = event.guild.name
-    user_id = str(user.id)
-    user_name = user.display_name or user.name
+    try:
+        guild_id = str(event.guild.id)
+        guild_name = event.guild.name
+        user_id = str(user.id)
+        user_name = get_user_name_safe(user)
 
-    # インタラクションとして記録
-    interaction_data = {
-        'type': 'scheduled_event_user_remove',
-        'userId': user_id,
-        'username': user_name,
-        'guildId': guild_id,
-        'guildName': guild_name,
-        'eventId': str(event.id),
-        'eventName': event.name,
-        'keywords': ['イベント退出', 'スケジュール退出'] + extract_keywords(event.name),
-        'metadata': {
-            'eventDescription': event.description or '',
-            'startTime': event.start_time.isoformat() if event.start_time else None,
-            'eventStatus': event.status.name if event.status else 'unknown',
-            'currentUserCount': event.user_count or 0
+        # イベントステータス情報の安全な取得
+        status_info = get_event_status_safe(event)
+
+        # インタラクションとして記録
+        interaction_data = {
+            'type': 'scheduled_event_user_remove',
+            'userId': user_id,
+            'username': user_name,
+            'guildId': guild_id,
+            'guildName': guild_name,
+            'eventId': str(event.id),
+            'eventName': event.name or 'イベント名不明',
+            'keywords': ['イベント退出', 'スケジュール退出'] + extract_keywords(event.name or ''),
+            'metadata': {
+                'eventDescription': event.description or '',
+                'startTime': event.start_time.isoformat() if event.start_time else None,
+                'eventStatus': status_info['status'],
+                'currentUserCount': event.user_count or 0
+            }
         }
-    }
 
-    asyncio.create_task(log_interaction_to_firestore(interaction_data))
-    print(f"👋 {user_name} がイベント '{event.name}' から退出しました")
+        asyncio.create_task(log_interaction_to_firestore(interaction_data))
+        print(f"👋 {user_name} がイベント '{event.name or 'イベント名不明'}' から退出しました")
+        
+    except Exception as e:
+        print(f'❌ イベント退出処理エラー: {e}')
 
 # --- ユーティリティ関数 ---
+def get_channel_name_safe(channel) -> str:
+    """チャンネル名を安全に取得する関数"""
+    try:
+        if channel is None:
+            return 'チャンネル不明'
+        
+        if isinstance(channel, discord.TextChannel):
+            return f"#{channel.name}"
+        elif isinstance(channel, discord.VoiceChannel):
+            return f"🔊{channel.name}"
+        elif isinstance(channel, discord.Thread):
+            parent_name = channel.parent.name if channel.parent else "不明"
+            return f"🧵{channel.name} (in #{parent_name})"
+        elif isinstance(channel, discord.DMChannel):
+            if channel.recipient:
+                return f"DM with {channel.recipient.display_name or channel.recipient.name}"
+            else:
+                return "DM (相手不明)"
+        elif isinstance(channel, discord.GroupChannel):
+            return f"グループDM: {channel.name or 'グループチャット'}"
+        elif isinstance(channel, discord.CategoryChannel):
+            return f"📁{channel.name}"
+        elif isinstance(channel, discord.StageChannel):
+            return f"🎤{channel.name}"
+        elif isinstance(channel, discord.ForumChannel):
+            return f"💬{channel.name}"
+        else:
+            # その他のチャンネルタイプ
+            return f"{type(channel).__name__}: {getattr(channel, 'name', 'チャンネル名不明')}"
+    except Exception as e:
+        print(f"⚠️ チャンネル名取得エラー: {e}")
+        return f"チャンネル取得エラー (ID: {getattr(channel, 'id', 'unknown')})"
+
+def get_user_name_safe(user) -> str:
+    """ユーザー名を安全に取得する関数"""
+    try:
+        if user is None:
+            return 'ユーザー不明'
+        
+        # display_nameを優先し、なければnameを使用
+        if hasattr(user, 'display_name') and user.display_name:
+            return user.display_name
+        elif hasattr(user, 'name') and user.name:
+            return user.name
+        elif hasattr(user, 'global_name') and user.global_name:
+            return user.global_name
+        else:
+            return f"ユーザー名不明 (ID: {getattr(user, 'id', 'unknown')})"
+    except Exception as e:
+        print(f"⚠️ ユーザー名取得エラー: {e}")
+        return f"ユーザー名取得エラー (ID: {getattr(user, 'id', 'unknown')})"
+
+def get_guild_info_safe(guild) -> tuple:
+    """ギルド情報を安全に取得する関数"""
+    try:
+        if guild is None:
+            return None, 'DM'
+        
+        guild_id = str(guild.id)
+        guild_name = guild.name or f"サーバー名不明 (ID: {guild_id})"
+        return guild_id, guild_name
+    except Exception as e:
+        print(f"⚠️ ギルド情報取得エラー: {e}")
+        return None, 'ギルド情報取得エラー'
+
+def get_event_status_safe(event) -> dict:
+    """イベントのステータス情報を安全に取得する関数"""
+    try:
+        status_info = {}
+        
+        # ステータス
+        if hasattr(event, 'status') and event.status:
+            status_info['status'] = event.status.name
+        else:
+            status_info['status'] = 'ステータス不明'
+        
+        # エンティティタイプ
+        if hasattr(event, 'entity_type') and event.entity_type:
+            status_info['entityType'] = event.entity_type.name
+        else:
+            status_info['entityType'] = 'タイプ不明'
+        
+        # プライバシーレベル
+        if hasattr(event, 'privacy_level') and event.privacy_level:
+            status_info['privacyLevel'] = event.privacy_level.name
+        else:
+            status_info['privacyLevel'] = 'プライバシー設定不明'
+        
+        return status_info
+    except Exception as e:
+        print(f"⚠️ イベントステータス取得エラー: {e}")
+        return {
+            'status': 'ステータス取得エラー',
+            'entityType': 'タイプ取得エラー',
+            'privacyLevel': 'プライバシー取得エラー'
+        }
+
 def extract_keywords(content: str) -> list:
     """メッセージからキーワードを抽出する関数"""
     import re
