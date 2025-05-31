@@ -198,72 +198,79 @@ class PodcastGenerator:
     def generate_podcast_content(self, analysis: Dict[str, Any], events: List[Dict]) -> str:
         """分析結果とイベント情報からポッドキャスト内容を生成"""
         
-        # 開始の挨拶（テンポ良く）
-        content = f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: はいはーい！今週もやってきましたにゃ〜！\n\n"
-        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 週刊にゃんこレポートの時間ですにゃ！\n\n"
+        # 開始の挨拶（超ハイテンション）
+        content = f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: みんなー！今週もキターーー！にゃ〜〜〜！\n\n"
+        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 週刊にゃんこレポート、スタートですにゃ！今週もヤバかったのにゃ〜！\n\n"
         
-        # 統計情報の紹介（数字を魅力的に）
+        # 統計情報の紹介（超興奮）
         total_interactions = analysis['total_interactions']
         if total_interactions > 100:
-            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 今週はなんと{total_interactions}件！すごい盛り上がりだにゃ〜！\n\n"
+            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: うわあああ！{total_interactions}件って何それ！？バケモノ級だにゃ〜〜〜！\n\n"
+            content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: みんなのパワーがハンパないのにゃ！\n\n"
         elif total_interactions > 50:
-            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 今週は{total_interactions}件のやり取り！みんな元気だにゃ！\n\n"
+            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {total_interactions}件！すっごーい！みんな超アクティブだにゃ〜！\n\n"
+            content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: この勢い、止まらないのにゃ〜！\n\n"
         else:
-            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 今週は{total_interactions}件。じっくり深い話が多かったにゃ〜\n\n"
+            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {total_interactions}件！質の高い議論がギュッと詰まってるにゃ〜！\n\n"
+            content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 濃密な時間だったのにゃ！\n\n"
         
-        # 人気トピックの紹介（興奮気味に）
+        # 人気トピックの紹介（爆発的興奮）
         if analysis['popular_keywords']:
             top_keyword = analysis['popular_keywords'][0]
-            content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 注目は「{top_keyword[0]}」！{top_keyword[1]}回も話題になったのにゃ！\n\n"
-            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: みんな気になってるんだにゃ〜！\n\n"
+            content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 今週の大注目は「{top_keyword[0]}」！なんと{top_keyword[1]}回も！\n\n"
+            content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: みんなこれに夢中だにゃ〜！熱すぎるにゃ〜〜〜！\n\n"
         
-        # 技術トピックの紹介（ワクワク感を演出）
+        # 技術トピックの紹介（開発者魂爆発）
         if analysis['tech_mentions']:
             tech_topics = list(analysis['tech_mentions'].keys())
             if len(tech_topics) >= 3:
-                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 技術トークも熱い！{tech_topics[0]}、{tech_topics[1]}、{tech_topics[2]}まで！\n\n"
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 開発者魂が燃えてるにゃ〜🔥\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 技術トーク祭り開催中！{tech_topics[0]}！{tech_topics[1]}！{tech_topics[2]}！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 開発者のみんな、マジで熱いにゃ〜〜〜！コード書きたくなってきたにゃ！\n\n"
             elif len(tech_topics) >= 2:
-                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {tech_topics[0]}と{tech_topics[1]}で盛り上がったのにゃ！\n\n"
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 技術の話は止まらないにゃ〜！\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {tech_topics[0]}と{tech_topics[1]}で大盛り上がり！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 技術愛が溢れてるにゃ〜！最高だにゃ〜！\n\n"
             elif len(tech_topics) == 1:
-                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {tech_topics[0]}について深掘りしてたのにゃ！\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {tech_topics[0]}について超深掘り！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 専門的すぎて脳みそパンクしそうだにゃ〜！\n\n"
         
-        # チャンネル活動の紹介（活気を表現）
+        # チャンネル活動の紹介（超活気）
         if analysis['channel_activity']:
             channels = list(analysis['channel_activity'].keys())
             if len(channels) >= 2:
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {channels[0]}チャンネルと{channels[1]}チャンネルが特に賑やかだったにゃ！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {channels[0]}チャンネルと{channels[1]}チャンネルが爆発してたにゃ〜！\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: もうお祭り騒ぎですにゃ〜！\n\n"
             else:
                 most_active_channel = channels[0]
                 activity_count = analysis['channel_activity'][most_active_channel]
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {most_active_channel}チャンネルで{activity_count}件！みんな集まってるにゃ〜\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: {most_active_channel}チャンネルで{activity_count}件の嵐！みんな集合してるにゃ〜！\n\n"
         
-        # アクティブユーザーの紹介（感謝を込めて）
+        # アクティブユーザーの紹介（感謝爆発）
         if analysis['user_activity']:
             active_users = list(analysis['user_activity'].keys())[:3]
             if len(active_users) >= 3:
-                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {active_users[0]}さん、{active_users[1]}さん、{active_users[2]}さん、今週もありがとうにゃ！\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {active_users[0]}さん！{active_users[1]}さん！{active_users[2]}さん！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: みんな超絶ありがとうにゃ〜〜〜！愛してるにゃ〜！\n\n"
             elif len(active_users) >= 2:
-                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {active_users[0]}さんと{active_users[1]}さん、いつも盛り上げてくれてありがとうにゃ！\n\n"
+                content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: {active_users[0]}さんと{active_users[1]}さん、神すぎるのにゃ〜！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: コミュニティの救世主だにゃ〜！\n\n"
         
-        # イベント情報の紹介（ワクワク感で）
+        # イベント情報の紹介（期待MAX）
         if events:
             upcoming_events = [e for e in events if e.get('status') in ['scheduled', 'active']]
             if upcoming_events:
                 event = upcoming_events[0]
                 event_name = event.get('name', 'イベント')
                 user_count = event.get('userCount', 0)
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: そうそう！「{event_name}」が控えてるにゃ〜！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: そして！そして！「{event_name}」がやってくるにゃ〜〜〜！\n\n"
                 if user_count > 0:
-                    content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: もう{user_count}名が参加予定！楽しみですにゃ〜\n\n"
-                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: まだの人はeventsチャンネルをチェックだにゃ！\n\n"
+                    content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: すでに{user_count}名が参戦予定！ワクワクが止まらないのにゃ〜！\n\n"
+                content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: eventsチャンネル、今すぐチェックだにゃ〜！急げ〜！\n\n"
         
-        # 締めの挨拶（親しみやすく）
-        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: 今週もみんなのおかげで楽しいコミュニティだったのにゃ〜\n\n"
-        content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 来週はどんな話題が飛び出すかにゃ？楽しみだにゃ〜！\n\n"
-        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: それじゃあ、また来週〜！\n\n"
-        content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: ばいばーい！にゃ〜ん！"
+        # 締めの挨拶（愛と感謝爆発）
+        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: みんなのパワーで今週も最高のコミュニティだったのにゃ〜！\n\n"
+        content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: 来週はもっともっと盛り上がっちゃうにゃ〜！期待しててにゃ〜〜〜！\n\n"
+        content += f"{self.characters['eve']['emoji']} **{self.characters['eve']['name']}**: それじゃあ、また来週〜！みんな大好きだにゃ〜！\n\n"
+        content += f"{self.characters['miya']['emoji']} **{self.characters['miya']['name']}**: ばいばーい！にゃ〜〜〜ん！最高だにゃ〜〜〜！"
         
         return content
     
@@ -356,6 +363,27 @@ class PodcastGenerator:
         content = re.sub(r'にゃ〜ん', 'にゃーん', content)  # 伸ばし音を自然に
         content = re.sub(r'だにゃ〜', 'だにゃー', content)
         content = re.sub(r'ですにゃ〜', 'ですにゃー', content)
+        
+        # 音声読み上げ用の調整（エネルギッシュな表現を自然に）
+        content = re.sub(r'にゃ〜〜〜ん', 'にゃーーーん', content)  # 超長い伸ばし音
+        content = re.sub(r'にゃ〜〜', 'にゃーー', content)  # 長い伸ばし音
+        content = re.sub(r'だにゃ〜〜〜', 'だにゃーーー', content)
+        content = re.sub(r'だにゃ〜〜', 'だにゃーー', content)
+        content = re.sub(r'ですにゃ〜〜', 'ですにゃーー', content)
+        
+        # 興奮表現を自然に
+        content = re.sub(r'キターーー', 'きたーーー', content)
+        content = re.sub(r'うわあああ', 'うわーーー', content)
+        content = re.sub(r'すっごーい', 'すっごーい', content)
+        content = re.sub(r'ヤバかった', 'やばかった', content)
+        content = re.sub(r'バケモノ級', 'ばけもの級', content)
+        content = re.sub(r'ハンパない', 'はんぱない', content)
+        content = re.sub(r'マジで', 'まじで', content)
+        content = re.sub(r'ワクワク', 'わくわく', content)
+        
+        # 感嘆符の調整（読み上げ時の自然さのため）
+        content = re.sub(r'！{3,}', '！', content)  # 連続感嘆符を1つに
+        content = re.sub(r'！{2}', '！', content)
         
         return content.strip()
     
