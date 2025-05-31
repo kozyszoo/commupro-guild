@@ -224,6 +224,10 @@ async def on_message(message: discord.Message):
     if guild_id:
         await update_user_info(user_id, guild_id, user_name, 'MESSAGE_CREATE')
 
+    # ボットがメンションされた場合の応答処理
+    if bot.user in message.mentions:
+        await handle_mention_response(message)
+
     # インタラクションデータの作成
     interaction_data = {
         'type': 'message',
@@ -240,7 +244,8 @@ async def on_message(message: discord.Message):
             'hasAttachments': len(message.attachments) > 0,
             'hasEmbeds': len(message.embeds) > 0,
             'mentionCount': len(message.mentions),
-            'reactionCount': len(message.reactions) if message.reactions else 0
+            'reactionCount': len(message.reactions) if message.reactions else 0,
+            'isMention': bot.user in message.mentions
         }
     }
     
@@ -1050,3 +1055,113 @@ if __name__ == "__main__":
     print("⚠️ 警告: このファイルは直接実行せず、run_bot.py を使用してください")
     print("   python3 run_bot.py")
     exit(1)
+
+# --- メンション応答処理関数 ---
+async def handle_mention_response(message: discord.Message):
+    """ボットがメンションされた時の応答処理"""
+    try:
+        # メンションを除いたメッセージ内容を取得
+        content = message.content
+        for mention in message.mentions:
+            content = content.replace(f'<@{mention.id}>', '').replace(f'<@!{mention.id}>', '')
+        content = content.strip()
+        
+        # ユーザー名を取得
+        user_name = message.author.display_name or message.author.name
+        
+        # キーワードベースの応答選択
+        response = await generate_response(content, user_name, message)
+        
+        # 応答を送信
+        if response:
+            await message.reply(response)
+            
+            # ボットアクションをFirestoreに記録
+            await log_bot_action(message, response, 'mention_response')
+            
+    except Exception as e:
+        print(f'❌ メンション応答エラー: {e}')
+        # エラー時のフォールバック応答
+        await message.reply("にゃーん？ちょっと調子が悪いみたいだにゃ... 🐱💦")
+
+async def generate_response(content: str, user_name: str, message: discord.Message) -> str:
+    """メッセージ内容に基づいて適切な応答を生成"""
+    content_lower = content.lower()
+    
+    # 挨拶系
+    if any(word in content_lower for word in ['こんにちは', 'おはよう', 'こんばんは', 'はじめまして', 'よろしく']):
+        responses = [
+            f"にゃーん！{user_name}さん、こんにちはだにゃ！ 🐱✨\n**トラにゃん**: 新しいお友達かにゃ？よろしくお願いしますにゃ！",
+            f"こんにちはにゃ〜！{user_name}さん！ 🐱💫\n**クロにゃん**: みんなでお話しできて嬉しいにゃ〜！",
+            f"にゃにゃ！{user_name}さん、ようこそにゃ！ 🐱🎉\n**トラにゃん**: このサーバーは楽しいことがいっぱいだにゃ！"
+        ]
+        return responses[hash(user_name) % len(responses)]
+    
+    # 質問・ヘルプ系
+    elif any(word in content_lower for word in ['質問', '教えて', 'ヘルプ', 'help', '分からない', 'わからない']):
+        responses = [
+            f"にゃにゃ？{user_name}さん、何か困ったことがあるのかにゃ？ 🐱❓\n**クロにゃん**: みんなで助け合うのが一番だにゃ〜！",
+            f"質問があるのかにゃ？{user_name}さん！ 🐱💭\n**トラにゃん**: 分からないことは恥ずかしくないにゃ！みんなで解決するにゃ！",
+            f"にゃーん！{user_name}さん、どんなことで困ってるのかにゃ？ 🐱🤔\n**クロにゃん**: 詳しく教えてくれたら、みんなで考えるにゃ〜！"
+        ]
+        return responses[hash(content) % len(responses)]
+    
+    # 感謝系
+    elif any(word in content_lower for word in ['ありがとう', 'ありがと', 'サンキュー', 'thanks']):
+        responses = [
+            f"にゃーん！{user_name}さん、どういたしましてにゃ！ 🐱💕\n**トラにゃん**: お役に立てて嬉しいにゃ〜！",
+            f"にゃにゃ〜！{user_name}さんの笑顔が一番の報酬だにゃ！ 🐱😊\n**クロにゃん**: また何かあったら声をかけてにゃ〜！",
+            f"にゃーん！{user_name}さん、こちらこそありがとうにゃ！ 🐱✨\n**トラにゃん**: みんなで支え合うのが大切だにゃ！"
+        ]
+        return responses[hash(user_name + content) % len(responses)]
+    
+    # イベント・活動系
+    elif any(word in content_lower for word in ['イベント', 'event', '活動', '参加', '企画']):
+        responses = [
+            f"にゃにゃ！{user_name}さん、イベントに興味があるのかにゃ？ 🐱🎪\n**トラにゃん**: みんなで楽しいことをするのは最高だにゃ！",
+            f"イベントの話かにゃ〜？{user_name}さん！ 🐱🎉\n**クロにゃん**: 新しい企画があったら教えてほしいにゃ〜！",
+            f"にゃーん！{user_name}さん、一緒に楽しいことをするにゃ！ 🐱🌟\n**トラにゃん**: みんなの参加を待ってるにゃ〜！"
+        ]
+        return responses[hash(content + user_name) % len(responses)]
+    
+    # 一般的な応答
+    else:
+        responses = [
+            f"にゃーん！{user_name}さん、お話ししてくれてありがとうにゃ！ 🐱💬\n**トラにゃん**: もっと詳しく聞かせてほしいにゃ〜！",
+            f"にゃにゃ〜！{user_name}さんのお話、興味深いにゃ！ 🐱✨\n**クロにゃん**: みんなでお話しするの楽しいにゃ〜！",
+            f"にゃーん！{user_name}さん、どんなことでも気軽に話しかけてにゃ！ 🐱😸\n**トラにゃん**: このコミュニティはみんな優しいにゃ！",
+            f"にゃにゃ！{user_name}さん、今日はどんな一日だったかにゃ？ 🐱🌅\n**クロにゃん**: みんなの日常も聞いてみたいにゃ〜！"
+        ]
+        return responses[hash(content + user_name + str(message.created_at.hour)) % len(responses)]
+
+async def log_bot_action(message: discord.Message, response: str, action_type: str):
+    """ボットのアクションをFirestoreに記録"""
+    if db is None:
+        return
+    
+    try:
+        guild_id = str(message.guild.id) if message.guild else None
+        
+        action_data = {
+            'type': 'bot_action',
+            'actionType': action_type,
+            'userId': str(message.author.id),
+            'username': message.author.display_name or message.author.name,
+            'guildId': guild_id,
+            'guildName': message.guild.name if message.guild else 'DM',
+            'channelId': str(message.channel.id),
+            'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
+            'originalMessage': message.content,
+            'botResponse': response,
+            'timestamp': firestore.SERVER_TIMESTAMP,
+            'metadata': {
+                'messageId': str(message.id),
+                'responseLength': len(response)
+            }
+        }
+        
+        await asyncio.to_thread(db.collection('bot_actions').add, action_data)
+        print(f"🤖 ボットアクションを記録: {action_type}")
+        
+    except Exception as e:
+        print(f'❌ ボットアクション記録エラー: {e}')
