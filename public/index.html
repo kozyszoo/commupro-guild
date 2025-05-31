@@ -695,6 +695,16 @@
         return 'score-low';
       }
 
+      function getEventStatusClass(status) {
+        switch(status?.toLowerCase()) {
+          case 'scheduled': return 'status-pending';
+          case 'active': case 'live': return 'status-active';
+          case 'completed': case 'ended': return 'status-completed';
+          case 'cancelled': return 'status-inactive';
+          default: return 'status-inactive';
+        }
+      }
+
       function getStatusClass(status) {
         switch(status?.toLowerCase()) {
           case 'active': case 'completed': case 'success': return 'status-active';
@@ -1036,6 +1046,11 @@
 
           // イベント
           const eventList = Object.values(events || {});
+          const totalEvents = eventList.length;
+          const activeEvents = eventList.filter(e => e.isActive).length;
+          const scheduledEvents = eventList.filter(e => e.status === 'scheduled').length;
+          const voiceEvents = eventList.filter(e => e.entityType === 'voice').length;
+          
           document.getElementById('dashboard-events').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1045,23 +1060,102 @@
                 </h3>
               </div>
               <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalEvents}</span>
+                    <span class="stat-label">総イベント</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${activeEvents}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${scheduledEvents}</span>
+                    <span class="stat-label">予定済み</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${voiceEvents}</span>
+                    <span class="stat-label">音声イベント</span>
+                  </div>
+                </div>
                 ${eventList.length ? `
                   <div class="recent-activity">
+                    <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">イベント一覧</div>
                     ${eventList.slice(0, 4).map(e => `
                       <div class="activity-item">
                         <div class="activity-icon">
-                          <i class="material-icons">event</i>
+                          <i class="material-icons">${e.entityType === 'voice' ? 'mic' : 'event'}</i>
                         </div>
                         <div class="activity-content">
-                          <div class="activity-title">${e.title || e.name || '-'}</div>
-                          <div class="activity-description">${truncateText(e.description)}</div>
+                          <div class="activity-title">
+                            ${e.name || '-'}
+                            <span class="status-badge ${getStatusClass(e.status)}" style="margin-left: 0.5rem; font-size: 0.7rem;">
+                              ${e.status || '-'}
+                            </span>
+                          </div>
+                          <div class="activity-description">
+                            ${e.description || 'イベントの説明はありません'}
+                            ${(e.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${e.keywords.slice(0, 3).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                          </div>
                           <div class="activity-time">
-                            <div>${formatDate(e.startTime)}</div>
-                            <div>参加予定: ${(e.attendees || []).length}人</div>
+                            <div><strong>開始:</strong> ${formatDate(e.startTime)}</div>
+                            ${e.endTime ? `<div><strong>終了:</strong> ${formatDate(e.endTime)}</div>` : ''}
+                            <div><strong>参加者:</strong> ${e.userCount || 0}人 | <strong>タイプ:</strong> ${e.entityType || '-'}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">ギルド: ${e.guildName || '-'}</div>
                           </div>
                         </div>
                       </div>
                     `).join('')}
+                  </div>
+                  <div style="margin-top: 1rem; overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>イベント名</th>
+                          <th>ステータス</th>
+                          <th>タイプ</th>
+                          <th>開始時刻</th>
+                          <th>参加者</th>
+                          <th>ギルド</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${eventList.map(e => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${e.name || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ID: ${e.eventId || ''}
+                              </div>
+                              ${(e.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${e.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                            </td>
+                            <td>
+                              <span class="status-badge ${getStatusClass(e.status)}">
+                                ${e.status || '-'}
+                              </span>
+                              ${e.isActive ? '<div style="font-size: 0.7rem; color: var(--success-color); margin-top: 0.25rem;">✓ アクティブ</div>' : '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">非アクティブ</div>'}
+                            </td>
+                            <td>
+                              <span class="tag">${e.entityType || '-'}</span>
+                              ${e.privacyLevel ? `<div style="font-size: 0.7rem; margin-top: 0.25rem;">${e.privacyLevel}</div>` : ''}
+                            </td>
+                            <td style="font-size: 0.8rem;">
+                              <div><strong>開始:</strong> ${formatDate(e.startTime)}</div>
+                              ${e.endTime ? `<div><strong>終了:</strong> ${formatDate(e.endTime)}</div>` : '<div style="color: var(--text-muted);">終了時刻未設定</div>'}
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(e.userCount || 0)}">
+                                ${e.userCount || 0}人
+                              </span>
+                            </td>
+                            <td>
+                              <div style="font-weight: 600;">${e.guildName || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${e.guildId || ''}</div>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
                   </div>
                 ` : '<div class="no-data"><i class="material-icons">event</i><div>イベントデータがありません</div></div>'}
               </div>
