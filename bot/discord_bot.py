@@ -1044,31 +1044,9 @@ async def export_data_to_json(guild_id: str = None, filename: str = None):
         return None
 
 # --- ボット起動処理 ---
+# 注意: ボットの起動は run_bot.py から行います
+# このファイルを直接実行する場合のみ以下のコードが実行されます
 if __name__ == "__main__":
-    # Discord Bot Tokenを環境変数から取得
-    DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
-    
-    if not DISCORD_BOT_TOKEN:
-        print("❌ エラー: DISCORD_BOT_TOKEN が設定されていません")
-        exit(1)
-    
-    if DISCORD_BOT_TOKEN == 'your_discord_bot_token_here':
-        print("⚠️ テストモード: Discord Bot Tokenが仮の値です")
-        print("🔚 ボットが終了しました。")
-        exit(0)
-    
-    if not firebase_initialized:
-        print("❌ エラー: Firebase Firestoreの初期化に失敗しました")
-        exit(1)
-    
-    try:
-        print("🚀 Discord ボットを起動中...")
-        bot.run(DISCORD_BOT_TOKEN)
-    except discord.LoginFailure:
-        print("❌ エラー: Discord Bot Tokenが無効です")
-        exit(1)
-    except Exception as e:
-        print(f"❌ ボット起動エラー: {e}")
-        exit(1)
-    finally:
-        print("🔚 ボットが終了しました。")
+    print("⚠️ 警告: このファイルは直接実行せず、run_bot.py を使用してください")
+    print("   python3 run_bot.py")
+    exit(1)
