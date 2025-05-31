@@ -1,0 +1,656 @@
+{
+  "metadata": {
+    "exportedAt": "2025-05-26T14:57:36.442931+00:00",
+    "guildId": null,
+    "totalRecords": 31,
+    "collections": [
+      "users",
+      "guilds",
+      "interactions",
+      "topics",
+      "podcasts",
+      "user_matches",
+      "events",
+      "analytics_sessions",
+      "bot_actions"
+    ]
+  },
+  "data": {
+    "users": [
+      {
+        "lastActive": "2025-05-26 14:48:40.578553+00:00",
+        "isActive": true,
+        "id": "646367578721353738",
+        "preferences": {
+          "language": "ja",
+          "dmNotifications": true,
+          "matchingNotifications": true,
+          "podcastNotifications": true
+        },
+        "joinedAt": "2025-05-26 14:48:31.615426+00:00",
+        "interests": [],
+        "engagementScore": 2,
+        "username": "kozzy",
+        "guildId": "1370568341680558080"
+      },
+      {
+        "username": "yukkin",
+        "isActive": true,
+        "joinedAt": "2025-05-26 14:49:04.237883+00:00",
+        "interests": [],
+        "preferences": {
+          "language": "ja",
+          "dmNotifications": true,
+          "matchingNotifications": true,
+          "podcastNotifications": true
+        },
+        "id": "714620575443583029",
+        "engagementScore": 1,
+        "lastActive": "2025-05-26 14:49:04.237883+00:00",
+        "guildId": "1370568341680558080"
+      },
+      {
+        "lastActive": "2025-05-26 14:49:48.412036+00:00",
+        "isActive": true,
+        "id": "837865982109286421",
+        "preferences": {
+          "language": "ja",
+          "dmNotifications": true,
+          "matchingNotifications": true,
+          "podcastNotifications": true
+        },
+        "joinedAt": "2025-05-26 14:48:27.813705+00:00",
+        "interests": [],
+        "engagementScore": 4.099999999999999,
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080"
+      },
+      {
+        "lastActive": "2025-05-26 14:50:04.413705+00:00",
+        "isActive": true,
+        "id": "888800168693084180",
+        "preferences": {
+          "language": "ja",
+          "dmNotifications": true,
+          "matchingNotifications": true,
+          "podcastNotifications": true
+        },
+        "joinedAt": "2025-05-26 14:48:43.770676+00:00",
+        "interests": [],
+        "engagementScore": 3.2,
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080"
+      },
+      {
+        "lastActive": "2025-05-26 14:50:09.395144+00:00",
+        "isActive": true,
+        "id": "984803296789270529",
+        "preferences": {
+          "language": "ja",
+          "dmNotifications": true,
+          "matchingNotifications": true,
+          "podcastNotifications": true
+        },
+        "joinedAt": "2025-05-26 14:48:44.900649+00:00",
+        "interests": [],
+        "engagementScore": 1.9000000000000001,
+        "username": "あやや",
+        "guildId": "1370568341680558080"
+      }
+    ],
+    "guilds": [],
+    "interactions": [
+      {
+        "messageId": "1376573051537199154",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "saikou",
+          "isCustomEmoji": true,
+          "emojiId": "829283961221808138"
+        },
+        "channelId": "1376567319937159219",
+        "userId": "984803296789270529",
+        "keywords": [
+          "リアクション",
+          "saikou"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:50:09.692000+00:00",
+        "username": "あやや",
+        "guildId": "1370568341680558080",
+        "id": "4uIzP7PofUfXizkOs8J9"
+      },
+      {
+        "messageId": "1376573051537199154",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🫡",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "keywords": [
+          "リアクション",
+          "🫡"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:50:04.703000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "Qy6qzUGuAg8tLSmdVgkZ"
+      },
+      {
+        "messageId": "1376573051537199154",
+        "content": "",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": true,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "channelName": "ねこphoto",
+        "keywords": [],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:51.290000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "CaFWaogqlSstVH32ozTi"
+      },
+      {
+        "messageId": "1376572718979350738",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "❤️",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "❤️"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:48.680000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "Xk2mmGmHukKjLWZ7M1TD"
+      },
+      {
+        "messageId": "1376572769978028093",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🦷",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "🦷"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:47.205000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "YYOtoAF31LlYuBgkOY6S"
+      },
+      {
+        "messageId": "1376572756547604582",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🌱",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "🌱"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:46.746000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "WIjMquxjan9gsla6pmgh"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "😼",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "😼"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:46.127000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "Y7QbEBhWJlTuxXwAsYCe"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "😼",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "keywords": [
+          "リアクション",
+          "😼"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:26.286000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "SFwx7TBzJSZvtafxOEGU"
+      },
+      {
+        "messageId": "1376572756547604582",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🌱",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "984803296789270529",
+        "keywords": [
+          "リアクション",
+          "🌱"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:13.019000+00:00",
+        "username": "あやや",
+        "guildId": "1370568341680558080",
+        "id": "TPBXp0QWpEG3IQJ4u8AQ"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_remove",
+        "metadata": {
+          "emojiName": "🐈‍⬛",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "keywords": [
+          "リアクション削除",
+          "🐈‍⬛"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:12.200000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "5UgjCb1O7DgLuBCkW8hL"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_remove",
+        "metadata": {
+          "emojiName": "🐈‍⬛",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション削除",
+          "🐈‍⬛"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:08.670000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "EoOjk6NAEgTqWNlYNjRZ"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🐈‍⬛",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "🐈‍⬛"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:08.318000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "4rKL2AdyBQFyAs42N3lw"
+      },
+      {
+        "messageId": "1376572769978028093",
+        "channelName": "ねこphoto",
+        "type": "reaction_remove",
+        "metadata": {
+          "emojiName": "🦷",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション削除",
+          "🦷"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:07.553000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "AKo8jflVOunYLhtAc9Z7"
+      },
+      {
+        "messageId": "1376572769978028093",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🦷",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "🦷"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:06.836000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "CQ7RLwnBLODY03Lv9OmC"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🐈‍⬛",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "keywords": [
+          "リアクション",
+          "🐈‍⬛"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:06.571000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "fptm49N6s7mO6gXy7fIh"
+      },
+      {
+        "messageId": "1376572756547604582",
+        "channelName": "ねこphoto",
+        "type": "reaction_remove",
+        "metadata": {
+          "emojiName": "🫡",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション削除",
+          "🫡"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:04.948000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "5ApxLf5FE3LslEdEGHL3"
+      },
+      {
+        "messageId": "1376572769978028093",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🦷",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "984803296789270529",
+        "keywords": [
+          "リアクション",
+          "🦷"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:04.769000+00:00",
+        "username": "あやや",
+        "guildId": "1370568341680558080",
+        "id": "etfaUvum60SAJT8MsI1I"
+      },
+      {
+        "messageId": "1376572718979350738",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🙆‍♀️",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "714620575443583029",
+        "keywords": [
+          "リアクション",
+          "🙆‍♀️"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:04.663000+00:00",
+        "username": "yukkin",
+        "guildId": "1370568341680558080",
+        "id": "0C1Yy2XLa8SkimrQzycb"
+      },
+      {
+        "messageId": "1376572756547604582",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "🫡",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "keywords": [
+          "リアクション",
+          "🫡"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:49:03.375000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "GO6e49lC9gFaEo3gcyfV"
+      },
+      {
+        "messageId": "1376572718979350738",
+        "channelName": "ねこphoto",
+        "type": "reaction_add",
+        "metadata": {
+          "emojiName": "❤️",
+          "isCustomEmoji": false,
+          "emojiId": null
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "keywords": [
+          "リアクション",
+          "❤️"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:59.394000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "UB6PfAMtJ19ygOGBRZSk"
+      },
+      {
+        "messageId": "1376572774579179613",
+        "content": "坊やだからさ",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": false,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "984803296789270529",
+        "channelName": "ねこphoto",
+        "keywords": [
+          "坊やだからさ"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:45.185000+00:00",
+        "username": "あやや",
+        "guildId": "1370568341680558080",
+        "id": "vCIbXilyojArUFR9TNa8"
+      },
+      {
+        "messageId": "1376572769978028093",
+        "content": "なつかしいｗ",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": false,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "888800168693084180",
+        "channelName": "ねこphoto",
+        "keywords": [
+          "なつかしい"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:44.056000+00:00",
+        "username": "かーでぃ",
+        "guildId": "1370568341680558080",
+        "id": "sDpg2tSbpmazzyCSaVdW"
+      },
+      {
+        "messageId": "1376572756547604582",
+        "content": "猫が好きです",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": false,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "646367578721353738",
+        "channelName": "ねこphoto",
+        "keywords": [
+          "猫が好きです"
+        ],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:40.932000+00:00",
+        "username": "kozzy",
+        "guildId": "1370568341680558080",
+        "id": "CxFpIVnBVw1cyNtKKcQU"
+      },
+      {
+        "messageId": "1376572750918975549",
+        "content": "ねこ2",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": false,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "channelName": "ねこphoto",
+        "keywords": [],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:39.514000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "uzVid5Y8C4NvIOF20P9c"
+      },
+      {
+        "messageId": "1376572718979350738",
+        "content": "ねこ",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": false,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "646367578721353738",
+        "channelName": "ねこphoto",
+        "keywords": [],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:31.912000+00:00",
+        "username": "kozzy",
+        "guildId": "1370568341680558080",
+        "id": "qlnHwOYzV8i1FfcsOAHM"
+      },
+      {
+        "messageId": "1376572697399791748",
+        "content": "",
+        "type": "message",
+        "metadata": {
+          "hasAttachments": true,
+          "mentionCount": 0,
+          "reactionCount": 0,
+          "hasEmbeds": false
+        },
+        "channelId": "1376567319937159219",
+        "userId": "837865982109286421",
+        "channelName": "ねこphoto",
+        "keywords": [],
+        "guildName": "AI ハッカソン 2025夏",
+        "timestamp": "2025-05-26 14:48:28.106000+00:00",
+        "username": "Mitz｜コミュニティ＆デジタル戦略プロデューサー",
+        "guildId": "1370568341680558080",
+        "id": "9OFeF0JaJVdCobe0COsX"
+      }
+    ],
+    "topics": [],
+    "podcasts": [],
+    "user_matches": [],
+    "events": [],
+    "analytics_sessions": [],
+    "bot_actions": []
+  }
+}

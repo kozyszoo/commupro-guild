@@ -1,0 +1,27 @@
+# Discord にゃんこエージェント ボット - 依存関係
+# Discord.py - Discord API ライブラリ
+discord.py==2.3.2
+
+# Firebase Admin SDK - Firestore データベース接続
+firebase-admin==6.2.0
+
+# 環境変数管理
+python-dotenv==1.0.0
+
+# 非同期処理サポート
+asyncio-mqtt==0.16.1
+
+# HTTP サーバー（ヘルスチェック用）
+flask==3.0.0
+
+# ログ管理
+structlog==23.2.0
+
+# 日付・時刻処理
+python-dateutil==2.8.2
+
+# JSON処理の強化
+ujson==5.8.0
+
+# メモリ効率の改善
+psutil==5.9.6

@@ -1,0 +1,81 @@
+# Discord にゃんこエージェント ボット - Docker 除外ファイル
+
+# 環境変数ファイル
+.env
+.env.*
+*.env
+
+# Python キャッシュ
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 仮想環境
+venv/
+env/
+ENV/
+
+# IDE設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS生成ファイル
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ログファイル
+*.log
+logs/
+
+# 一時ファイル
+tmp/
+temp/
+*.tmp
+
+# Git
+.git/
+.gitignore
+
+# Firebase キーファイル（セキュリティ上重要）
+*.json
+!package*.json
+
+# README とドキュメント
+README.md
+*.md
+docs/
+
+# テストファイル
+test/
+tests/
+*_test.py
+test_*.py
+
+# デプロイスクリプト（コンテナ内では不要）
+deploy.sh
+cloudbuild.yaml

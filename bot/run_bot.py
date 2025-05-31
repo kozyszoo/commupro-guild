@@ -2,10 +2,13 @@
 """
 Discord にゃんこエージェント ボット実行スクリプト
 現在のFirestore構造と連動したDiscordボット
+Cloud Run 対応版
 """
 
 import os
 import sys
+import threading
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -57,10 +60,38 @@ def install_dependencies():
         print("   pip install -r requirements.txt")
         return False
 
+def start_health_server():
+    """ヘルスチェックサーバーを別スレッドで開始"""
+    try:
+        from health_server import start_health_server, update_bot_status
+        print("🏥 ヘルスチェックサーバーを開始中...")
+        
+        # 別スレッドでヘルスサーバーを起動
+        health_thread = threading.Thread(target=start_health_server, daemon=True)
+        health_thread.start()
+        
+        # 少し待ってからボット状態を更新
+        time.sleep(2)
+        update_bot_status(True)
+        
+        print("✅ ヘルスチェックサーバーが起動しました")
+        return True
+    except Exception as e:
+        print(f"⚠️ ヘルスチェックサーバーの起動に失敗: {e}")
+        print("   ボットは継続して動作しますが、Cloud Run のヘルスチェックが利用できません")
+        return False
+
 def main():
     """メイン実行関数"""
     print("🐱 Discord にゃんこエージェント ボット起動中...")
     print("=" * 50)
+    
+    # Cloud Run 環境の検出
+    is_cloud_run = os.getenv('K_SERVICE') is not None
+    if is_cloud_run:
+        print("☁️ Cloud Run 環境を検出しました")
+        # ヘルスチェックサーバーを開始
+        start_health_server()
     
     # 環境確認
     if not check_requirements():
@@ -106,14 +137,41 @@ def main():
         
         # ボットを実際に起動
         print("🚀 Discord ボットを起動中...")
+        
+        # Cloud Run環境の場合、ボット状態を更新
+        if is_cloud_run:
+            try:
+                from health_server import update_bot_status
+                update_bot_status(True)
+            except:
+                pass
+        
         discord_bot.bot.run(discord_token)
         
     except KeyboardInterrupt:
         print("\n🛑 ボットが停止されました")
+        
+        # Cloud Run環境の場合、ボット状態を更新
+        if is_cloud_run:
+            try:
+                from health_server import update_bot_status
+                update_bot_status(False)
+            except:
+                pass
+                
     except Exception as e:
         print(f"❌ ボット実行中にエラーが発生しました: {e}")
         import traceback
         traceback.print_exc()
+        
+        # Cloud Run環境の場合、ボット状態を更新
+        if is_cloud_run:
+            try:
+                from health_server import update_bot_status
+                update_bot_status(False)
+            except:
+                pass
+        
         sys.exit(1)
 
 if __name__ == "__main__":
