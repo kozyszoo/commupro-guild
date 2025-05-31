@@ -23,48 +23,104 @@ bot = discord.Client(intents=intents)
 
 # --- Firebase Firestore の設定 ---
 # 環境変数またはサービスアカウントファイルから設定を読み込み
-FIREBASE_SERVICE_ACCOUNT_KEY_PATH = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH', 
-                                             './nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
+# 現在のスクリプトのディレクトリを基準にした絶対パスを設定
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_KEY_PATH = os.path.join(SCRIPT_DIR, 'nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH', DEFAULT_KEY_PATH)
 
 db = None # Firestoreクライアントをグローバル変数として定義
 
-def initialize_firebase():
+async def initialize_firebase():
     """Firebase Firestoreを初期化する関数"""
     global db
+    print("🔧 Firebase初期化を開始...")
+    
     try:
         if not firebase_admin._apps: # まだ初期化されていなければ初期化
-            # まずファイルパスから読み込みを試行
-            if os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH') and os.path.exists(os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')):
-                key_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
-                print(f"🔑 Firebaseサービスアカウントキーファイルを読み込み中: {key_path}")
-                cred = credentials.Certificate(key_path)
+            cred = None
+            
+            # 1. 環境変数のFIREBASE_SERVICE_ACCOUNT_KEY_PATHから読み込み
+            env_key_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
+            if env_key_path and os.path.exists(env_key_path):
+                print(f"🔑 環境変数からFirebaseサービスアカウントキーファイルを読み込み中: {env_key_path}")
+                cred = credentials.Certificate(env_key_path)
+            
+            # 2. デフォルトパスから読み込み
             elif os.path.exists(FIREBASE_SERVICE_ACCOUNT_KEY_PATH):
                 print(f"🔑 デフォルトのFirebaseサービスアカウントキーファイルを読み込み中: {FIREBASE_SERVICE_ACCOUNT_KEY_PATH}")
                 cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_KEY_PATH)
+            
+            # 3. 環境変数のFIREBASE_SERVICE_ACCOUNTから読み込み
             elif os.getenv('FIREBASE_SERVICE_ACCOUNT'):
                 print("🔑 環境変数からFirebaseサービスアカウント情報を読み込み中...")
                 service_account_info = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
                 cred = credentials.Certificate(service_account_info)
+            
+            # 4. 他の可能なパスを試行
             else:
-                raise FileNotFoundError("Firebaseサービスアカウントキーが見つかりません")
+                possible_paths = [
+                    './nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json',
+                    '../nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json',
+                    os.path.join(os.getcwd(), 'nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json'),
+                    os.path.join(os.getcwd(), 'bot', 'nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
+                ]
+                
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        print(f"🔑 代替パスからFirebaseサービスアカウントキーファイルを読み込み中: {path}")
+                        cred = credentials.Certificate(path)
+                        break
+                
+                if cred is None:
+                    print("❌ デバッグ情報:")
+                    print(f"   現在の作業ディレクトリ: {os.getcwd()}")
+                    print(f"   スクリプトディレクトリ: {SCRIPT_DIR}")
+                    print(f"   デフォルトキーパス: {FIREBASE_SERVICE_ACCOUNT_KEY_PATH}")
+                    print(f"   環境変数FIREBASE_SERVICE_ACCOUNT_KEY_PATH: {env_key_path}")
+                    print("   試行したパス:")
+                    for path in possible_paths:
+                        exists = "✅" if os.path.exists(path) else "❌"
+                        print(f"     {exists} {path}")
+                    raise FileNotFoundError("Firebaseサービスアカウントキーが見つかりません")
             
             firebase_admin.initialize_app(cred)
+            print("✅ Firebase Admin SDKの初期化が完了しました")
         
         db = firestore.client() # Firestoreデータベースへの参照を取得
         print("✅ Firebase Firestoreへの接続準備ができました。")
+        
+        # 接続テストを実行
+        try:
+            test_ref = db.collection('_test').document('connection_test')
+            await asyncio.to_thread(test_ref.set, {
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'status': 'connected'
+            })
+            print("✅ Firestore接続テストが成功しました")
+            # テストドキュメントを削除
+            await asyncio.to_thread(test_ref.delete)
+        except Exception as test_error:
+            print(f"⚠️ Firestore接続テストに失敗しました: {test_error}")
+        
         return True
-    except FileNotFoundError:
+        
+    except FileNotFoundError as e:
         print(f"❌ 致命的エラー: Firebaseサービスアカウントキーファイルが見つかりません。")
-        print(f"指定されたパス: {FIREBASE_SERVICE_ACCOUNT_KEY_PATH}")
-        print("パスが正しいか、ファイルがサーバーのその場所に存在するか確認してください。")
+        print(f"エラー詳細: {e}")
         return False
     except Exception as e:
         print(f"❌ 致命的エラー: Firebase Firestoreの初期化に失敗しました: {e}")
         print("サービスアカウントキーの内容や権限、ネットワーク接続を確認してください。")
         return False
 
-# Firebase初期化
-firebase_initialized = initialize_firebase()
+# Firebase初期化（非同期で実行）
+firebase_initialized = False
+
+async def init_firebase_async():
+    """Firebase初期化を非同期で実行"""
+    global firebase_initialized
+    firebase_initialized = await initialize_firebase()
+    return firebase_initialized
 
 # --- ユーザー情報をFirestoreに保存/更新する関数 ---
 async def update_user_info(user_id: str, guild_id: str, username: str, action_type: str = None):
@@ -132,6 +188,7 @@ async def log_interaction_to_firestore(interaction_data: dict):
     """指定されたデータをFirestoreの'interactions'コレクションに新しいドキュメントとして追記する非同期関数"""
     if db is None:
         print("⚠️ Firebase Firestoreが初期化されていません。ログをスキップしました。")
+        print(f"   スキップされたログタイプ: {interaction_data.get('type', 'unknown')}")
         return
 
     try:
@@ -139,14 +196,16 @@ async def log_interaction_to_firestore(interaction_data: dict):
         interaction_data['timestamp'] = firestore.SERVER_TIMESTAMP
         
         # Firestoreへの書き込み
-        await asyncio.to_thread(db.collection('interactions').add, interaction_data)
+        doc_ref = await asyncio.to_thread(db.collection('interactions').add, interaction_data)
         
-        # デバッグ用（必要に応じてコメントアウト）
-        # print(f"📝 インタラクションをFirestoreに記録: {interaction_data.get('type')}")
+        # 成功ログ（デバッグ用）
+        print(f"📝 インタラクションをFirestoreに記録: {interaction_data.get('type')} (ID: {doc_ref[1].id})")
         
     except Exception as e:
         print(f'❌ Firestoreへの書き込みエラー: {e}')
-        print(f'❌ 書き込もうとしたデータ: {interaction_data}')
+        print(f'❌ 書き込もうとしたデータタイプ: {interaction_data.get("type", "unknown")}')
+        print(f'❌ ユーザーID: {interaction_data.get("userId", "unknown")}')
+        print(f'❌ ギルドID: {interaction_data.get("guildId", "unknown")}')
 
 # --- イベント情報をFirestoreに保存/更新する関数 ---
 async def save_event_to_firestore(event_data: dict):
@@ -188,10 +247,18 @@ async def delete_event_from_firestore(event_id: str):
 @bot.event
 async def on_ready():
     print(f'🚀 ログインしました！ Bot名: {bot.user}')
-    if db is None:
-        print("⚠️ Firebase Firestoreが初期化されていないため、ログ機能は動作しません。")
+    
+    # Firebase初期化を実行
+    if not firebase_initialized:
+        print("🔧 Firebase初期化を実行中...")
+        success = await init_firebase_async()
+        if success:
+            print("📝 ログ記録の準備ができました (Firestore)。")
+        else:
+            print("⚠️ Firebase Firestoreが初期化されていないため、ログ機能は動作しません。")
     else:
         print("📝 ログ記録の準備ができました (Firestore)。")
+    
     print('------')
 
 # --- 各種イベントリスナー関数 ---

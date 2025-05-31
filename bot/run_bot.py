@@ -90,14 +90,33 @@ def main():
     is_cloud_run = os.getenv('K_SERVICE') is not None
     if is_cloud_run:
         print("☁️ Cloud Run 環境を検出しました")
-        # ヘルスチェックサーバーを開始
-        start_health_server()
+        # ヘルスチェックサーバーを最初に開始
+        if not start_health_server():
+            print("⚠️ ヘルスチェックサーバーの起動に失敗しましたが、ボットの起動を続行します")
     
     # 環境確認
     if not check_requirements():
+        if is_cloud_run:
+            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
+            print("⚠️ 環境設定エラーですが、Cloud Run環境のためヘルスサーバーを維持します")
+            try:
+                # 無限ループでヘルスサーバーを維持
+                while True:
+                    time.sleep(60)
+            except KeyboardInterrupt:
+                pass
         sys.exit(1)
     
     if not install_dependencies():
+        if is_cloud_run:
+            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
+            print("⚠️ 依存関係エラーですが、Cloud Run環境のためヘルスサーバーを維持します")
+            try:
+                # 無限ループでヘルスサーバーを維持
+                while True:
+                    time.sleep(60)
+            except KeyboardInterrupt:
+                pass
         sys.exit(1)
     
     # Discord Bot Tokenの確認
@@ -119,6 +138,16 @@ def main():
             print("=" * 50)
         except Exception as e:
             print(f"❌ テストモード実行中にエラーが発生しました: {e}")
+        
+        if is_cloud_run:
+            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
+            print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
+            try:
+                # 無限ループでヘルスサーバーを維持
+                while True:
+                    time.sleep(60)
+            except KeyboardInterrupt:
+                pass
         return
     
     # ボットの実行
@@ -130,12 +159,7 @@ def main():
         # discord_bot.pyをインポート
         import discord_bot
         
-        # Firebase初期化の確認
-        if not discord_bot.firebase_initialized:
-            print("❌ エラー: Firebase Firestoreの初期化に失敗しました")
-            sys.exit(1)
-        
-        # ボットを実際に起動
+        # ボットを実際に起動（Firebase初期化はon_readyイベントで実行される）
         print("🚀 Discord ボットを起動中...")
         
         # Cloud Run環境の場合、ボット状態を更新
@@ -169,7 +193,11 @@ def main():
             try:
                 from health_server import update_bot_status
                 update_bot_status(False)
-            except:
+                # ヘルスサーバーを維持
+                print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
+                while True:
+                    time.sleep(60)
+            except KeyboardInterrupt:
                 pass
         
         sys.exit(1)
