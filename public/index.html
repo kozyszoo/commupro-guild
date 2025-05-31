@@ -929,9 +929,10 @@
           // インタラクション統計
           const interactionList = Object.values(interactions || {});
           const totalInteractions = interactionList.length;
-          const messageCount = interactionList.filter(i => i.type === 'message' || i.type === 'MESSAGE_CREATE').length;
-          const reactionCount = interactionList.filter(i => i.type === 'reaction' || i.type === 'REACTION_ADD').length;
-          const botCount = interactionList.filter(i => i.type === 'bot_interaction').length;
+          const messageCount = interactionList.filter(i => i.type === 'message').length;
+          const reactionCount = interactionList.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
+          const mentionCount = interactionList.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
+          const attachmentCount = interactionList.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
           
           document.getElementById('dashboard-interactions').innerHTML = `
             <div class="dashboard-card">
@@ -952,12 +953,12 @@
                     <span class="stat-label">メッセージ</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-number">${reactionCount}</span>
-                    <span class="stat-label">リアクション</span>
+                    <span class="stat-number">${mentionCount}</span>
+                    <span class="stat-label">メンション</span>
                   </div>
                   <div class="stat-item">
-                    <span class="stat-number">${botCount}</span>
-                    <span class="stat-label">ボット対話</span>
+                    <span class="stat-number">${attachmentCount}</span>
+                    <span class="stat-label">添付ファイル</span>
                   </div>
                 </div>
                 ${interactionList.length ? `
@@ -966,15 +967,67 @@
                     ${interactionList.slice(0, 5).map(i => `
                       <div class="activity-item">
                         <div class="activity-icon">
-                          <i class="material-icons">${i.type === 'message' || i.type === 'MESSAGE_CREATE' ? 'message' : i.type === 'reaction' || i.type === 'REACTION_ADD' ? 'thumb_up' : 'smart_toy'}</i>
+                          <i class="material-icons">${i.type === 'message' ? 'message' : 'chat'}</i>
                         </div>
                         <div class="activity-content">
-                          <div class="activity-title">${i.username || i.userId || '-'}</div>
+                          <div class="activity-title">
+                            ${i.username || '-'}
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.5rem;">
+                              #${i.channelName || '-'}
+                            </span>
+                          </div>
                           <div class="activity-description">${truncateText(i.content)}</div>
-                          <div class="activity-time">${formatDate(i.timestamp)}</div>
+                          <div class="activity-time">
+                            ${formatDate(i.timestamp)}
+                            ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 3).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                          </div>
                         </div>
                       </div>
                     `).join('')}
+                  </div>
+                  <div style="margin-top: 1rem; overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>ユーザー</th>
+                          <th>チャンネル</th>
+                          <th>メッセージ</th>
+                          <th>メタデータ</th>
+                          <th>時刻</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${interactionList.slice(0, 10).map(i => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${i.username || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.userId || ''}</div>
+                            </td>
+                            <td>
+                              <div style="font-weight: 600;">#${i.channelName || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.guildName || ''}</div>
+                            </td>
+                            <td>
+                              <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                ${truncateText(i.content, 100)}
+                              </div>
+                              ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                            </td>
+                            <td>
+                              <div style="font-size: 0.75rem;">
+                                ${safeGet(i, 'metadata.mentionCount', 0) > 0 ? `<span class="tag">メンション: ${i.metadata.mentionCount}</span>` : ''}
+                                ${safeGet(i, 'metadata.reactionCount', 0) > 0 ? `<span class="tag">リアクション: ${i.metadata.reactionCount}</span>` : ''}
+                                ${safeGet(i, 'metadata.hasAttachments', false) ? `<span class="tag">添付ファイル</span>` : ''}
+                                ${safeGet(i, 'metadata.hasEmbeds', false) ? `<span class="tag">埋め込み</span>` : ''}
+                              </div>
+                            </td>
+                            <td style="font-size: 0.75rem;">
+                              ${formatDate(i.timestamp)}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
                   </div>
                 ` : '<div class="no-data"><i class="material-icons">chat</i><div>インタラクションデータがありません</div></div>'}
               </div>
