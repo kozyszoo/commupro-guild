@@ -44,16 +44,16 @@ class PodcastGenerator:
                     'language_code': 'ja-JP',
                     'name': 'ja-JP-Neural2-B',  # 明るい女性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
-                    'speaking_rate': 1.2,  # 適度に速めで元気な印象
-                    'pitch': 2.0,  # 少し高めで可愛らしく
-                    'volume_gain_db': 1.0,  # 少し大きめで活発な印象
+                    'speaking_rate': 1.1,  # 少し速めで元気な印象
+                    'pitch': 1.0,  # 軽く高めで可愛らしく（掠れ防止）
+                    'volume_gain_db': 0.5,  # 少し大きめで活発な印象
                     'sample_rate_hertz': 24000
                 },
                 'gender': 'female',
                 'emotions': {
-                    'excited': {'pitch': 3.5, 'speaking_rate': 1.3},  # 興奮時は少し高く速く
-                    'calm': {'pitch': 1.5, 'speaking_rate': 1.1},    # 落ち着き時でも少し高め
-                    'curious': {'pitch': 2.5, 'speaking_rate': 1.25} # 好奇心は高めで少し速め
+                    'excited': {'pitch': 2.0, 'speaking_rate': 1.2},  # 興奮時も控えめに
+                    'calm': {'pitch': 0.5, 'speaking_rate': 1.05},    # 落ち着き時は自然に
+                    'curious': {'pitch': 1.5, 'speaking_rate': 1.15} # 好奇心は少し高めで少し速め
                 }
             },
             'eve': {
@@ -65,16 +65,16 @@ class PodcastGenerator:
                     'language_code': 'ja-JP',
                     'name': 'ja-JP-Neural2-C',  # 低めの男性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                    'speaking_rate': 0.9,  # ゆっくりで落ち着いた印象
-                    'pitch': -3.0,  # 低めで男性らしく、でも極端すぎない
+                    'speaking_rate': 0.95,  # ややゆっくりで落ち着いた印象
+                    'pitch': -2.0,  # 低めで男性らしく、でも自然な範囲
                     'volume_gain_db': 0.0,  # 標準的な音量で落ち着いた印象
                     'sample_rate_hertz': 24000
                 },
                 'gender': 'male',
                 'emotions': {
-                    'analytical': {'pitch': -4.0, 'speaking_rate': 0.85},  # 分析時は少し低くゆっくり
-                    'pleased': {'pitch': -2.0, 'speaking_rate': 0.95},      # 喜び時は少し明るめでも低め維持
-                    'thoughtful': {'pitch': -3.5, 'speaking_rate': 0.8}    # 思考時はより低くゆっくり
+                    'analytical': {'pitch': -2.5, 'speaking_rate': 0.9},  # 分析時は少し低くゆっくり
+                    'pleased': {'pitch': -1.5, 'speaking_rate': 1.0},      # 喜び時は少し明るめ
+                    'thoughtful': {'pitch': -2.2, 'speaking_rate': 0.85}    # 思考時は少し低くゆっくり
                 }
             }
         }
@@ -407,10 +407,10 @@ class PodcastGenerator:
         # キャラクター別の基本音声設定
         if character == 'miya':
             # みやにゃん：明るく活発な設定
-            ssml += '<prosody rate="1.2" pitch="+2.0st" volume="medium">'
+            ssml += '<prosody rate="1.1" pitch="+1.0st" volume="medium">'
         elif character == 'eve':
             # イヴにゃん：落ち着いて低い設定
-            ssml += '<prosody rate="0.9" pitch="-3.0st" volume="medium">'
+            ssml += '<prosody rate="0.95" pitch="-2.0st" volume="medium">'
         
         # キャラクター別の感情設定を追加適用
         if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
@@ -419,18 +419,18 @@ class PodcastGenerator:
             # 感情による追加調整
             if character == 'miya':
                 if emotion == 'excited':
-                    ssml += '<prosody rate="1.3" pitch="+3.5st">'
+                    ssml += '<prosody rate="1.2" pitch="+2.0st">'
                 elif emotion == 'curious':
-                    ssml += '<prosody rate="1.25" pitch="+2.5st">'
+                    ssml += '<prosody rate="1.15" pitch="+1.5st">'
                 elif emotion == 'calm':
-                    ssml += '<prosody rate="1.1" pitch="+1.5st">'
+                    ssml += '<prosody rate="1.05" pitch="+0.5st">'
             elif character == 'eve':
                 if emotion == 'analytical':
-                    ssml += '<prosody rate="0.85" pitch="-4.0st">'
+                    ssml += '<prosody rate="0.9" pitch="-2.5st">'
                 elif emotion == 'thoughtful':
-                    ssml += '<prosody rate="0.8" pitch="-3.5st">'
+                    ssml += '<prosody rate="0.85" pitch="-2.2st">'
                 elif emotion == 'pleased':
-                    ssml += '<prosody rate="0.95" pitch="-2.0st">'
+                    ssml += '<prosody rate="1.0" pitch="-1.5st">'
         
         # テキストを文に分割して、キャラクター別の特徴を強化
         sentences = re.split(r'([。！？])', clean_text)
@@ -789,18 +789,18 @@ class PodcastGenerator:
                     emotion = self.detect_emotion_from_content(speech, 'miya')
                     
                     # みやにゃんの基本設定
-                    ssml += '<prosody rate="1.2" pitch="+2.0st" volume="medium">'
+                    ssml += '<prosody rate="1.1" pitch="+1.0st" volume="medium">'
                     
                     # 感情による調整
                     if emotion == 'excited':
-                        ssml += '<prosody rate="1.3" pitch="+3.5st">'
+                        ssml += '<prosody rate="1.2" pitch="+2.0st">'
                     elif emotion == 'curious':
-                        ssml += '<prosody rate="1.25" pitch="+2.5st">'
+                        ssml += '<prosody rate="1.15" pitch="+1.5st">'
                     elif emotion == 'calm':
-                        ssml += '<prosody rate="1.1" pitch="+1.5st">'
+                        ssml += '<prosody rate="1.05" pitch="+0.5st">'
                     
                     # 特別な表現の調整
-                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="+3.0st">にゃー</prosody>', speech)
+                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="+1.5st">にゃー</prosody>', speech)
                     if '！' in speech or 'ありがとう' in speech or '楽しみ' in speech:
                         ssml += f'<emphasis level="strong">{speech_adjusted}</emphasis>'
                     else:
@@ -824,18 +824,18 @@ class PodcastGenerator:
                     emotion = self.detect_emotion_from_content(speech, 'eve')
                     
                     # イヴにゃんの基本設定
-                    ssml += '<prosody rate="0.9" pitch="-3.0st" volume="medium">'
+                    ssml += '<prosody rate="0.95" pitch="-2.0st" volume="medium">'
                     
                     # 感情による調整
                     if emotion == 'analytical':
-                        ssml += '<prosody rate="0.85" pitch="-4.0st">'
+                        ssml += '<prosody rate="0.9" pitch="-2.5st">'
                     elif emotion == 'thoughtful':
-                        ssml += '<prosody rate="0.8" pitch="-3.5st">'
+                        ssml += '<prosody rate="0.85" pitch="-2.2st">'
                     elif emotion == 'pleased':
-                        ssml += '<prosody rate="0.95" pitch="-2.0st">'
+                        ssml += '<prosody rate="1.0" pitch="-1.5st">'
                     
                     # 特別な表現の調整
-                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="-2.0st">にゃー</prosody>', speech)
+                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="-1.0st">にゃー</prosody>', speech)
                     if '数字' in speech or '統計' in speech or '分析' in speech:
                         ssml += f'<emphasis level="moderate">{speech_adjusted}</emphasis>'
                     else:

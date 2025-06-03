@@ -1,0 +1,9 @@
+{
+  "total_characters": 2,
+  "audio_files": {
+    "miya": "podcast_conversation_20250603_231823_miya.mp3",
+    "eve": "podcast_conversation_20250603_231823_eve.mp3"
+  },
+  "suggestion": "Use ffmpeg or similar tool to concatenate audio files in conversation order",
+  "generated_at": "2025-06-03T23:18:29.092474"
+}
