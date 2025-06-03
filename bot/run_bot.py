@@ -11,6 +11,9 @@ import threading
 import time
 from pathlib import Path
 from dotenv import load_dotenv
+import asyncio
+import traceback
+from multi_bot_manager import MultiBotManager
 
 # 環境変数の読み込み
 load_dotenv()
@@ -119,87 +122,52 @@ def main():
                 pass
         sys.exit(1)
     
-    # Discord Bot Tokenの確認
-    discord_token = os.getenv('DISCORD_BOT_TOKEN')
-    if discord_token == 'your_discord_bot_token_here':
-        print("📋 テストモード: Firebase接続のみ確認します...")
-        print("=" * 50)
-        
-        try:
-            # discord_bot.pyをインポートして初期化部分のみ実行
-            import discord_bot
-            print("=" * 50)
-            print("🔧 実際にボットを動作させるには:")
-            print("   1. Discord Developer Portal (https://discord.com/developers/applications) でボットを作成")
-            print("   2. Bot Tokenを取得")
-            print("   3. 環境変数 DISCORD_BOT_TOKEN に設定")
-            print("   4. ボットをDiscordサーバーに招待")
-            print("   5. 再度実行")
-            print("=" * 50)
-        except Exception as e:
-            print(f"❌ テストモード実行中にエラーが発生しました: {e}")
-        
-        if is_cloud_run:
-            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
-            print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
-            try:
-                # 無限ループでヘルスサーバーを維持
-                while True:
-                    time.sleep(60)
-            except KeyboardInterrupt:
-                pass
-        return
+    # MultiBotManagerのインスタンスを作成
+    bot_manager = MultiBotManager()
     
     # ボットの実行
-    print("🚀 ボットを起動します...")
+    print("🚀 複数ボットを起動します...")
     print("   停止するには Ctrl+C を押してください")
     print("=" * 50)
     
     try:
-        # discord_bot.pyをインポート
-        import discord_bot
+        # 全てのボットを非同期で起動
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(bot_manager.start_all_bots())
         
-        # ボットを実際に起動（Firebase初期化はon_readyイベントで実行される）
-        print("🚀 Discord ボットを起動中...")
-        
-        # Cloud Run環境の場合、ボット状態を更新
-        if is_cloud_run:
-            try:
-                from health_server import update_bot_status
-                update_bot_status(True)
-            except:
-                pass
-        
-        discord_bot.bot.run(discord_token)
-        
+        # 成功したボットがあれば待機
+        if any(results.values()):
+            print("\n📱 Botが起動しました。Ctrl+Cで停止します。")
+            loop.run_until_complete(bot_manager.wait_for_bots())
+        else:
+            print("❌ 全てのBotの起動に失敗しました")
+            if is_cloud_run:
+                print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
+                while True: time.sleep(60)
+
     except KeyboardInterrupt:
         print("\n🛑 ボットが停止されました")
-        
-        # Cloud Run環境の場合、ボット状態を更新
         if is_cloud_run:
             try:
                 from health_server import update_bot_status
-                update_bot_status(False)
-            except:
-                pass
+                update_bot_status(False) # ヘルスチェックサーバーにも通知
+            except: pass
+        loop.run_until_complete(bot_manager.stop_all_bots()) # 全ボット停止
                 
     except Exception as e:
         print(f"❌ ボット実行中にエラーが発生しました: {e}")
-        import traceback
         traceback.print_exc()
         
-        # Cloud Run環境の場合、ボット状態を更新
         if is_cloud_run:
             try:
                 from health_server import update_bot_status
-                update_bot_status(False)
-                # ヘルスサーバーを維持
+                update_bot_status(False) # ヘルスチェックサーバーにも通知
                 print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
-                while True:
-                    time.sleep(60)
+                while True: time.sleep(60)
             except KeyboardInterrupt:
                 pass
         
+        loop.run_until_complete(bot_manager.stop_all_bots()) # エラー時も全ボット停止
         sys.exit(1)
 
 if __name__ == "__main__":
