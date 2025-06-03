@@ -624,6 +624,12 @@
           <i class="material-icons">pets</i>
           にゃんこエージェント管理パネル
         </a>
+        <ul class="right hide-on-med-and-down">
+          <li style="color: #fff; padding: 0 20px; display: flex; align-items: center;">
+            <i class="material-icons" style="margin-right: 8px;">access_time</i>
+            <span id="current-time">読み込み中...</span>
+          </li>
+        </ul>
       </div>
     </nav>
     
@@ -681,11 +687,35 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
 
-      function formatDate(dateString) {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
+      function formatDate(dateValue) {
+        if (!dateValue) return '-';
+        
+        let date;
+        
+        // Firestoreのタイムスタンプオブジェクトの場合
+        if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+          date = dateValue.toDate();
+        }
+        // Firestoreのタイムスタンプオブジェクト（seconds/nanoseconds形式）の場合
+        else if (dateValue && typeof dateValue === 'object' && dateValue.seconds) {
+          date = new Date(dateValue.seconds * 1000 + (dateValue.nanoseconds || 0) / 1000000);
+        }
+        // 文字列または数値の場合
+        else {
+          date = new Date(dateValue);
+        }
+        
         if (isNaN(date.getTime())) return '-';
         return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
+      }
+
+      function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleDateString('ja-JP') + ' ' + now.toLocaleTimeString('ja-JP');
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+          timeElement.textContent = timeString;
+        }
       }
 
       function getEngagementClass(score) {
@@ -972,29 +1002,6 @@
                   </div>
                 </div>
                 ${interactionList.length ? `
-                  <div class="recent-activity">
-                    <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">最近のアクティビティ</div>
-                    ${interactionList.slice(0, 5).map(i => `
-                      <div class="activity-item">
-                        <div class="activity-icon">
-                          <i class="material-icons">${i.type === 'message' ? 'message' : 'chat'}</i>
-                        </div>
-                        <div class="activity-content">
-                          <div class="activity-title">
-                            ${i.username || '-'}
-                            <span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.5rem;">
-                              #${i.channelName || '-'}
-                            </span>
-                          </div>
-                          <div class="activity-description">${truncateText(i.content)}</div>
-                          <div class="activity-time">
-                            ${formatDate(i.timestamp)}
-                            ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 3).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
-                          </div>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
                   <div style="margin-top: 1rem; overflow-x:auto;">
                     <table class="dashboard-table">
                       <thead>
@@ -1079,34 +1086,6 @@
                   </div>
                 </div>
                 ${eventList.length ? `
-                  <div class="recent-activity">
-                    <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">イベント一覧</div>
-                    ${eventList.slice(0, 4).map(e => `
-                      <div class="activity-item">
-                        <div class="activity-icon">
-                          <i class="material-icons">${e.entityType === 'voice' ? 'mic' : 'event'}</i>
-                        </div>
-                        <div class="activity-content">
-                          <div class="activity-title">
-                            ${e.name || '-'}
-                            <span class="status-badge ${getStatusClass(e.status)}" style="margin-left: 0.5rem; font-size: 0.7rem;">
-                              ${e.status || '-'}
-                            </span>
-                          </div>
-                          <div class="activity-description">
-                            ${e.description || 'イベントの説明はありません'}
-                            ${(e.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${e.keywords.slice(0, 3).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
-                          </div>
-                          <div class="activity-time">
-                            <div><strong>開始:</strong> ${formatDate(e.startTime)}</div>
-                            ${e.endTime ? `<div><strong>終了:</strong> ${formatDate(e.endTime)}</div>` : ''}
-                            <div><strong>参加者:</strong> ${e.userCount || 0}人 | <strong>タイプ:</strong> ${e.entityType || '-'}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">ギルド: ${e.guildName || '-'}</div>
-                          </div>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
                   <div style="margin-top: 1rem; overflow-x:auto;">
                     <table class="dashboard-table">
                       <thead>
@@ -1404,7 +1383,13 @@
       }
 
       // Initialize dashboard
-      document.addEventListener('DOMContentLoaded', loadDashboard);
+      document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        
+        // 現在時刻を初期化し、1秒ごとに更新
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+      });
     </script>
   </body>
 </html>

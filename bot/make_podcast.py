@@ -18,7 +18,8 @@ from dotenv import load_dotenv
 from collections import Counter
 import re
 from typing import List, Dict, Any, Optional
-from gtts import gTTS
+from google.cloud import texttospeech
+from google.oauth2 import service_account
 import tempfile
 import io
 
@@ -32,7 +33,7 @@ class PodcastGenerator:
         self.db = None
         self.initialize_firebase()
         
-        # キャラクター設定
+        # キャラクター設定（改善版）
         self.characters = {
             'miya': {
                 'name': 'みやにゃん',
@@ -40,11 +41,20 @@ class PodcastGenerator:
                 'personality': 'フレンドリーで好奇心旺盛、新しい技術に興味津々',
                 'speaking_style': 'だにゃ、にゃ〜、だよにゃ',
                 'voice_settings': {
-                    'lang': 'ja',
-                    'tld': 'com.au',  # オーストラリア英語（女性的な声）
-                    'slow': False
+                    'language_code': 'ja-JP',
+                    'name': 'ja-JP-Neural2-B',  # 女性の声
+                    'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
+                    'speaking_rate': 1.15,  # 少しゆっくりめに調整
+                    'pitch': 1.5,  # 少し控えめに調整
+                    'volume_gain_db': 2.0,  # 音量を少し上げる
+                    'sample_rate_hertz': 24000  # 高品質サンプリングレート
                 },
-                'gender': 'female'
+                'gender': 'female',
+                'emotions': {
+                    'excited': {'pitch': 3.0, 'speaking_rate': 1.3},
+                    'calm': {'pitch': 0.5, 'speaking_rate': 1.0},
+                    'curious': {'pitch': 2.0, 'speaking_rate': 1.2}
+                }
             },
             'eve': {
                 'name': 'イヴにゃん',
@@ -52,11 +62,20 @@ class PodcastGenerator:
                 'personality': 'クールで分析的、データや統計が得意',
                 'speaking_style': 'ですにゃ、なのにゃ、ですね',
                 'voice_settings': {
-                    'lang': 'ja',
-                    'tld': 'co.in',  # インド英語（男性的な声）
-                    'slow': False
+                    'language_code': 'ja-JP',
+                    'name': 'ja-JP-Neural2-D',  # より中性的で落ち着いた声に変更
+                    'ssml_gender': texttospeech.SsmlVoiceGender.NEUTRAL,
+                    'speaking_rate': 1.1,  # より落ち着いたテンポ
+                    'pitch': -1.0,  # 適度に低め
+                    'volume_gain_db': 1.0,  # 適度な音量
+                    'sample_rate_hertz': 24000  # 高品質サンプリングレート
                 },
-                'gender': 'male'
+                'gender': 'neutral',
+                'emotions': {
+                    'analytical': {'pitch': -2.0, 'speaking_rate': 1.0},
+                    'pleased': {'pitch': 0.0, 'speaking_rate': 1.15},
+                    'thoughtful': {'pitch': -1.5, 'speaking_rate': 0.95}
+                }
             }
         }
     
@@ -377,25 +396,191 @@ class PodcastGenerator:
         
         return content.strip()
     
-    async def generate_audio(self, content: str, filename: Optional[str] = None, lang: str = 'ja') -> Optional[str]:
-        """ポッドキャスト内容を音声ファイルに変換"""
+    def create_ssml_content(self, text: str, character: str = None, emotion: str = None) -> str:
+        """SSML（Speech Synthesis Markup Language）を使用した高品質な音声用テキスト生成"""
+        # 基本的なクリーンアップ
+        clean_text = self.clean_text_for_tts(text, remove_character_names=True)
+        
+        # SSMLの開始タグ
+        ssml = '<speak>'
+        
+        # キャラクター別の感情設定
+        if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
+            emotion_settings = self.characters[character]['emotions'][emotion]
+            prosody_attrs = []
+            
+            if 'pitch' in emotion_settings:
+                pitch_value = f"{emotion_settings['pitch']:+.1f}st"
+                prosody_attrs.append(f'pitch="{pitch_value}"')
+            
+            if 'speaking_rate' in emotion_settings:
+                rate_value = f"{emotion_settings['speaking_rate']:.2f}"
+                prosody_attrs.append(f'rate="{rate_value}"')
+            
+            if prosody_attrs:
+                ssml += f'<prosody {" ".join(prosody_attrs)}>'
+        
+        # テキストを文に分割して、自然な間を追加
+        sentences = re.split(r'([。！？])', clean_text)
+        
+        for i, sentence in enumerate(sentences):
+            if not sentence.strip():
+                continue
+                
+            # 感情的な表現を検出してSSMLマークアップを追加
+            if '！' in sentence or 'ありがとう' in sentence or '楽しみ' in sentence:
+                # 興奮や感謝の表現
+                ssml += f'<emphasis level="moderate">{sentence}</emphasis>'
+            elif '数字' in sentence or '統計' in sentence or '分析' in sentence:
+                # 分析的な表現
+                ssml += f'<prosody rate="0.9">{sentence}</prosody>'
+            elif 'にゃー' in sentence or 'にゃん' in sentence:
+                # 猫らしい表現
+                ssml += f'<prosody pitch="+1.0st">{sentence}</prosody>'
+            else:
+                ssml += sentence
+            
+            # 文の間に適切な休止を追加
+            if sentence.endswith(('。', '！', '？')) and i < len(sentences) - 2:
+                if '。' in sentence:
+                    ssml += '<break time="800ms"/>'  # 普通の文の後は800ms
+                elif '！' in sentence:
+                    ssml += '<break time="600ms"/>'  # 感嘆文の後は600ms
+                elif '？' in sentence:
+                    ssml += '<break time="700ms"/>'  # 疑問文の後は700ms
+        
+        # 特別な表現の調整
+        ssml = re.sub(r'にゃー+', '<phoneme alphabet="ipa" ph="ɲaː">にゃー</phoneme>', ssml)
+        
+        # キャラクター別の感情設定の終了タグ
+        if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
+            ssml += '</prosody>'
+        
+        # SSMLの終了タグ
+        ssml += '</speak>'
+        
+        return ssml
+    
+    def detect_emotion_from_content(self, text: str, character: str) -> str:
+        """テキスト内容からキャラクターに適した感情を検出"""
+        if character not in self.characters:
+            return None
+        
+        emotions = self.characters[character].get('emotions', {})
+        if not emotions:
+            return None
+        
+        # キーワードベースの感情検出
+        excited_keywords = ['！', 'すごい', 'すばらしい', '楽しい', 'ありがとう', '活発', '盛り上がり']
+        analytical_keywords = ['統計', '分析', 'データ', '数字', '件', '割合', '比較']
+        calm_keywords = ['落ち着い', '安定', 'ゆっくり', '深い']
+        
+        text_lower = text.lower()
+        
+        if character == 'miya':
+            # みやにゃんの感情検出
+            if any(keyword in text for keyword in excited_keywords):
+                return 'excited'
+            else:
+                curious_keywords = ['新しい', '興味', '気になる', '知りたい']
+                if any(keyword in text for keyword in curious_keywords):
+                    return 'curious'
+                else:
+                    return 'calm'
+        elif character == 'eve':
+            # イヴにゃんの感情検出
+            if any(keyword in text for keyword in analytical_keywords):
+                return 'analytical'
+            elif any(keyword in text for keyword in ['良い', 'すばらしい', '素晴らしい']):
+                return 'pleased'
+            else:
+                return 'thoughtful'
+        
+        return None
+    
+    async def generate_audio(self, content: str, filename: Optional[str] = None, voice_settings: Optional[Dict] = None, character: str = None, use_ssml: bool = True) -> Optional[str]:
+        """ポッドキャスト内容を音声ファイルに変換（SSML対応、高品質版）"""
         if not filename:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"podcast_{timestamp}.mp3"
         
         try:
-            print("🎵 音声ファイル生成中...")
+            print("🎵 高品質音声ファイル生成中...")
             
-            # テキストをTTS用にクリーンアップ（キャラクター名も削除）
-            clean_content = self.clean_text_for_tts(content, remove_character_names=True)
+            # Google Cloud Text-to-Speech クライアントを初期化
+            key_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH', 
+                               './nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
             
-            # gTTSで音声生成
-            tts = gTTS(text=clean_content, lang=lang, slow=False)
+            if os.path.exists(key_path):
+                client = texttospeech.TextToSpeechClient.from_service_account_json(key_path)
+            elif os.getenv('FIREBASE_SERVICE_ACCOUNT'):
+                service_account_info = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
+                credentials = service_account.Credentials.from_service_account_info(service_account_info)
+                client = texttospeech.TextToSpeechClient(credentials=credentials)
+            else:
+                print("⚠️ サービスアカウントキーが見つかりません。デフォルトクレデンシャルを使用します。")
+                client = texttospeech.TextToSpeechClient()
+            
+            # デフォルトの音声設定（高品質版）
+            default_voice_settings = {
+                'language_code': 'ja-JP',
+                'name': 'ja-JP-Neural2-B',
+                'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
+                'speaking_rate': 1.15,
+                'pitch': 0.0,
+                'volume_gain_db': 2.0,
+                'sample_rate_hertz': 24000
+            }
+            
+            # 音声設定をマージ
+            if voice_settings:
+                default_voice_settings.update(voice_settings)
+            
+            # SSML対応のテキスト準備
+            if use_ssml and character:
+                # 感情を検出
+                emotion = self.detect_emotion_from_content(content, character)
+                # SSMLコンテンツ生成
+                synthesis_input = texttospeech.SynthesisInput(
+                    ssml=self.create_ssml_content(content, character, emotion)
+                )
+                print(f"📢 {character}キャラクターの{emotion}感情でSSML音声生成中...")
+            else:
+                # 通常のテキスト処理
+                clean_content = self.clean_text_for_tts(content, remove_character_names=True)
+                synthesis_input = texttospeech.SynthesisInput(text=clean_content)
+                print("📢 通常のテキスト音声生成中...")
+            
+            # 音声設定
+            voice = texttospeech.VoiceSelectionParams(
+                language_code=default_voice_settings['language_code'],
+                name=default_voice_settings['name'],
+                ssml_gender=default_voice_settings['ssml_gender']
+            )
+            
+            # 高品質音声設定
+            audio_config = texttospeech.AudioConfig(
+                audio_encoding=texttospeech.AudioEncoding.MP3,
+                speaking_rate=default_voice_settings['speaking_rate'],
+                pitch=default_voice_settings['pitch'],
+                volume_gain_db=default_voice_settings.get('volume_gain_db', 0.0),
+                sample_rate_hertz=default_voice_settings.get('sample_rate_hertz', 24000),
+                effects_profile_id=['telephony-class-application']  # 音質改善プロファイル
+            )
+            
+            # 音声合成を実行
+            response = await asyncio.to_thread(
+                client.synthesize_speech,
+                input=synthesis_input,
+                voice=voice,
+                audio_config=audio_config
+            )
             
             # 音声ファイルに保存
-            await asyncio.to_thread(tts.save, filename)
+            with open(filename, 'wb') as out:
+                out.write(response.audio_content)
             
-            print(f"🎵 音声ファイルを生成: {filename}")
+            print(f"🎵 高品質音声ファイルを生成: {filename}")
             return filename
             
         except Exception as e:
@@ -403,7 +588,7 @@ class PodcastGenerator:
             return None
     
     async def generate_character_audio(self, content: str, base_filename: Optional[str] = None) -> Dict[str, str]:
-        """キャラクター別に音声ファイルを生成"""
+        """キャラクター別に音声ファイルを生成（SSML対応、高品質版）"""
         if not base_filename:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             base_filename = f"podcast_{timestamp}"
@@ -434,40 +619,100 @@ class PodcastGenerator:
                     # ナレーション
                     character_lines['narrator'].append(line)
             
-            # 各キャラクターの音声を生成
+            # 各キャラクターの音声を生成（高品質版）
             for character, lines_list in character_lines.items():
                 if lines_list:
                     character_text = ' '.join(lines_list)
-                    clean_text = self.clean_text_for_tts(character_text, remove_character_names=True)
                     
-                    if clean_text:
+                    if character_text.strip():
                         filename = f"{base_filename}_{character}.mp3"
                         
-                        print(f"🎵 {character}の音声生成中...")
+                        print(f"🎵 {character}の高品質音声生成中...")
                         
                         # キャラクター別の音声設定を使用
                         if character in self.characters:
                             voice_settings = self.characters[character]['voice_settings']
-                            tts = gTTS(
-                                text=clean_text, 
-                                lang=voice_settings['lang'],
-                                tld=voice_settings['tld'],
-                                slow=voice_settings['slow']
+                            # SSML対応で音声生成
+                            audio_file = await self.generate_audio(
+                                character_text, 
+                                filename, 
+                                voice_settings,
+                                character=character,
+                                use_ssml=True
                             )
+                            if audio_file:
+                                audio_files[character] = audio_file
+                                print(f"✅ {character}の高品質音声ファイル生成完了: {filename}")
                         else:
-                            # ナレーション用のデフォルト設定
-                            tts = gTTS(text=clean_text, lang='ja', tld='com', slow=False)
-                        
-                        await asyncio.to_thread(tts.save, filename)
-                        
-                        audio_files[character] = filename
-                        print(f"✅ {character}の音声ファイル生成完了: {filename}")
+                            # ナレーション用の高品質設定
+                            default_narrator_settings = {
+                                'language_code': 'ja-JP',
+                                'name': 'ja-JP-Neural2-D',  # ナレーション用の中性的な声
+                                'ssml_gender': texttospeech.SsmlVoiceGender.NEUTRAL,
+                                'speaking_rate': 1.2,
+                                'pitch': 0.0,
+                                'volume_gain_db': 1.5,
+                                'sample_rate_hertz': 24000
+                            }
+                            # ナレーションはSSMLなしで生成
+                            audio_file = await self.generate_audio(
+                                character_text, 
+                                filename, 
+                                default_narrator_settings,
+                                character=None,
+                                use_ssml=False
+                            )
+                            if audio_file:
+                                audio_files[character] = audio_file
+                                print(f"✅ {character}の高品質音声ファイル生成完了: {filename}")
             
             return audio_files
             
         except Exception as e:
             print(f"❌ キャラクター別音声生成エラー: {e}")
             return {}
+    
+    async def create_conversation_audio(self, content: str, base_filename: Optional[str] = None) -> Optional[str]:
+        """会話形式で統合された高品質音声を生成（キャラクター切り替え対応）"""
+        if not base_filename:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            base_filename = f"podcast_conversation_{timestamp}"
+        
+        try:
+            print("🎭 会話形式音声生成中...")
+            
+            # 各キャラクターの個別音声を生成
+            character_audios = await self.generate_character_audio(content, base_filename)
+            
+            if len(character_audios) > 1:
+                # 複数の音声ファイルが生成された場合は、統合処理の準備
+                print("🔄 複数キャラクターの音声統合準備完了")
+                print("💡 音声統合には外部ツール（ffmpeg等）の使用を推奨します")
+                
+                # 統合用のメタデータファイルを作成
+                metadata_filename = f"{base_filename}_metadata.json"
+                metadata = {
+                    'total_characters': len(character_audios),
+                    'audio_files': character_audios,
+                    'suggestion': 'Use ffmpeg or similar tool to concatenate audio files in conversation order',
+                    'generated_at': datetime.datetime.now().isoformat()
+                }
+                
+                with open(metadata_filename, 'w', encoding='utf-8') as f:
+                    json.dump(metadata, f, ensure_ascii=False, indent=2)
+                
+                print(f"📋 音声統合メタデータを生成: {metadata_filename}")
+                return metadata_filename
+            elif character_audios:
+                # 単一キャラクターの場合はそのまま返す
+                return list(character_audios.values())[0]
+            else:
+                print("⚠️ 音声ファイルが生成されませんでした")
+                return None
+                
+        except Exception as e:
+            print(f"❌ 会話形式音声生成エラー: {e}")
+            return None
     
     async def generate_podcast(self, days: int = 7, save_to_firestore: bool = True, save_to_file: bool = True, generate_audio: bool = True) -> Dict[str, Any]:
         """ポッドキャストを生成するメイン関数"""
@@ -512,18 +757,28 @@ class PodcastGenerator:
             
             # 音声ファイル生成
             if generate_audio:
-                print("\n🎵 音声ファイル生成を開始...")
+                print("\n🎵 高品質音声ファイル生成を開始...")
                 
-                # 統合音声ファイルを生成
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                audio_filename = await self.generate_audio(content, f"podcast_full_{timestamp}.mp3")
+                
+                # 統合音声ファイルを生成（高品質版）
+                audio_filename = await self.generate_audio(
+                    content, 
+                    f"podcast_full_{timestamp}.mp3",
+                    use_ssml=False  # 統合版はSSMLなしで生成
+                )
                 if audio_filename:
                     result['audio_file'] = audio_filename
                 
-                # キャラクター別音声ファイルを生成
+                # キャラクター別音声ファイルを生成（SSML対応）
                 character_audio_files = await self.generate_character_audio(content, f"podcast_{timestamp}")
                 if character_audio_files:
                     result['character_audio_files'] = character_audio_files
+                
+                # 会話形式音声を生成（新機能）
+                conversation_audio = await self.create_conversation_audio(content, f"podcast_conversation_{timestamp}")
+                if conversation_audio:
+                    result['conversation_metadata'] = conversation_audio
             
             print("✅ ポッドキャスト生成完了！")
             print("\n" + "="*50)
@@ -531,6 +786,17 @@ class PodcastGenerator:
             print("="*50)
             print(content)
             print("="*50)
+            
+            # 音声ファイル情報の表示
+            if 'audio_file' in result:
+                print(f"🎵 統合音声ファイル: {result['audio_file']}")
+            if 'character_audio_files' in result:
+                print(f"🎭 キャラクター別音声ファイル:")
+                for character, filename in result['character_audio_files'].items():
+                    print(f"   - {character}: {filename}")
+            if 'conversation_metadata' in result:
+                print(f"💬 会話形式音声メタデータ: {result['conversation_metadata']}")
+                print("💡 ヒント: 会話形式の音声統合にはffmpegなどの外部ツールをご利用ください")
             
             return result
             
@@ -567,6 +833,9 @@ async def main():
             print(f"🎭 キャラクター別音声ファイル:")
             for character, filename in result['character_audio_files'].items():
                 print(f"   - {character}: {filename}")
+        if 'conversation_metadata' in result:
+            print(f"💬 会話形式音声メタデータ: {result['conversation_metadata']}")
+            print("💡 ヒント: 会話形式の音声統合にはffmpegなどの外部ツールをご利用ください")
         
         # 統計情報の表示
         analysis = result.get('analysis', {})
