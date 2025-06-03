@@ -42,18 +42,18 @@ class PodcastGenerator:
                 'speaking_style': 'だにゃ、にゃ〜、だよにゃ',
                 'voice_settings': {
                     'language_code': 'ja-JP',
-                    'name': 'ja-JP-Neural2-B',  # 女性の声
+                    'name': 'ja-JP-Neural2-B',  # 明るい女性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
-                    'speaking_rate': 1.15,  # 少しゆっくりめに調整
-                    'pitch': 1.5,  # 少し控えめに調整
-                    'volume_gain_db': 2.0,  # 音量を少し上げる
-                    'sample_rate_hertz': 24000  # 高品質サンプリングレート
+                    'speaking_rate': 1.35,  # かなり速めで元気な印象
+                    'pitch': 4.0,  # 大幅に高めで可愛らしく
+                    'volume_gain_db': 3.0,  # 少し大きめで活発な印象
+                    'sample_rate_hertz': 24000
                 },
                 'gender': 'female',
                 'emotions': {
-                    'excited': {'pitch': 3.0, 'speaking_rate': 1.3},
-                    'calm': {'pitch': 0.5, 'speaking_rate': 1.0},
-                    'curious': {'pitch': 2.0, 'speaking_rate': 1.2}
+                    'excited': {'pitch': 6.0, 'speaking_rate': 1.5},  # 非常に高く速く
+                    'calm': {'pitch': 2.5, 'speaking_rate': 1.2},    # それでも高めを維持
+                    'curious': {'pitch': 5.0, 'speaking_rate': 1.4}  # 好奇心は高めで速め
                 }
             },
             'eve': {
@@ -63,18 +63,18 @@ class PodcastGenerator:
                 'speaking_style': 'ですにゃ、なのにゃ、ですね',
                 'voice_settings': {
                     'language_code': 'ja-JP',
-                    'name': 'ja-JP-Neural2-D',  # より中性的で落ち着いた声に変更
-                    'ssml_gender': texttospeech.SsmlVoiceGender.NEUTRAL,
-                    'speaking_rate': 1.1,  # より落ち着いたテンポ
-                    'pitch': -1.0,  # 適度に低め
-                    'volume_gain_db': 1.0,  # 適度な音量
-                    'sample_rate_hertz': 24000  # 高品質サンプリングレート
+                    'name': 'ja-JP-Neural2-C',  # 低めの男性の声に戻す
+                    'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
+                    'speaking_rate': 0.95,  # かなりゆっくりで落ち着いた印象
+                    'pitch': -4.0,  # 大幅に低めでクールに
+                    'volume_gain_db': 0.5,  # 控えめな音量で落ち着いた印象
+                    'sample_rate_hertz': 24000
                 },
-                'gender': 'neutral',
+                'gender': 'male',
                 'emotions': {
-                    'analytical': {'pitch': -2.0, 'speaking_rate': 1.0},
-                    'pleased': {'pitch': 0.0, 'speaking_rate': 1.15},
-                    'thoughtful': {'pitch': -1.5, 'speaking_rate': 0.95}
+                    'analytical': {'pitch': -5.0, 'speaking_rate': 0.85},  # 非常に低くゆっくり
+                    'pleased': {'pitch': -2.0, 'speaking_rate': 1.0},      # 少し明るめでも低め維持
+                    'thoughtful': {'pitch': -4.5, 'speaking_rate': 0.8}    # より深く考える感じ
                 }
             }
         }
@@ -404,56 +404,110 @@ class PodcastGenerator:
         # SSMLの開始タグ
         ssml = '<speak>'
         
-        # キャラクター別の感情設定
+        # キャラクター別の基本音声設定
+        if character == 'miya':
+            # みやにゃん：明るく活発な設定
+            ssml += '<prosody rate="1.35" pitch="+4.0st" volume="loud">'
+        elif character == 'eve':
+            # イヴにゃん：落ち着いて低い設定
+            ssml += '<prosody rate="0.95" pitch="-4.0st" volume="medium">'
+        
+        # キャラクター別の感情設定を追加適用
         if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
             emotion_settings = self.characters[character]['emotions'][emotion]
-            prosody_attrs = []
             
-            if 'pitch' in emotion_settings:
-                pitch_value = f"{emotion_settings['pitch']:+.1f}st"
-                prosody_attrs.append(f'pitch="{pitch_value}"')
-            
-            if 'speaking_rate' in emotion_settings:
-                rate_value = f"{emotion_settings['speaking_rate']:.2f}"
-                prosody_attrs.append(f'rate="{rate_value}"')
-            
-            if prosody_attrs:
-                ssml += f'<prosody {" ".join(prosody_attrs)}>'
+            # 感情による追加調整
+            if character == 'miya':
+                if emotion == 'excited':
+                    ssml += '<prosody rate="1.5" pitch="+6.0st">'
+                elif emotion == 'curious':
+                    ssml += '<prosody rate="1.4" pitch="+5.0st">'
+                elif emotion == 'calm':
+                    ssml += '<prosody rate="1.2" pitch="+2.5st">'
+            elif character == 'eve':
+                if emotion == 'analytical':
+                    ssml += '<prosody rate="0.85" pitch="-5.0st">'
+                elif emotion == 'thoughtful':
+                    ssml += '<prosody rate="0.8" pitch="-4.5st">'
+                elif emotion == 'pleased':
+                    ssml += '<prosody rate="1.0" pitch="-2.0st">'
         
-        # テキストを文に分割して、自然な間を追加
+        # テキストを文に分割して、キャラクター別の特徴を強化
         sentences = re.split(r'([。！？])', clean_text)
         
         for i, sentence in enumerate(sentences):
             if not sentence.strip():
                 continue
-                
-            # 感情的な表現を検出してSSMLマークアップを追加
-            if '！' in sentence or 'ありがとう' in sentence or '楽しみ' in sentence:
-                # 興奮や感謝の表現
-                ssml += f'<emphasis level="moderate">{sentence}</emphasis>'
-            elif '数字' in sentence or '統計' in sentence or '分析' in sentence:
-                # 分析的な表現
-                ssml += f'<prosody rate="0.9">{sentence}</prosody>'
-            elif 'にゃー' in sentence or 'にゃん' in sentence:
-                # 猫らしい表現
-                ssml += f'<prosody pitch="+1.0st">{sentence}</prosody>'
-            else:
-                ssml += sentence
             
-            # 文の間に適切な休止を追加
+            # キャラクター別の表現調整
+            if character == 'miya':
+                # みやにゃん：明るく元気な表現を強調
+                if '！' in sentence or 'ありがとう' in sentence or '楽しみ' in sentence or 'すごい' in sentence:
+                    ssml += f'<emphasis level="strong"><prosody rate="1.6" pitch="+7.0st">{sentence}</prosody></emphasis>'
+                elif 'にゃー' in sentence or 'にゃん' in sentence:
+                    ssml += f'<prosody pitch="+5.5st" rate="1.4">{sentence}</prosody>'
+                elif '数字' in sentence or '件' in sentence:
+                    ssml += f'<emphasis level="moderate">{sentence}</emphasis>'
+                else:
+                    ssml += sentence
+            elif character == 'eve':
+                # イヴにゃん：分析的で落ち着いた表現を強調
+                if '数字' in sentence or '統計' in sentence or '分析' in sentence or 'データ' in sentence:
+                    ssml += f'<emphasis level="moderate"><prosody rate="0.8" pitch="-5.5st">{sentence}</prosody></emphasis>'
+                elif 'にゃー' in sentence or 'にゃん' in sentence:
+                    ssml += f'<prosody pitch="-3.5st" rate="0.9">{sentence}</prosody>'
+                elif 'すばらしい' in sentence or '良い' in sentence:
+                    ssml += f'<prosody rate="1.05" pitch="-2.5st">{sentence}</prosody>'
+                else:
+                    ssml += sentence
+            else:
+                # その他のキャラクター（ナレーション等）
+                if '！' in sentence or 'ありがとう' in sentence or '楽しみ' in sentence:
+                    ssml += f'<emphasis level="moderate">{sentence}</emphasis>'
+                elif '数字' in sentence or '統計' in sentence or '分析' in sentence:
+                    ssml += f'<prosody rate="0.9">{sentence}</prosody>'
+                else:
+                    ssml += sentence
+            
+            # 文の間に適切な休止を追加（キャラクター別調整）
             if sentence.endswith(('。', '！', '？')) and i < len(sentences) - 2:
-                if '。' in sentence:
-                    ssml += '<break time="800ms"/>'  # 普通の文の後は800ms
-                elif '！' in sentence:
-                    ssml += '<break time="600ms"/>'  # 感嘆文の後は600ms
-                elif '？' in sentence:
-                    ssml += '<break time="700ms"/>'  # 疑問文の後は700ms
+                if character == 'miya':
+                    # みやにゃん：短めの休止で活発さを表現
+                    if '。' in sentence:
+                        ssml += '<break time="600ms"/>'
+                    elif '！' in sentence:
+                        ssml += '<break time="400ms"/>'
+                    elif '？' in sentence:
+                        ssml += '<break time="500ms"/>'
+                elif character == 'eve':
+                    # イヴにゃん：長めの休止で落ち着きを表現
+                    if '。' in sentence:
+                        ssml += '<break time="1000ms"/>'
+                    elif '！' in sentence:
+                        ssml += '<break time="800ms"/>'
+                    elif '？' in sentence:
+                        ssml += '<break time="900ms"/>'
+                else:
+                    # デフォルト
+                    if '。' in sentence:
+                        ssml += '<break time="800ms"/>'
+                    elif '！' in sentence:
+                        ssml += '<break time="600ms"/>'
+                    elif '？' in sentence:
+                        ssml += '<break time="700ms"/>'
         
-        # 特別な表現の調整
-        ssml = re.sub(r'にゃー+', '<phoneme alphabet="ipa" ph="ɲaː">にゃー</phoneme>', ssml)
+        # 特別な表現の調整（キャラクター別）
+        if character == 'miya':
+            ssml = re.sub(r'にゃー+', '<phoneme alphabet="ipa" ph="ɲaː"><prosody pitch="+6.0st">にゃー</prosody></phoneme>', ssml)
+        elif character == 'eve':
+            ssml = re.sub(r'にゃー+', '<phoneme alphabet="ipa" ph="ɲaː"><prosody pitch="-3.0st">にゃー</prosody></phoneme>', ssml)
         
-        # キャラクター別の感情設定の終了タグ
+        # 感情設定の終了タグ
         if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
+            ssml += '</prosody>'
+        
+        # キャラクター別基本設定の終了タグ
+        if character in ['miya', 'eve']:
             ssml += '</prosody>'
         
         # SSMLの終了タグ
@@ -644,14 +698,14 @@ class PodcastGenerator:
                                 audio_files[character] = audio_file
                                 print(f"✅ {character}の高品質音声ファイル生成完了: {filename}")
                         else:
-                            # ナレーション用の高品質設定
+                            # ナレーション用の高品質設定（キャラクターとの区別を明確化）
                             default_narrator_settings = {
                                 'language_code': 'ja-JP',
                                 'name': 'ja-JP-Neural2-D',  # ナレーション用の中性的な声
                                 'ssml_gender': texttospeech.SsmlVoiceGender.NEUTRAL,
-                                'speaking_rate': 1.2,
-                                'pitch': 0.0,
-                                'volume_gain_db': 1.5,
+                                'speaking_rate': 1.15,  # みやにゃんとイヴにゃんの中間
+                                'pitch': 0.0,  # 中性的な高さ
+                                'volume_gain_db': 2.0,  # 適度な音量
                                 'sample_rate_hertz': 24000
                             }
                             # ナレーションはSSMLなしで生成
