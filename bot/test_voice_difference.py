@@ -22,8 +22,8 @@ class VoiceTestGenerator:
                     'language_code': 'ja-JP',
                     'name': 'ja-JP-Neural2-B',  # 明るい女性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
-                    'speaking_rate': 1.1,  # 少し速めで元気な印象
-                    'pitch': 1.0,  # 軽く高めで可愛らしく（掠れ防止）
+                    'speaking_rate': 1.2,  # 速めで元気な印象
+                    'pitch': 0.5,  # 軽く高めで掠れ防止（さらに調整）
                     'volume_gain_db': 0.5,  # 少し大きめで活発な印象
                     'sample_rate_hertz': 24000
                 }
@@ -34,8 +34,8 @@ class VoiceTestGenerator:
                     'language_code': 'ja-JP',
                     'name': 'ja-JP-Neural2-C',  # 低めの男性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                    'speaking_rate': 0.95,  # ややゆっくりで落ち着いた印象
-                    'pitch': -2.0,  # 低めで男性らしく、でも自然な範囲
+                    'speaking_rate': 1.0,  # 標準的な速さで落ち着いた印象
+                    'pitch': -1.5,  # 低めで男性らしく、適度な差
                     'volume_gain_db': 0.0,  # 標準的な音量で落ち着いた印象
                     'sample_rate_hertz': 24000
                 }
@@ -48,10 +48,10 @@ class VoiceTestGenerator:
         
         if character == 'miya':
             # みやにゃん：明るく元気に
-            ssml += '<prosody rate="1.1" pitch="+1.0st" volume="medium">'
+            ssml += '<prosody rate="1.2" pitch="+0.5st" volume="medium">'
         elif character == 'eve':
             # イヴにゃん：落ち着いて低く
-            ssml += '<prosody rate="0.95" pitch="-2.0st" volume="medium">'
+            ssml += '<prosody rate="1.0" pitch="-1.5st" volume="medium">'
         
         ssml += text
         
