@@ -63,18 +63,18 @@ class PodcastGenerator:
                 'speaking_style': 'ですにゃ、なのにゃ、ですね',
                 'voice_settings': {
                     'language_code': 'ja-JP',
-                    'name': 'ja-JP-Neural2-C',  # 低めの男性の声に戻す
+                    'name': 'ja-JP-Neural2-C',  # 低めの男性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                    'speaking_rate': 0.95,  # かなりゆっくりで落ち着いた印象
-                    'pitch': -4.0,  # 大幅に低めでクールに
-                    'volume_gain_db': 0.5,  # 控えめな音量で落ち着いた印象
+                    'speaking_rate': 0.85,  # 非常にゆっくりで落ち着いた印象
+                    'pitch': -8.0,  # 極端に低めで明確に男性らしく
+                    'volume_gain_db': -1.0,  # 控えめな音量で落ち着いた印象
                     'sample_rate_hertz': 24000
                 },
                 'gender': 'male',
                 'emotions': {
-                    'analytical': {'pitch': -5.0, 'speaking_rate': 0.85},  # 非常に低くゆっくり
-                    'pleased': {'pitch': -2.0, 'speaking_rate': 1.0},      # 少し明るめでも低め維持
-                    'thoughtful': {'pitch': -4.5, 'speaking_rate': 0.8}    # より深く考える感じ
+                    'analytical': {'pitch': -10.0, 'speaking_rate': 0.75},  # 極端に低くゆっくり
+                    'pleased': {'pitch': -6.0, 'speaking_rate': 0.9},      # 少し明るめでも男性らしく低め維持
+                    'thoughtful': {'pitch': -9.0, 'speaking_rate': 0.7}    # より深く考える感じ
                 }
             }
         }
@@ -410,7 +410,7 @@ class PodcastGenerator:
             ssml += '<prosody rate="1.35" pitch="+4.0st" volume="loud">'
         elif character == 'eve':
             # イヴにゃん：落ち着いて低い設定
-            ssml += '<prosody rate="0.95" pitch="-4.0st" volume="medium">'
+            ssml += '<prosody rate="0.85" pitch="-8.0st" volume="medium">'
         
         # キャラクター別の感情設定を追加適用
         if character and character in self.characters and emotion and emotion in self.characters[character].get('emotions', {}):
@@ -426,11 +426,11 @@ class PodcastGenerator:
                     ssml += '<prosody rate="1.2" pitch="+2.5st">'
             elif character == 'eve':
                 if emotion == 'analytical':
-                    ssml += '<prosody rate="0.85" pitch="-5.0st">'
+                    ssml += '<prosody rate="0.75" pitch="-10.0st">'
                 elif emotion == 'thoughtful':
-                    ssml += '<prosody rate="0.8" pitch="-4.5st">'
+                    ssml += '<prosody rate="0.7" pitch="-9.0st">'
                 elif emotion == 'pleased':
-                    ssml += '<prosody rate="1.0" pitch="-2.0st">'
+                    ssml += '<prosody rate="0.9" pitch="-6.0st">'
         
         # テキストを文に分割して、キャラクター別の特徴を強化
         sentences = re.split(r'([。！？])', clean_text)
@@ -453,11 +453,11 @@ class PodcastGenerator:
             elif character == 'eve':
                 # イヴにゃん：分析的で落ち着いた表現を強調
                 if '数字' in sentence or '統計' in sentence or '分析' in sentence or 'データ' in sentence:
-                    ssml += f'<emphasis level="moderate"><prosody rate="0.8" pitch="-5.5st">{sentence}</prosody></emphasis>'
+                    ssml += f'<emphasis level="moderate"><prosody rate="0.75" pitch="-10.5st">{sentence}</prosody></emphasis>'
                 elif 'にゃー' in sentence or 'にゃん' in sentence:
-                    ssml += f'<prosody pitch="-3.5st" rate="0.9">{sentence}</prosody>'
+                    ssml += f'<prosody pitch="-7.5st" rate="0.8">{sentence}</prosody>'
                 elif 'すばらしい' in sentence or '良い' in sentence:
-                    ssml += f'<prosody rate="1.05" pitch="-2.5st">{sentence}</prosody>'
+                    ssml += f'<prosody rate="0.95" pitch="-6.5st">{sentence}</prosody>'
                 else:
                     ssml += sentence
             else:
@@ -465,7 +465,7 @@ class PodcastGenerator:
                 if '！' in sentence or 'ありがとう' in sentence or '楽しみ' in sentence:
                     ssml += f'<emphasis level="moderate">{sentence}</emphasis>'
                 elif '数字' in sentence or '統計' in sentence or '分析' in sentence:
-                    ssml += f'<prosody rate="0.9">{sentence}</prosody>'
+                    ssml += f'<prosody rate="0.8">{sentence}</prosody>'
                 else:
                     ssml += sentence
             
@@ -768,6 +768,99 @@ class PodcastGenerator:
             print(f"❌ 会話形式音声生成エラー: {e}")
             return None
     
+    def create_full_conversation_ssml(self, content: str) -> str:
+        """会話全体をキャラクター別音声設定でSSML化"""
+        lines = content.split('\n')
+        ssml = '<speak>'
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                # 空行は短い休止
+                ssml += '<break time="300ms"/>'
+                continue
+            
+            # キャラクター判定とセリフ抽出
+            if self.characters['miya']['name'] in line:
+                # みやにゃんのセリフ
+                speech = re.sub(f".*{self.characters['miya']['name']}.*?:\s*", '', line)
+                speech = self.clean_text_for_tts(speech, remove_character_names=False)
+                if speech:
+                    emotion = self.detect_emotion_from_content(speech, 'miya')
+                    
+                    # みやにゃんの基本設定
+                    ssml += '<prosody rate="1.35" pitch="+4.0st" volume="loud">'
+                    
+                    # 感情による調整
+                    if emotion == 'excited':
+                        ssml += '<prosody rate="1.5" pitch="+6.0st">'
+                    elif emotion == 'curious':
+                        ssml += '<prosody rate="1.4" pitch="+5.0st">'
+                    elif emotion == 'calm':
+                        ssml += '<prosody rate="1.2" pitch="+2.5st">'
+                    
+                    # 特別な表現の調整
+                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="+6.0st">にゃー</prosody>', speech)
+                    if '！' in speech or 'ありがとう' in speech or '楽しみ' in speech:
+                        ssml += f'<emphasis level="strong">{speech_adjusted}</emphasis>'
+                    else:
+                        ssml += speech_adjusted
+                    
+                    # 感情調整の終了
+                    if emotion in ['excited', 'curious', 'calm']:
+                        ssml += '</prosody>'
+                    
+                    # 基本設定の終了
+                    ssml += '</prosody>'
+                    
+                    # みやにゃん用の休止（短め）
+                    ssml += '<break time="600ms"/>'
+                    
+            elif self.characters['eve']['name'] in line:
+                # イヴにゃんのセリフ
+                speech = re.sub(f".*{self.characters['eve']['name']}.*?:\s*", '', line)
+                speech = self.clean_text_for_tts(speech, remove_character_names=False)
+                if speech:
+                    emotion = self.detect_emotion_from_content(speech, 'eve')
+                    
+                    # イヴにゃんの基本設定
+                    ssml += '<prosody rate="0.85" pitch="-8.0st" volume="medium">'
+                    
+                    # 感情による調整
+                    if emotion == 'analytical':
+                        ssml += '<prosody rate="0.75" pitch="-10.0st">'
+                    elif emotion == 'thoughtful':
+                        ssml += '<prosody rate="0.7" pitch="-9.0st">'
+                    elif emotion == 'pleased':
+                        ssml += '<prosody rate="0.9" pitch="-6.0st">'
+                    
+                    # 特別な表現の調整
+                    speech_adjusted = re.sub(r'にゃー+', '<prosody pitch="-3.0st">にゃー</prosody>', speech)
+                    if '数字' in speech or '統計' in speech or '分析' in speech:
+                        ssml += f'<emphasis level="moderate">{speech_adjusted}</emphasis>'
+                    else:
+                        ssml += speech_adjusted
+                    
+                    # 感情調整の終了
+                    if emotion in ['analytical', 'thoughtful', 'pleased']:
+                        ssml += '</prosody>'
+                    
+                    # 基本設定の終了
+                    ssml += '</prosody>'
+                    
+                    # イヴにゃん用の休止（長め）
+                    ssml += '<break time="1000ms"/>'
+                    
+            else:
+                # ナレーション（中間的な設定）
+                speech = self.clean_text_for_tts(line, remove_character_names=False)
+                if speech:
+                    ssml += f'<prosody rate="1.0" pitch="0st" volume="medium">{speech}</prosody>'
+                    ssml += '<break time="800ms"/>'
+        
+        ssml += '</speak>'
+        return ssml
+    
     async def generate_podcast(self, days: int = 7, save_to_firestore: bool = True, save_to_file: bool = True, generate_audio: bool = True) -> Dict[str, Any]:
         """ポッドキャストを生成するメイン関数"""
         print(f"🎙️ ポッドキャスト生成を開始（過去{days}日間のデータを分析）...")
@@ -815,14 +908,29 @@ class PodcastGenerator:
                 
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 
-                # 統合音声ファイルを生成（高品質版）
-                audio_filename = await self.generate_audio(
-                    content, 
+                # 統合音声ファイルを生成（キャラクター別SSML対応版）
+                print("🎭 統合音声ファイル生成中（キャラクター別音声設定適用）...")
+                
+                # キャラクター別SSML生成
+                full_ssml = self.create_full_conversation_ssml(content)
+                
+                # SSML対応で統合音声生成
+                audio_filename = await self.generate_audio_with_ssml(
+                    full_ssml,
                     f"podcast_full_{timestamp}.mp3",
-                    use_ssml=False  # 統合版はSSMLなしで生成
+                    voice_settings={
+                        'language_code': 'ja-JP',
+                        'name': 'ja-JP-Neural2-B',  # 基本はみやにゃんの声をベース
+                        'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
+                        'speaking_rate': 1.15,  # 中間値
+                        'pitch': 0.0,  # SSMLで制御するので基本値
+                        'volume_gain_db': 2.0,
+                        'sample_rate_hertz': 24000
+                    }
                 )
                 if audio_filename:
                     result['audio_file'] = audio_filename
+                    print(f"✅ キャラクター別音声対応の統合ファイル生成: {audio_filename}")
                 
                 # キャラクター別音声ファイルを生成（SSML対応）
                 character_audio_files = await self.generate_character_audio(content, f"podcast_{timestamp}")
@@ -857,6 +965,83 @@ class PodcastGenerator:
         except Exception as e:
             print(f"❌ ポッドキャスト生成エラー: {e}")
             return {'success': False, 'error': str(e)}
+
+    async def generate_audio_with_ssml(self, ssml_content: str, filename: Optional[str] = None, voice_settings: Optional[Dict] = None) -> Optional[str]:
+        """SSML専用の音声ファイル生成関数"""
+        if not filename:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"podcast_ssml_{timestamp}.mp3"
+        
+        try:
+            print("🎵 SSML対応音声ファイル生成中...")
+            
+            # Google Cloud Text-to-Speech クライアントを初期化
+            key_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_KEY_PATH', 
+                               './nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json')
+            
+            if os.path.exists(key_path):
+                client = texttospeech.TextToSpeechClient.from_service_account_json(key_path)
+            elif os.getenv('FIREBASE_SERVICE_ACCOUNT'):
+                service_account_info = json.loads(os.getenv('FIREBASE_SERVICE_ACCOUNT'))
+                credentials = service_account.Credentials.from_service_account_info(service_account_info)
+                client = texttospeech.TextToSpeechClient(credentials=credentials)
+            else:
+                print("⚠️ サービスアカウントキーが見つかりません。デフォルトクレデンシャルを使用します。")
+                client = texttospeech.TextToSpeechClient()
+            
+            # デフォルトの音声設定
+            default_voice_settings = {
+                'language_code': 'ja-JP',
+                'name': 'ja-JP-Neural2-B',
+                'ssml_gender': texttospeech.SsmlVoiceGender.FEMALE,
+                'speaking_rate': 1.15,
+                'pitch': 0.0,
+                'volume_gain_db': 2.0,
+                'sample_rate_hertz': 24000
+            }
+            
+            # 音声設定をマージ
+            if voice_settings:
+                default_voice_settings.update(voice_settings)
+            
+            # SSMLコンテンツで音声合成
+            synthesis_input = texttospeech.SynthesisInput(ssml=ssml_content)
+            
+            # 音声設定
+            voice = texttospeech.VoiceSelectionParams(
+                language_code=default_voice_settings['language_code'],
+                name=default_voice_settings['name'],
+                ssml_gender=default_voice_settings['ssml_gender']
+            )
+            
+            # 高品質音声設定
+            audio_config = texttospeech.AudioConfig(
+                audio_encoding=texttospeech.AudioEncoding.MP3,
+                speaking_rate=default_voice_settings['speaking_rate'],
+                pitch=default_voice_settings['pitch'],
+                volume_gain_db=default_voice_settings.get('volume_gain_db', 0.0),
+                sample_rate_hertz=default_voice_settings.get('sample_rate_hertz', 24000),
+                effects_profile_id=['telephony-class-application']
+            )
+            
+            # 音声合成を実行
+            response = await asyncio.to_thread(
+                client.synthesize_speech,
+                input=synthesis_input,
+                voice=voice,
+                audio_config=audio_config
+            )
+            
+            # 音声ファイルに保存
+            with open(filename, 'wb') as out:
+                out.write(response.audio_content)
+            
+            print(f"🎵 SSML対応音声ファイルを生成: {filename}")
+            return filename
+            
+        except Exception as e:
+            print(f"❌ SSML音声ファイル生成エラー: {e}")
+            return None
 
 async def main():
     """メイン実行関数"""

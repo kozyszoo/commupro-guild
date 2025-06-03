@@ -25,3 +25,10 @@ ujson==5.8.0
 
 # メモリ効率の改善
 psutil==5.9.6
+
+# Text-to-Speech（音声合成）
+# gTTS==2.4.0  # 旧バージョン（基本機能のみ）
+google-cloud-texttospeech==2.16.3  # Google Cloud TTS（高品質音声、speakingRate対応）
+
+# 音声ファイル処理
+pydub==0.25.1

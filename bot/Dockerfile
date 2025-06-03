@@ -5,8 +5,11 @@ FROM python:3.10-slim
 # 作業ディレクトリを設定
 WORKDIR /app
 
-# システムパッケージの更新とタイムゾーン設定
+# システムパッケージの更新、ビルドツール、タイムゾーン設定
 RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    build-essential \
     tzdata \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime

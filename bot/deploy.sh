@@ -31,15 +31,32 @@ log_info "プロジェクト ID: ${PROJECT_ID}"
 log_info "リージョン: ${REGION}"
 log_info "サービス名: ${SERVICE_NAME}"
 
-# 必要な環境変数の確認
-if [ -z "$DISCORD_BOT_TOKEN" ]; then
-    log_error "DISCORD_BOT_TOKEN 環境変数が設定されていません"
-    exit 1
-fi
+# 環境変数ファイルの確認と作成
+ENV_VARS_FILE="env_vars.yaml"
+if [ -f "$ENV_VARS_FILE" ]; then
+    log_info "既存の環境変数ファイル ($ENV_VARS_FILE) を使用します"
+else
+    log_info "環境変数ファイルを作成します"
+    
+    # 必要な環境変数の確認
+    if [ -z "$DISCORD_BOT_TOKEN" ]; then
+        log_error "DISCORD_BOT_TOKEN 環境変数が設定されていません"
+        log_error "環境変数を設定するか、env_vars.yamlファイルを作成してください"
+        exit 1
+    fi
 
-if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
-    log_error "FIREBASE_SERVICE_ACCOUNT 環境変数が設定されていません"
-    exit 1
+    if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+        log_error "FIREBASE_SERVICE_ACCOUNT 環境変数が設定されていません"
+        log_error "環境変数を設定するか、env_vars.yamlファイルを作成してください"
+        exit 1
+    fi
+
+    # 環境変数ファイルを作成
+    cat > $ENV_VARS_FILE << EOF
+DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"
+FIREBASE_SERVICE_ACCOUNT: '${FIREBASE_SERVICE_ACCOUNT}'
+PYTHONUNBUFFERED: "1"
+EOF
 fi
 
 # Google Cloud プロジェクトの設定
@@ -52,13 +69,9 @@ gcloud services enable cloudbuild.googleapis.com
 gcloud services enable run.googleapis.com
 gcloud services enable containerregistry.googleapis.com
 
-# Docker イメージのビルド
-log_info "Docker イメージをビルド中..."
-docker build -t ${IMAGE_NAME}:latest .
-
-# Docker イメージをプッシュ
-log_info "Docker イメージを Container Registry にプッシュ中..."
-docker push ${IMAGE_NAME}:latest
+# Cloud Build を使用してDocker イメージをビルド（x86_64アーキテクチャ）
+log_info "Cloud Build を使用してDocker イメージをビルド中..."
+gcloud builds submit --tag ${IMAGE_NAME}:latest .
 
 # Cloud Run にデプロイ
 log_info "Cloud Run にデプロイ中..."
@@ -74,9 +87,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --min-instances 1 \
     --port 8080 \
     --timeout 3600 \
-    --set-env-vars "DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}" \
-    --set-env-vars "FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT}" \
-    --set-env-vars "PYTHONUNBUFFERED=1"
+    --env-vars-file $ENV_VARS_FILE
 
 # デプロイ結果の確認
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format="value(status.url)")
