@@ -48,12 +48,24 @@ pip install -r requirements.txt
 
 ### 3. 環境変数の設定
 
-`.env`ファイルを編集して、Discord Bot Tokenを設定：
+`.env`ファイルを作成して、必要な設定を行います：
 
 ```bash
+# .envファイルを作成（env_example.txtをコピーして編集）
+cp env_example.txt .env
+
 # .envファイルを編集
-DISCORD_BOT_TOKEN=あなたのDiscord_Bot_Token
+# 複数ボット管理システム用（推奨）
+DISCORD_BOT_TOKEN_MIYA=あなたのみやにゃん用Discord_Bot_Token
+DISCORD_BOT_TOKEN_EVE=あなたのイヴにゃん用Discord_Bot_Token
+
+# Firebase設定（どちらか一方を設定）
+FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json
+# または
+# FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
 ```
+
+> **💡 Firebase設定について**: `FIREBASE_SERVICE_ACCOUNT_KEY_PATH`（ファイルパス）と`FIREBASE_SERVICE_ACCOUNT`（JSON文字列）のどちらか一方を設定すれば十分です。ローカル開発では`FIREBASE_SERVICE_ACCOUNT_KEY_PATH`、Cloud環境では`FIREBASE_SERVICE_ACCOUNT`を推奨します。
 
 ### 4. Firebase設定の確認
 
