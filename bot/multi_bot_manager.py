@@ -121,7 +121,7 @@ class MultiBotManager:
                 return
             
             genai.configure(api_key=api_key)
-            self.gemini_model = genai.GenerativeModel('gemini-pro')
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
             print("✅ Gemini API が初期化されました")
         except Exception as e:
             print(f"❌ Gemini API の初期化に失敗: {e}")
