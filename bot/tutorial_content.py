@@ -9,6 +9,14 @@ from dataclasses import dataclass
 from typing import List, Dict, Optional
 
 @dataclass
+class TutorialStep:
+    """シンプルなチュートリアルステップ（multi_bot_manager.py用）"""
+    title: str
+    description: str
+    action_prompt: str
+    emoji: str
+
+@dataclass
 class TutorialContent:
     """チュートリアルコンテンツの詳細定義"""
     step_number: int
