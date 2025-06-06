@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Discord にゃんこエージェント - 複数Bot管理システム
-4つのキャラクター（みやにゃん、イヴにゃん、みやにゃん2、いぶにゃん）を管理
+2つのキャラクター（みやにゃん、イヴにゃん）を管理
 新規参加者向けチュートリアル機能付き
 """
 
@@ -52,7 +52,7 @@ class MultiBotManager:
             ),
             'eve': BotCharacter(
                 name='イヴにゃん',
-                token_env_var='DISCORD_BOT_TOKEN_EVE',
+                token_env_var='DISCORD_BOT_TOKEN', # 同じトークンを使用
                 emoji='🐱',
                 personality='クールで分析的、データや統計が得意',
                 speaking_style='ですにゃ、なのにゃ、ですね',
@@ -228,35 +228,88 @@ class MultiBotManager:
     
     async def send_tutorial_step(self, member: discord.Member, step_index: int, bot: discord.Client):
         """指定されたチュートリアルステップを送信"""
-        if step_index >= len(self.tutorial_steps):
+        step_number = step_index + 1  # 1-based index
+        total_steps = self.tutorial_manager.get_total_steps()
+        
+        if step_number > total_steps:
             await self.complete_tutorial(member, bot)
             return
         
-        step = self.tutorial_steps[step_index]
+        # 新しいチュートリアルコンテンツシステムから取得
+        step_content = self.tutorial_manager.format_step_for_discord(step_number)
+        if not step_content:
+            await self.complete_tutorial(member, bot)
+            return
+        
         user_id = str(member.id)
         
-        # チュートリアルステップの埋め込みメッセージ作成
+        # 高度なチュートリアルステップの埋め込みメッセージ作成
         embed = discord.Embed(
-            title=f"{step.title} (ステップ {step_index + 1}/{len(self.tutorial_steps)})",
-            description=step.description,
+            title=step_content['title'],
+            description=step_content['description'],
             color=0xFF69B4,
             timestamp=datetime.datetime.now()
         )
         
+        # 詳細ガイドを追加（長いので分割）
+        if len(step_content['detailed_guide']) <= 1024:
+            embed.add_field(
+                name="📖 詳細ガイド",
+                value=step_content['detailed_guide'],
+                inline=False
+            )
+        else:
+            # 1024文字を超える場合は分割
+            guide_parts = step_content['detailed_guide'].split('\n\n')
+            current_part = ""
+            part_num = 1
+            
+            for part in guide_parts:
+                if len(current_part + part) <= 1000:
+                    current_part += part + "\n\n"
+                else:
+                    if current_part:
+                        embed.add_field(
+                            name=f"📖 詳細ガイド (Part {part_num})",
+                            value=current_part.strip(),
+                            inline=False
+                        )
+                        part_num += 1
+                    current_part = part + "\n\n"
+            
+            if current_part:
+                embed.add_field(
+                    name=f"📖 詳細ガイド (Part {part_num})" if part_num > 1 else "📖 詳細ガイド",
+                    value=current_part.strip(),
+                    inline=False
+                )
+        
+        # アクションアイテムを追加
+        if step_content['action_items']:
+            embed.add_field(
+                name="✅ やってみてにゃ！",
+                value=step_content['action_items'],
+                inline=False
+            )
+        
+        # ヒントを追加
+        if step_content['tips']:
+            embed.add_field(
+                name="💡 みやにゃんからのヒント",
+                value=step_content['tips'],
+                inline=False
+            )
+        
+        # ナビゲーションヒント
         embed.add_field(
-            name=f"{step.emoji} やってみてにゃ！",
-            value=step.action_prompt,
+            name="🎮 操作方法",
+            value="完了したら「**次へ**」または「**できた**」と言ってくださいにゃ〜\n"
+                  "スキップしたい場合は「**スキップ**」と言ってくださいにゃ！\n"
+                  "困った時は「**ヘルプ**」、終了したい時は「**終了**」ですにゃ",
             inline=False
         )
         
-        embed.add_field(
-            name="💡 ヒント",
-            value="完了したら「次へ」または「できた」と言ってくださいにゃ〜\n"
-                  "スキップしたい場合は「スキップ」と言ってくださいにゃ！",
-            inline=False
-        )
-        
-        embed.set_footer(text="みやにゃんがサポートしますにゃ〜 | 困ったら「ヘルプ」と言ってくださいにゃ")
+        embed.set_footer(text=f"{step_content['footer']} | みやにゃんがサポートしますにゃ〜")
         
         # 現在のステップを更新
         self.new_members[user_id]['current_step'] = step_index
