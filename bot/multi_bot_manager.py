@@ -15,7 +15,8 @@ import random
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 from dataclasses import dataclass
-from tutorial_content import AdvancedTutorialManager
+import google.generativeai as genai
+from tutorial_content import TutorialStep
 
 load_dotenv()
 
@@ -35,8 +36,48 @@ class MultiBotManager:
     """複数Discord Botの管理クラス"""
     
     def __init__(self):
-        # 高度なチュートリアル管理システムを初期化
-        self.tutorial_manager = AdvancedTutorialManager()
+        # Gemini API の初期化
+        self.init_gemini_api()
+        
+        # チュートリアルステップの定義
+        self.tutorial_steps = [
+            TutorialStep(
+                title="🎉 ようこそ！",
+                description="このサーバーへようこそ！私たちがDiscordサーバーの使い方をご案内しますにゃ〜",
+                action_prompt="まずは自己紹介チャンネルで簡単な挨拶をしてみませんか？",
+                emoji="👋"
+            ),
+            TutorialStep(
+                title="📋 ルールの確認",
+                description="サーバーのルールを確認して、みんなが気持ちよく過ごせるようにしましょうにゃ",
+                action_prompt="#rules チャンネルを見て、「✅」リアクションを押してくださいにゃ！",
+                emoji="📜"
+            ),
+            TutorialStep(
+                title="🎭 ロールの選択",
+                description="あなたの興味や役割に応じてロールを選択できますにゃ",
+                action_prompt="#role-selection チャンネルでお好きなロールを選んでくださいにゃ〜",
+                emoji="🏷️"
+            ),
+            TutorialStep(
+                title="💬 コミュニケーション",
+                description="他のメンバーとの交流を始めましょうにゃ！",
+                action_prompt="#general チャンネルで雑談や質問をしてみてくださいにゃ",
+                emoji="🗣️"
+            ),
+            TutorialStep(
+                title="🔔 通知設定",
+                description="必要な通知だけを受け取れるように設定しましょうにゃ",
+                action_prompt="サーバー名を右クリック→「通知設定」から調整できますにゃ〜",
+                emoji="🔔"
+            ),
+            TutorialStep(
+                title="❓ 困った時は",
+                description="何か分からないことがあったら、いつでも私たちに聞いてくださいにゃ！",
+                action_prompt="「@みやにゃん ヘルプ」または「@イヴにゃん ヘルプ」と呼んでくださいにゃ〜",
+                emoji="🆘"
+            )
+        ]
         
         # キャラクター設定（みやにゃんとイヴにゃんの2体）
         self.characters = {
@@ -70,6 +111,58 @@ class MultiBotManager:
         self.bots: Dict[str, discord.Client] = {}
         self.bot_tasks: Dict[str, asyncio.Task] = {}
         
+    def init_gemini_api(self):
+        """Gemini API を初期化"""
+        try:
+            api_key = os.getenv('GEMINI_API_KEY')
+            if not api_key:
+                print("⚠️ GEMINI_API_KEY が設定されていません。固定応答モードで動作します。")
+                self.gemini_model = None
+                return
+            
+            genai.configure(api_key=api_key)
+            self.gemini_model = genai.GenerativeModel('gemini-pro')
+            print("✅ Gemini API が初期化されました")
+        except Exception as e:
+            print(f"❌ Gemini API の初期化に失敗: {e}")
+            self.gemini_model = None
+    
+    def get_character_system_prompt(self, character_id: str) -> str:
+        """キャラクター別のシステムプロンプトを取得"""
+        character = self.characters[character_id]
+        
+        base_prompt = f"""あなたは「{character.name}」というDiscordサーバーのAIアシスタントです。
+
+キャラクター設定:
+- 名前: {character.name}
+- 性格: {character.personality}
+- 話し方: {character.speaking_style}
+- 役割: {character.role}
+- 絵文字: {character.emoji}
+
+応答ルール:
+1. 必ず{character.speaking_style}で話してください
+2. {character.role}に関連する内容を優先的に扱ってください
+3. 親しみやすく、サポート的な態度で応答してください
+4. 応答は簡潔で分かりやすくしてください（200文字以内推奨）
+5. 必要に応じて{character.emoji}絵文字を使ってください
+"""
+        
+        if character_id == 'miya':
+            base_prompt += """
+6. 技術的な質問には具体的で実践的なアドバイスを提供してください
+7. 初心者にも分かりやすく説明してください
+8. チュートリアルや学習のサポートを積極的に行ってください
+"""
+        elif character_id == 'eve':
+            base_prompt += """
+6. データや統計に基づいた客観的な情報を提供してください
+7. 論理的で分析的な視点から回答してください
+8. 具体的な数値や事実を含めて説明してください
+"""
+        
+        return base_prompt
+
     def create_bot_client(self, character_id: str) -> discord.Client:
         """キャラクター用のDiscord Clientを作成"""
         character = self.characters[character_id]
@@ -228,88 +321,35 @@ class MultiBotManager:
     
     async def send_tutorial_step(self, member: discord.Member, step_index: int, bot: discord.Client):
         """指定されたチュートリアルステップを送信"""
-        step_number = step_index + 1  # 1-based index
-        total_steps = self.tutorial_manager.get_total_steps()
-        
-        if step_number > total_steps:
+        if step_index >= len(self.tutorial_steps):
             await self.complete_tutorial(member, bot)
             return
         
-        # 新しいチュートリアルコンテンツシステムから取得
-        step_content = self.tutorial_manager.format_step_for_discord(step_number)
-        if not step_content:
-            await self.complete_tutorial(member, bot)
-            return
-        
+        step = self.tutorial_steps[step_index]
         user_id = str(member.id)
         
-        # 高度なチュートリアルステップの埋め込みメッセージ作成
+        # チュートリアルステップの埋め込みメッセージ作成
         embed = discord.Embed(
-            title=step_content['title'],
-            description=step_content['description'],
+            title=f"{step.title} (ステップ {step_index + 1}/{len(self.tutorial_steps)})",
+            description=step.description,
             color=0xFF69B4,
             timestamp=datetime.datetime.now()
         )
         
-        # 詳細ガイドを追加（長いので分割）
-        if len(step_content['detailed_guide']) <= 1024:
-            embed.add_field(
-                name="📖 詳細ガイド",
-                value=step_content['detailed_guide'],
-                inline=False
-            )
-        else:
-            # 1024文字を超える場合は分割
-            guide_parts = step_content['detailed_guide'].split('\n\n')
-            current_part = ""
-            part_num = 1
-            
-            for part in guide_parts:
-                if len(current_part + part) <= 1000:
-                    current_part += part + "\n\n"
-                else:
-                    if current_part:
-                        embed.add_field(
-                            name=f"📖 詳細ガイド (Part {part_num})",
-                            value=current_part.strip(),
-                            inline=False
-                        )
-                        part_num += 1
-                    current_part = part + "\n\n"
-            
-            if current_part:
-                embed.add_field(
-                    name=f"📖 詳細ガイド (Part {part_num})" if part_num > 1 else "📖 詳細ガイド",
-                    value=current_part.strip(),
-                    inline=False
-                )
-        
-        # アクションアイテムを追加
-        if step_content['action_items']:
-            embed.add_field(
-                name="✅ やってみてにゃ！",
-                value=step_content['action_items'],
-                inline=False
-            )
-        
-        # ヒントを追加
-        if step_content['tips']:
-            embed.add_field(
-                name="💡 みやにゃんからのヒント",
-                value=step_content['tips'],
-                inline=False
-            )
-        
-        # ナビゲーションヒント
         embed.add_field(
-            name="🎮 操作方法",
-            value="完了したら「**次へ**」または「**できた**」と言ってくださいにゃ〜\n"
-                  "スキップしたい場合は「**スキップ**」と言ってくださいにゃ！\n"
-                  "困った時は「**ヘルプ**」、終了したい時は「**終了**」ですにゃ",
+            name=f"{step.emoji} やってみてにゃ！",
+            value=step.action_prompt,
             inline=False
         )
         
-        embed.set_footer(text=f"{step_content['footer']} | みやにゃんがサポートしますにゃ〜")
+        embed.add_field(
+            name="💡 ヒント",
+            value="完了したら「次へ」または「できた」と言ってくださいにゃ〜\n"
+                  "スキップしたい場合は「スキップ」と言ってくださいにゃ！",
+            inline=False
+        )
+        
+        embed.set_footer(text="みやにゃんがサポートしますにゃ〜 | 困ったら「ヘルプ」と言ってくださいにゃ")
         
         # 現在のステップを更新
         self.new_members[user_id]['current_step'] = step_index
@@ -468,7 +508,7 @@ class MultiBotManager:
             await message.channel.send(embed=embed)
     
     async def generate_character_response(self, content: str, character_id: str, user_name: str, message: discord.Message = None) -> str:
-        """キャラクター別の応答を生成"""
+        """キャラクター別の応答を生成（Gemini API使用）"""
         character = self.characters[character_id]
         content_lower = content.lower()
         
@@ -496,8 +536,62 @@ class MultiBotManager:
                        f"• 技術的な質問なら詳しく教えてくださいにゃ〜\n"
                        f"• サーバーの使い方なら「使い方」と言ってくださいにゃ！")
         
-        # 通常の応答システム
-        responses = {
+        # Gemini API を使用した応答生成
+        if self.gemini_model:
+            try:
+                return await self.generate_gemini_response(content, character_id, user_name, message)
+            except Exception as e:
+                print(f"❌ Gemini API エラー ({character.name}): {e}")
+                # フォールバック応答
+                return await self.generate_fallback_response(character_id, user_name)
+        else:
+            # Gemini APIが利用できない場合のフォールバック
+            return await self.generate_fallback_response(character_id, user_name)
+    
+    async def generate_gemini_response(self, content: str, character_id: str, user_name: str, message: discord.Message = None) -> str:
+        """Gemini APIを使用して応答を生成"""
+        try:
+            # システムプロンプトを取得
+            system_prompt = self.get_character_system_prompt(character_id)
+            
+            # コンテキスト情報を作成
+            context_info = f"""
+ユーザー名: {user_name}
+メッセージ: {content}
+サーバー: {message.guild.name if message and message.guild else "DM"}
+チャンネル: {message.channel.name if message and hasattr(message.channel, 'name') else "DM"}
+現在時刻: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+            
+            # プロンプト構築
+            full_prompt = f"""{system_prompt}
+
+{context_info}
+
+上記の設定とコンテキストを踏まえて、ユーザーのメッセージに応答してください。"""
+            
+            # Gemini APIに送信
+            response = await asyncio.to_thread(
+                self.gemini_model.generate_content,
+                full_prompt
+            )
+            
+            if response and response.text:
+                # レスポンスの長さを制限（Discord埋め込みの制限）
+                response_text = response.text.strip()
+                if len(response_text) > 1000:
+                    response_text = response_text[:950] + "..."
+                return response_text
+            else:
+                return await self.generate_fallback_response(character_id, user_name)
+                
+        except Exception as e:
+            print(f"❌ Gemini応答生成エラー: {e}")
+            return await self.generate_fallback_response(character_id, user_name)
+    
+    async def generate_fallback_response(self, character_id: str, user_name: str) -> str:
+        """フォールバック応答を生成"""
+        fallback_responses = {
             'miya': [
                 f"こんにちはにゃ〜、{user_name}さん！技術的な質問があれば何でも聞いてくださいにゃ！",
                 f"プログラミングの話だにゃ〜！楽しそうですにゃ！",
@@ -514,7 +608,7 @@ class MultiBotManager:
             ]
         }
         
-        return random.choice(responses.get(character_id, [f"こんにちはにゃ、{user_name}さん！"]))
+        return random.choice(fallback_responses.get(character_id, [f"こんにちはにゃ、{user_name}さん！"]))
     
     async def start_bot(self, character_id: str) -> bool:
         """指定されたキャラクターのBotを起動"""
