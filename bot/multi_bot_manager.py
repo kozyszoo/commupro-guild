@@ -93,7 +93,7 @@ class MultiBotManager:
             ),
             'eve': BotCharacter(
                 name='イヴにゃん',
-                token_env_var='DISCORD_BOT_TOKEN', # 同じトークンを使用
+                token_env_var='DISCORD_BOT_TOKEN_EVE', # イヴにゃん用トークン環境変数
                 emoji='🐱',
                 personality='クールで分析的、データや統計が得意',
                 speaking_style='ですにゃ、なのにゃ、ですね',
