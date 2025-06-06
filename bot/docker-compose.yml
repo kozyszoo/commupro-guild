@@ -16,7 +16,7 @@ services:
       
       # Firebase 設定（どちらか一方があれば十分）
       - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT:-}
-      - FIREBASE_SERVICE_ACCOUNT_KEY_PATH=${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-}
+      - FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/app/firebase-key.json
       
       # Gemini API
       - GEMINI_API_KEY=${GEMINI_API_KEY}
@@ -28,8 +28,8 @@ services:
       - "8081:8081"
     restart: unless-stopped
     volumes:
-      # Firebase キーファイルがローカルにある場合
-      - ${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:ro
+      # Firebase キーファイルがローカルにある場合（コンテナ内は固定パス）
+      - ${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:/app/firebase-key.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
@@ -54,7 +54,7 @@ services:
       
       # Firebase 設定（どちらか一方があれば十分）
       - FIREBASE_SERVICE_ACCOUNT=${FIREBASE_SERVICE_ACCOUNT:-}
-      - FIREBASE_SERVICE_ACCOUNT_KEY_PATH=${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-}
+      - FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/app/firebase-key.json
       
       # Gemini API
       - GEMINI_API_KEY=${GEMINI_API_KEY}
@@ -66,8 +66,8 @@ services:
       - "8082:8082"
     restart: unless-stopped
     volumes:
-      # Firebase キーファイルがローカルにある場合
-      - ${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:ro
+      # Firebase キーファイルがローカルにある場合（コンテナ内は固定パス）
+      - ${FIREBASE_SERVICE_ACCOUNT_KEY_PATH:-/dev/null}:/app/firebase-key.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
       interval: 30s
