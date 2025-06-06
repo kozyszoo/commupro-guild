@@ -67,27 +67,59 @@ ls -la nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json
 ### 5. ボットの起動
 
 ```bash
+# 複数ボット管理システム（推奨）
 python3 run_bot.py
+
+# レガシーボット（旧版）
+python3 discord_bot.py
 ```
+
+> **💡 ヒント**: `run_bot.py`が最新の複数ボット管理システムです。みやにゃんとイヴにゃんの2体を同時に管理し、新規参加者チュートリアル機能も含まれています。
 
 ## 📋 機能一覧
 
-### 🔍 インタラクション記録
+### 🎭 にゃんこエージェント機能
+
+#### 🐈 みやにゃん（技術サポート）
+- **新規参加者チュートリアル**: 6段階の詳細ガイド配信
+- **技術サポート**: プログラミング・技術相談対応
+- **コミュニティサポート**: サーバー利用方法の案内
+- **エージェント秘書機能**: 親しみやすい対話形式でのサポート
+
+#### 🐱 イヴにゃん（データ分析）
+- **データ分析**: ユーザー行動・エンゲージメント分析
+- **レポート作成**: 統計情報の可視化・報告
+- **論理的サポート**: データに基づく問題解決支援
+
+### 🎓 チュートリアルシステム
+- **新規参加者自動検出**: サーバー参加時の自動ウェルカム
+- **段階的ガイド**: 6つのステップでサーバー活用方法を習得
+- **インタラクティブ進行**: 「次へ」「スキップ」「ヘルプ」コマンド
+- **既存ユーザー対応**: いつでもチュートリアル再受講可能
+- **DM配信**: プライベートな学習環境
+
+### 🔍 インタラクション記録（レガシー機能）
 - メッセージの送信・編集・削除
 - リアクションの追加・削除
 - メンバーの参加・退出
 - スケジュールイベントの作成・更新・削除・参加
 
-### 📊 データ分析
+### 📊 データ分析（レガシー機能）
 - ユーザーエンゲージメントスコア
 - キーワード抽出
 - トピック分析
 - アクティビティ統計
 
+### 🎵 音声・Podcast機能
+- **AI音声生成**: VOICEVOXによるキャラクター音声
+- **Podcast自動生成**: テキストから音声コンテンツ作成
+- **キャラクター音声**: みやにゃん・イヴにゃんの個性的な声
+
 ### 🗄️ データ管理
 - Firestore自動同期
 - データエクスポート機能
 - リアルタイム更新
+- 一括データアップロード・クリア機能
 
 ## 🛠️ トラブルシューティング
 
@@ -128,15 +160,108 @@ python3 run_bot.py
 
 ## 📁 ファイル構成
 
+### 🎯 メインファイル
+
+| ファイル名 | 説明 | 役割 |
+|-----------|------|------|
+| `run_bot.py` | **ボット起動スクリプト** | 複数ボット管理システムの起動、環境確認、Cloud Run対応 |
+| `multi_bot_manager.py` | **複数ボット管理システム** | みやにゃん・イヴにゃんの管理、新規参加者チュートリアル機能 |
+| `tutorial_content.py` | **チュートリアルコンテンツ管理** | 6段階の詳細なチュートリアル内容、運用者向けガイド |
+| `discord_bot.py` | **レガシーボットロジック** | 旧版のDiscord.pyボット実装（Firestore連携機能付き） |
+
+### 🎭 キャラクター機能
+
+| ファイル名 | 説明 | 機能 |
+|-----------|------|------|
+| `multi_bot_manager.py` | **みやにゃん** | 技術サポート、新規参加者チュートリアル、コミュニティサポート |
+| `multi_bot_manager.py` | **イヴにゃん** | データ分析、レポート作成、統計情報提供 |
+| `onbording-bot.py` | **オンボーディングBot** | 新規参加者向けの動的挨拶生成（OpenAI連携） |
+
+### 🎵 音声・Podcast機能
+
+| ファイル名 | 説明 | 機能 |
+|-----------|------|------|
+| `make_podcast.py` | **Podcast生成システム** | VOICEVOXを使用したAI音声Podcast自動生成 |
+| `test_voice_difference.py` | **音声テストスクリプト** | みやにゃん・イヴにゃんの音声設定テスト |
+| `test_miya_voice.mp3` | **みやにゃん音声サンプル** | みやにゃんキャラクターの音声テスト用ファイル |
+| `test_eve_voice.mp3` | **イヴにゃん音声サンプル** | イヴにゃんキャラクターの音声テスト用ファイル |
+
+### 🔧 データ管理・ユーティリティ
+
+| ファイル名 | 説明 | 機能 |
+|-----------|------|------|
+| `upload_firestore.py` | **Firestoreデータアップロード** | JSONデータのFirestore一括インポート |
+| `clear_firestore_data.py` | **Firestoreデータクリア** | 開発・テスト用データクリア機能 |
+| `test_data_retrieval.py` | **データ取得テスト** | Firestoreからのデータ取得動作確認 |
+| `test_export_20250526_235736.json` | **テストデータ** | データ構造確認用のサンプルエクスポートファイル |
+
+### ☁️ Cloud Run・デプロイ関連
+
+| ファイル名 | 説明 | 機能 |
+|-----------|------|------|
+| `Dockerfile` | **Dockerコンテナ設定** | Cloud Run用のPythonコンテナ定義 |
+| `cloudbuild.yaml` | **Cloud Build設定** | 自動ビルド・デプロイパイプライン設定 |
+| `deploy.sh` | **デプロイスクリプト** | Cloud Runへの手動デプロイ自動化 |
+| `health_server.py` | **ヘルスチェックサーバー** | Cloud Run用のHTTPヘルスチェック機能 |
+| `env_vars.yaml` | **環境変数管理** | Cloud Run用の環境変数設定ファイル |
+| `.dockerignore` | **Docker除外設定** | Dockerビルド時の除外ファイル指定 |
+
+### 📚 設定・ドキュメント
+
+| ファイル名 | 説明 | 内容 |
+|-----------|------|------|
+| `requirements.txt` | **Python依存関係** | 必要なライブラリとバージョン指定 |
+| `env_example.txt` | **環境変数テンプレート** | .envファイル作成用のサンプル |
+| `README.md` | **メインドキュメント** | このファイル（プロジェクト全体の説明） |
+| `README_podcast.md` | **Podcast機能ドキュメント** | 音声生成機能の詳細説明 |
+| `README_CLOUDRUN.md` | **Cloud Runドキュメント** | クラウドデプロイの詳細手順 |
+| `README_discord_bot.md` | **Discordボットドキュメント** | レガシーボット機能の説明 |
+| `README_upload.md` | **データアップロードガイド** | Firestoreデータ管理の説明 |
+
+### 🔑 認証・設定ファイル
+
+| ファイル名 | 説明 | 重要度 |
+|-----------|------|---------|
+| `nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json` | **Firebaseサービスアカウントキー** | 🔒 機密情報 |
+| `.env` | **環境変数設定** | 🔒 Discord Token等を格納 |
+
+### 📁 ディレクトリ構造
+
 ```
 bot/
-├── run_bot.py              # ボット起動スクリプト
-├── discord_bot.py          # メインボットロジック
-├── requirements.txt        # Python依存関係
-├── .env                   # 環境変数設定
-├── env_example.txt        # 環境変数設定例
-├── README.md              # このファイル
-└── nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json  # Firebase設定
+├── 🎯 メインシステム
+│   ├── run_bot.py                    # 起動エントリーポイント
+│   ├── multi_bot_manager.py          # 複数ボット管理（みやにゃん・イヴにゃん）
+│   └── tutorial_content.py           # チュートリアルコンテンツ
+├── 🎭 レガシー・特殊機能
+│   ├── discord_bot.py               # 旧版ボット
+│   └── onbording-bot.py             # オンボーディング機能
+├── 🎵 音声・Podcast
+│   ├── make_podcast.py              # Podcast生成
+│   ├── test_voice_difference.py     # 音声テスト
+│   ├── test_miya_voice.mp3          # みやにゃん音声
+│   └── test_eve_voice.mp3           # イヴにゃん音声
+├── 🔧 データ管理
+│   ├── upload_firestore.py          # データアップロード
+│   ├── clear_firestore_data.py      # データクリア
+│   ├── test_data_retrieval.py       # データ取得テスト
+│   └── test_export_*.json           # テストデータ
+├── ☁️ Cloud Run・デプロイ
+│   ├── Dockerfile                   # コンテナ定義
+│   ├── cloudbuild.yaml             # ビルド設定
+│   ├── deploy.sh                   # デプロイ自動化
+│   ├── health_server.py            # ヘルスチェック
+│   ├── env_vars.yaml               # 環境変数
+│   └── .dockerignore               # Docker除外設定
+├── 📚 設定・ドキュメント
+│   ├── requirements.txt            # 依存関係
+│   ├── env_example.txt             # 環境変数例
+│   ├── README*.md                  # 各種ドキュメント
+│   └── .env                       # 環境変数（要作成）
+├── 🔑 認証ファイル
+│   └── nyanco-bot-firebase-*.json  # Firebase認証
+└── 📦 システムファイル
+    └── __pycache__/                # Python キャッシュ
 ```
 
 ## 🔧 開発者向け情報
@@ -159,11 +284,15 @@ Firestoreコレクション：
 
 ### 環境変数
 
-| 変数名 | 説明 | 必須 |
-|--------|------|------|
-| `DISCORD_BOT_TOKEN` | Discord Bot Token | ✅ |
-| `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` | Firebaseキーファイルパス | ✅ |
-| `FIREBASE_SERVICE_ACCOUNT` | Firebase設定JSON | - |
+| 変数名 | 説明 | 必須 | 対象システム |
+|--------|------|------|-------------|
+| `DISCORD_BOT_TOKEN` | Discord Bot Token（レガシー用） | - | レガシーボット |
+| `DISCORD_BOT_TOKEN_MIYA` | みやにゃん用Discord Token | ✅ | 複数ボット管理 |
+| `DISCORD_BOT_TOKEN_EVE` | イヴにゃん用Discord Token | ✅ | 複数ボット管理 |
+| `FIREBASE_SERVICE_ACCOUNT_KEY_PATH` | Firebaseキーファイルパス | ✅ | 全システム |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase設定JSON | - | 全システム |
+
+> **🔑 重要**: 複数ボット管理システムでは、みやにゃんとイヴにゃん用に個別のDiscord Bot Tokenが必要です。
 
 ## 📞 サポート
 
