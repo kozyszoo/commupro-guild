@@ -264,6 +264,17 @@ async def on_ready():
     else:
         print("📝 ログ記録の準備ができました (Firestore)。")
     
+    # 参加しているすべてのギルドの情報を更新
+    if firebase_initialized:
+        for guild in bot.guilds:
+            await update_guild_info(guild)
+            # 日次分析セッションの作成
+            await create_daily_analytics_session(str(guild.id))
+        
+        # バックグラウンドメンテナンスタスクを開始
+        asyncio.create_task(schedule_maintenance())
+        print("⏰ バックグラウンドメンテナンスタスクを開始しました")
+    
     print('------')
 
 # --- 各種イベントリスナー関数 ---
@@ -291,11 +302,21 @@ async def on_message(message: discord.Message):
         if guild_id:
             await update_user_info(user_id, guild_id, user_name, 'MESSAGE_CREATE')
 
+        # トピック人気度の更新
+        keywords = extract_keywords(content)
+        if guild_id and keywords:
+            await update_topic_popularity(guild_id, keywords)
+
+        # 管理者コマンドの処理
+        if message.content.startswith('!nyanco'):
+            await handle_admin_commands(message)
+            return  # 管理者コマンドの場合は他の処理をスキップ
+
         # ボットがメンションされた場合の応答処理
         if bot.user in message.mentions:
             await handle_mention_response(message)
 
-        # インタラクションデータの作成
+        # インタラクションデータの作成（拡張版）
         interaction_data = {
             'type': 'message',
             'userId': user_id,
@@ -306,14 +327,20 @@ async def on_message(message: discord.Message):
             'channelName': channel_name,
             'messageId': message_id,
             'content': content,
-            'keywords': extract_keywords(content),  # キーワード抽出
+            'keywords': keywords,  # 既に抽出済み
+            'sentiment': 0.0,  # 今後実装予定
             'metadata': {
                 'hasAttachments': len(message.attachments) > 0,
                 'hasEmbeds': len(message.embeds) > 0,
                 'mentionCount': len(message.mentions),
                 'reactionCount': len(message.reactions) if message.reactions else 0,
                 'isMention': bot.user in message.mentions,
-                'channelType': type(message.channel).__name__
+                'channelType': type(message.channel).__name__,
+                'messageLength': len(content),
+                'hasCodeBlock': '```' in content,
+                'hasLinks': 'http' in content.lower(),
+                'isReply': message.reference is not None,
+                'threadId': str(message.thread.id) if hasattr(message, 'thread') and message.thread else None
             }
         }
         
@@ -764,6 +791,9 @@ async def on_scheduled_event_user_add(event: discord.ScheduledEvent, user: disco
 
         # ユーザー情報の更新（イベント参加でエンゲージメントスコア+2）
         await update_user_info(user_id, guild_id, user_name, 'EVENT_JOIN')
+
+        # ユーザーマッチングの実行（イベント参加時は良いタイミング）
+        await find_user_matches(guild_id, user_id)
 
         # イベントステータス情報の安全な取得
         status_info = get_event_status_safe(event)
@@ -1283,6 +1313,60 @@ if __name__ == "__main__":
     print("   python3 run_bot.py")
     exit(1)
 
+# --- 定期実行タスク ---
+async def daily_maintenance_task():
+    """日次メンテナンスタスクを実行する"""
+    if not firebase_initialized:
+        return
+    
+    try:
+        print("🔄 日次メンテナンスタスクを開始...")
+        
+        for guild in bot.guilds:
+            guild_id = str(guild.id)
+            
+            # 日次分析セッションの作成
+            await create_daily_analytics_session(guild_id)
+            
+            # ユーザーマッチングの実行
+            await find_user_matches(guild_id)
+            
+            # エンゲージメント分析の生成
+            insights = await generate_engagement_insights(guild_id, 7)
+            if insights:
+                print(f"📊 {guild.name} のエンゲージメント分析完了")
+        
+        print("✅ 日次メンテナンスタスク完了")
+        
+    except Exception as e:
+        print(f"❌ 日次メンテナンスタスクエラー: {e}")
+
+# スケジュール実行用のバックグラウンドタスク
+async def schedule_maintenance():
+    """メンテナンスタスクのスケジュール実行"""
+    import asyncio
+    
+    while True:
+        try:
+            # 毎日午前2時に実行（UTC）
+            now = datetime.datetime.now(datetime.timezone.utc)
+            target_time = now.replace(hour=2, minute=0, second=0, microsecond=0)
+            
+            # 今日の2時が過ぎていれば明日の2時に設定
+            if now > target_time:
+                target_time += datetime.timedelta(days=1)
+            
+            wait_seconds = (target_time - now).total_seconds()
+            print(f"⏰ 次回メンテナンスまで {wait_seconds/3600:.1f}時間")
+            
+            await asyncio.sleep(wait_seconds)
+            await daily_maintenance_task()
+            
+        except Exception as e:
+            print(f"❌ スケジュール実行エラー: {e}")
+            # エラー時は1時間後に再試行
+            await asyncio.sleep(3600)
+
 # --- メンション応答処理関数 ---
 async def handle_mention_response(message: discord.Message):
     """ボットがメンションされた時の応答処理"""
@@ -1304,7 +1388,18 @@ async def handle_mention_response(message: discord.Message):
             await message.reply(response)
             
             # ボットアクションをFirestoreに記録
-            await log_bot_action(message, response, 'mention_response')
+            # 高度なボットアクション記録
+            guild_id = str(message.guild.id) if message.guild else None
+            if guild_id:
+                payload = {
+                    'character': detect_character_from_mention(message.content),
+                    'responseType': 'mention_response',
+                    'originalMessage': message.content,
+                    'responseMessage': response,
+                    'confidence': 0.8,  # 固定値（今後動的に設定可能）
+                    'messageLength': len(response)
+                }
+                await log_advanced_bot_action(guild_id, str(message.author.id), 'mention_response', payload, str(message.id))
             
     except Exception as e:
         print(f'❌ メンション応答エラー: {e}')
@@ -1460,6 +1555,81 @@ async def generate_response(content: str, user_name: str, message: discord.Messa
             ]
         return responses[hash(content + user_name + str(message.created_at.hour)) % len(responses)]
 
+# --- 管理者コマンド処理 ---
+async def handle_admin_commands(message: discord.Message):
+    """管理者向けのコマンドを処理する"""
+    if not message.content.startswith('!nyanco'):
+        return
+    
+    guild_id = str(message.guild.id) if message.guild else None
+    if not guild_id:
+        return
+    
+    content = message.content[8:].strip()  # '!nyanco ' の部分を除去
+    
+    try:
+        if content == 'analytics':
+            # エンゲージメント分析の実行
+            insights = await generate_engagement_insights(guild_id, 7)
+            if insights:
+                summary = insights['summary']
+                response = f"📊 **過去7日間の分析結果**\n"
+                response += f"• 総インタラクション数: {summary['totalInteractions']}\n"
+                response += f"• アクティブユーザー数: {summary['activeUsers']}\n"
+                response += f"• 1日平均: {summary['averageInteractionsPerDay']:.1f}インタラクション\n"
+                response += f"• 人気キーワード: {', '.join(list(insights['topKeywords'].keys())[:5])}"
+                await message.reply(response)
+            else:
+                await message.reply("❌ 分析データの取得に失敗しました")
+        
+        elif content == 'matching':
+            # ユーザーマッチングの実行
+            matches = await find_user_matches(guild_id)
+            if matches:
+                response = f"🤝 **新しいマッチング結果**\n"
+                for match in matches[:3]:  # 最大3件表示
+                    response += f"• {match['metadata']['user1Name']} ↔ {match['metadata']['user2Name']} "
+                    response += f"(スコア: {match['matchScore']:.2f})\n"
+                    response += f"  共通関心事: {', '.join(match['commonInterests'][:3])}\n"
+                await message.reply(response)
+            else:
+                await message.reply("🤝 新しいマッチングは見つかりませんでした")
+        
+        elif content == 'daily':
+            # 日次分析の実行
+            analytics = await create_daily_analytics_session(guild_id)
+            if analytics:
+                response = f"📈 **本日の統計**\n"
+                response += f"• アクティブユーザー: {analytics['activeUsers']}人\n"
+                response += f"• メッセージ数: {analytics['messageCount']}\n"
+                response += f"• 新規メンバー: {analytics['newMembers']}人\n"
+                top_topics = list(analytics['topTopics'].keys())[:3]
+                if top_topics:
+                    response += f"• 人気トピック: {', '.join(top_topics)}"
+                await message.reply(response)
+            else:
+                await message.reply("❌ 日次分析の作成に失敗しました")
+        
+        elif content.startswith('export'):
+            # データエクスポート
+            filename = await export_data_to_json(guild_id)
+            if filename:
+                await message.reply(f"📤 データエクスポート完了: `{filename}`")
+            else:
+                await message.reply("❌ データエクスポートに失敗しました")
+        
+        else:
+            help_text = """🤖 **にゃんこボット管理コマンド**
+`!nyanco analytics` - 過去7日間の分析結果を表示
+`!nyanco matching` - ユーザーマッチングを実行
+`!nyanco daily` - 本日の統計を表示
+`!nyanco export` - データをエクスポート"""
+            await message.reply(help_text)
+    
+    except Exception as e:
+        print(f"❌ 管理者コマンド処理エラー: {e}")
+        await message.reply("❌ コマンドの実行中にエラーが発生しました")
+
 async def log_bot_action(message: discord.Message, response: str, action_type: str):
     """ボットのアクションをFirestoreに記録"""
     if db is None:
@@ -1491,3 +1661,528 @@ async def log_bot_action(message: discord.Message, response: str, action_type: s
         
     except Exception as e:
         print(f'❌ ボットアクション記録エラー: {e}')
+
+# --- ギルド情報をFirestoreに保存/更新する関数 ---
+async def update_guild_info(guild: discord.Guild):
+    """ギルド情報をFirestoreのguildsコレクションに保存/更新する"""
+    if db is None:
+        return
+    
+    try:
+        guild_id = str(guild.id)
+        guild_ref = db.collection('guilds').document(guild_id)
+        guild_doc = await asyncio.to_thread(guild_ref.get)
+        
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        
+        # デフォルトのボット設定
+        default_bot_settings = {
+            'traNyanPersonality': {
+                'energyLevel': 0.8,
+                'friendliness': 0.9,
+                'endPhrases': ['だにゃ', 'にゃ', 'にゃ〜'],
+                'customMessages': {
+                    'welcome': 'ようこそだにゃ！一緒に楽しくお話ししよう！',
+                    'reengagement': '久しぶりだにゃ！待ってたにゃ〜'
+                }
+            },
+            'kuroNyanPersonality': {
+                'analyticalLevel': 0.85,
+                'helpfulness': 0.75,
+                'endPhrases': ['のにゃ', 'ですにゃ', 'にゃ'],
+                'customMessages': {
+                    'analysis': 'データを分析してみたのにゃ。',
+                    'recommendation': 'こちらがおすすめですにゃ。'
+                }
+            },
+            'podcastFrequency': '0 18 * * MON',  # 毎週月曜日18時
+            'inactiveThreshold': 14,  # 14日間非アクティブで判定
+            'reengagementFrequency': 3,  # 3日間隔
+            'maxReengagementAttempts': 3,
+            'matchingEnabled': True,
+            'matchingThreshold': 0.7,
+            'analyticsEnabled': True
+        }
+        
+        if guild_doc.exists:
+            # 既存ギルドの更新
+            update_data = {
+                'name': guild.name,
+                'ownerId': str(guild.owner_id) if guild.owner_id else None,
+                'updatedAt': current_time.isoformat(),
+                'analytics': {
+                    'totalMembers': guild.member_count or 0,
+                    'lastUpdated': current_time.isoformat()
+                }
+            }
+            await asyncio.to_thread(guild_ref.update, update_data)
+            print(f"📝 ギルド情報を更新: {guild.name}")
+        else:
+            # 新規ギルドの作成
+            guild_data = {
+                'id': guild_id,
+                'name': guild.name,
+                'ownerId': str(guild.owner_id) if guild.owner_id else None,
+                'botSettings': default_bot_settings,
+                'welcomeChannelId': None,
+                'podcastChannelId': None,
+                'createdAt': current_time.isoformat(),
+                'updatedAt': current_time.isoformat(),
+                'analytics': {
+                    'totalMembers': guild.member_count or 0,
+                    'activeMembers': 0,
+                    'averageEngagement': 0.0,
+                    'topChannels': [],
+                    'lastUpdated': current_time.isoformat()
+                }
+            }
+            await asyncio.to_thread(guild_ref.set, guild_data)
+            print(f"📝 新規ギルド情報を作成: {guild.name}")
+            
+    except Exception as e:
+        print(f'❌ ギルド情報更新エラー: {e}')
+
+# --- トピック管理機能 ---
+async def update_topic_popularity(guild_id: str, keywords: list):
+    """キーワードからトピックの人気度を更新する"""
+    if db is None or not keywords:
+        return
+    
+    try:
+        for keyword in keywords:
+            if len(keyword) < 2:  # 短いキーワードはスキップ
+                continue
+                
+            # トピック検索または作成
+            topic_id = f"topic_{keyword.lower()}_{guild_id}"
+            topic_ref = db.collection('topics').document(topic_id)
+            topic_doc = await asyncio.to_thread(topic_ref.get)
+            
+            current_time = datetime.datetime.now(datetime.timezone.utc)
+            
+            if topic_doc.exists:
+                # 既存トピックの更新
+                topic_data = topic_doc.to_dict()
+                current_popularity = topic_data.get('popularity', 0)
+                mention_count = topic_data.get('mentionCount', 0)
+                
+                # 人気度スコアの更新（減衰を考慮）
+                new_popularity = min(100, current_popularity * 0.99 + 1.5)  # 減衰 + 新規言及
+                
+                update_data = {
+                    'popularity': new_popularity,
+                    'mentionCount': mention_count + 1,
+                    'updatedAt': current_time.isoformat(),
+                    'lastMentioned': current_time.isoformat()
+                }
+                await asyncio.to_thread(topic_ref.update, update_data)
+            else:
+                # 新規トピックの作成
+                topic_data = {
+                    'id': topic_id,
+                    'guildId': guild_id,
+                    'name': keyword,
+                    'keywords': [keyword.lower()],
+                    'channelIds': [],
+                    'popularity': 1.0,
+                    'trendScore': 1.0,
+                    'mentionCount': 1,
+                    'uniqueUsers': [],  # setはJSONシリアライズ不可のため配列に変更
+                    'createdAt': current_time.isoformat(),
+                    'updatedAt': current_time.isoformat(),
+                    'lastMentioned': current_time.isoformat(),
+                    'relatedTopics': {}
+                }
+                await asyncio.to_thread(topic_ref.set, topic_data)
+                print(f"📈 新規トピック作成: {keyword}")
+                
+    except Exception as e:
+        print(f'❌ トピック更新エラー: {e}')
+
+# --- 日次分析セッション管理 ---
+async def create_daily_analytics_session(guild_id: str):
+    """日次分析セッションを作成・更新する"""
+    if db is None:
+        return
+    
+    try:
+        today = datetime.datetime.now(datetime.timezone.utc).date()
+        session_id = f"analytics_{today.strftime('%Y%m%d')}_{guild_id}"
+        
+        # 今日のインタラクション数を集計
+        interactions_ref = db.collection('interactions')
+        today_start = datetime.datetime.combine(today, datetime.time.min, datetime.timezone.utc)
+        today_end = today_start + datetime.timedelta(days=1)
+        
+        # 今日のデータを取得
+        today_interactions = await asyncio.to_thread(
+            interactions_ref
+            .where('guildId', '==', guild_id)
+            .where('timestamp', '>=', today_start)
+            .where('timestamp', '<', today_end)
+            .get
+        )
+        
+        # 統計データの集計
+        message_count = 0
+        active_users = set()
+        channel_activity = {}
+        topic_mentions = {}
+        
+        for doc in today_interactions:
+            interaction = doc.to_dict()
+            
+            if interaction.get('type') == 'message':
+                message_count += 1
+                
+            user_id = interaction.get('userId')
+            if user_id:
+                active_users.add(user_id)
+                
+            channel_name = interaction.get('channelName', 'unknown')
+            channel_activity[channel_name] = channel_activity.get(channel_name, 0) + 1
+            
+            # キーワード集計
+            keywords = interaction.get('keywords', [])
+            for keyword in keywords:
+                topic_mentions[keyword] = topic_mentions.get(keyword, 0) + 1
+        
+        # 新規メンバー数の取得
+        new_members_today = await asyncio.to_thread(
+            interactions_ref
+            .where('guildId', '==', guild_id)
+            .where('type', '==', 'member_join')
+            .where('timestamp', '>=', today_start)
+            .where('timestamp', '<', today_end)
+            .get
+        )
+        
+        # 分析データの作成
+        analytics_data = {
+            'id': session_id,
+            'guildId': guild_id,
+            'date': today.strftime('%Y-%m-%d'),
+            'activeUsers': len(active_users),
+            'messageCount': message_count,
+            'newMembers': len(new_members_today),
+            'reengagements': 0,  # 今後実装
+            'topTopics': dict(sorted(topic_mentions.items(), key=lambda x: x[1], reverse=True)[:10]),
+            'channelActivity': dict(sorted(channel_activity.items(), key=lambda x: x[1], reverse=True)[:10]),
+            'createdAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            'metadata': {
+                'totalInteractions': len(today_interactions),
+                'uniqueChannels': len(channel_activity),
+                'topicVariety': len(topic_mentions)
+            }
+        }
+        
+        # Firestoreに保存
+        analytics_ref = db.collection('analytics_sessions').document(session_id)
+        await asyncio.to_thread(analytics_ref.set, analytics_data, merge=True)
+        
+        print(f"📊 日次分析セッション作成: {today.strftime('%Y-%m-%d')} ({len(active_users)}人アクティブ)")
+        return analytics_data
+        
+    except Exception as e:
+        print(f'❌ 日次分析セッション作成エラー: {e}')
+        return None
+
+# --- ユーザーマッチング機能 ---
+async def find_user_matches(guild_id: str, user_id: str = None):
+    """ユーザーマッチングを実行する"""
+    if db is None:
+        return []
+    
+    try:
+        # アクティブユーザーの取得
+        users_ref = db.collection('users').where('guildId', '==', guild_id).where('isActive', '==', True)
+        users_docs = await asyncio.to_thread(users_ref.get)
+        
+        users = []
+        for doc in users_docs:
+            user_data = doc.to_dict()
+            user_data['id'] = doc.id
+            users.append(user_data)
+        
+        if len(users) < 2:
+            return []
+        
+        matches = []
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        
+        # 対象ユーザーを決定
+        target_users = [u for u in users if u['id'] == user_id] if user_id else users
+        
+        for user in target_users:
+            user_interests = set(user.get('interests', []))
+            if not user_interests:
+                continue
+                
+            for other_user in users:
+                if user['id'] == other_user['id']:
+                    continue
+                    
+                other_interests = set(other_user.get('interests', []))
+                if not other_interests:
+                    continue
+                
+                # 共通の関心事を計算
+                common_interests = user_interests.intersection(other_interests)
+                if len(common_interests) < 1:
+                    continue
+                
+                # マッチングスコアの計算
+                match_score = calculate_match_score(user, other_user, common_interests)
+                
+                if match_score >= 0.7:  # 閾値以上のマッチング
+                    match_id = f"match_{min(user['id'], other_user['id'])}_{max(user['id'], other_user['id'])}"
+                    
+                    # 既存マッチの確認
+                    existing_match_ref = db.collection('user_matches').document(match_id)
+                    existing_match = await asyncio.to_thread(existing_match_ref.get)
+                    
+                    if not existing_match.exists:
+                        match_data = {
+                            'id': match_id,
+                            'guildId': guild_id,
+                            'user1Id': user['id'],
+                            'user2Id': other_user['id'],
+                            'commonInterests': list(common_interests),
+                            'matchScore': match_score,
+                            'status': 'suggested',
+                            'createdAt': current_time.isoformat(),
+                            'lastInteraction': None,
+                            'isIntroduced': False,
+                            'metadata': {
+                                'user1Name': user.get('username', ''),
+                                'user2Name': other_user.get('username', ''),
+                                'engagementScores': {
+                                    'user1': user.get('engagementScore', 0),
+                                    'user2': other_user.get('engagementScore', 0)
+                                }
+                            }
+                        }
+                        
+                        await asyncio.to_thread(existing_match_ref.set, match_data)
+                        matches.append(match_data)
+                        print(f"🤝 新しいマッチング: {user.get('username')} ↔ {other_user.get('username')} (スコア: {match_score:.2f})")
+        
+        return matches
+        
+    except Exception as e:
+        print(f'❌ ユーザーマッチング実行エラー: {e}')
+        return []
+
+def calculate_match_score(user1: dict, user2: dict, common_interests: set) -> float:
+    """マッチングスコアを計算する"""
+    try:
+        user1_interests = set(user1.get('interests', []))
+        user2_interests = set(user2.get('interests', []))
+        
+        # 共通関心事の重み（0-0.4）
+        if len(user1_interests) == 0 or len(user2_interests) == 0:
+            common_weight = 0
+        else:
+            common_weight = len(common_interests) / max(len(user1_interests), len(user2_interests)) * 0.4
+        
+        # エンゲージメントレベルの類似度（0-0.2）
+        engagement1 = user1.get('engagementScore', 0)
+        engagement2 = user2.get('engagementScore', 0)
+        if engagement1 == 0 and engagement2 == 0:
+            engagement_similarity = 0
+        else:
+            engagement_similarity = 1 - abs(engagement1 - engagement2) / max(engagement1, engagement2, 1) * 0.2
+        
+        # 活動時間の類似度（簡易版）（0-0.2）
+        activity_similarity = 0.1  # 仮の値
+        
+        # 基本的な互換性（0-0.2）
+        basic_compatibility = 0.1 if len(common_interests) > 0 else 0
+        
+        total_score = common_weight + engagement_similarity + activity_similarity + basic_compatibility
+        return min(1.0, total_score)
+        
+    except Exception as e:
+        print(f'❌ マッチングスコア計算エラー: {e}')
+        return 0.0
+
+# --- ポッドキャスト管理機能 ---
+async def create_podcast_entry(guild_id: str, title: str, content: str, topics: list):
+    """ポッドキャストエントリーをFirestoreに保存する"""
+    if db is None:
+        return None
+    
+    try:
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        podcast_id = f"podcast_{current_time.strftime('%Y%m%d_%H%M%S')}_{guild_id}"
+        
+        podcast_data = {
+            'id': podcast_id,
+            'guildId': guild_id,
+            'title': title,
+            'content': content,
+            'topics': topics,
+            'publishedAt': current_time.isoformat(),
+            'channelId': None,  # 後で設定
+            'views': 0,
+            'reactions': [],
+            'metadata': {
+                'generationTime': current_time.isoformat(),
+                'weeklyDataRange': {
+                    'start': (current_time - datetime.timedelta(days=7)).isoformat(),
+                    'end': current_time.isoformat()
+                },
+                'topContributors': [],
+                'dataSourcesUsed': ['interactions', 'topics', 'analytics_sessions']
+            }
+        }
+        
+        podcast_ref = db.collection('podcasts').document(podcast_id)
+        await asyncio.to_thread(podcast_ref.set, podcast_data)
+        
+        print(f"🎙️ ポッドキャストエントリー作成: {title}")
+        return podcast_data
+        
+    except Exception as e:
+        print(f'❌ ポッドキャスト作成エラー: {e}')
+        return None
+
+# --- 高度なボットアクション記録 ---
+async def log_advanced_bot_action(guild_id: str, user_id: str, action_type: str, payload: dict, target_id: str = None):
+    """高度なボットアクションをFirestoreに記録する"""
+    if db is None:
+        return
+    
+    try:
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        action_id = f"bot_action_{action_type}_{current_time.strftime('%Y%m%d%H%M%S')}_{user_id}"
+        
+        action_data = {
+            'id': action_id,
+            'guildId': guild_id,
+            'userId': user_id,
+            'actionType': action_type,
+            'targetId': target_id,
+            'payload': payload,
+            'timestamp': current_time.isoformat(),
+            'status': 'completed',
+            'result': None,  # 後で更新
+            'metadata': {
+                'actionId': action_id,
+                'payloadSize': len(str(payload)),
+                'executionTime': current_time.isoformat()
+            }
+        }
+        
+        bot_action_ref = db.collection('bot_actions').document(action_id)
+        await asyncio.to_thread(bot_action_ref.set, action_data)
+        
+        print(f"🤖 高度なボットアクション記録: {action_type}")
+        return action_id
+        
+    except Exception as e:
+        print(f'❌ 高度なボットアクション記録エラー: {e}')
+        return None
+
+# --- 管理者情報管理 ---
+async def get_admin_permissions(uid: str, guild_id: str):
+    """管理者の権限情報を取得する"""
+    if db is None:
+        return None
+    
+    try:
+        admin_ref = db.collection('admin_users').document(uid)
+        admin_doc = await asyncio.to_thread(admin_ref.get)
+        
+        if not admin_doc.exists:
+            return None
+            
+        admin_data = admin_doc.to_dict()
+        
+        # ギルド権限の確認
+        if guild_id not in admin_data.get('guildIds', []):
+            return None
+            
+        return admin_data.get('permissions', {})
+        
+    except Exception as e:
+        print(f'❌ 管理者権限取得エラー: {e}')
+        return None
+
+# --- 統合データ分析機能 ---
+async def generate_engagement_insights(guild_id: str, days: int = 7):
+    """エンゲージメント分析レポートを生成する"""
+    if db is None:
+        return None
+    
+    try:
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        start_time = current_time - datetime.timedelta(days=days)
+        
+        # 期間内のインタラクション取得
+        interactions_ref = db.collection('interactions')
+        interactions_docs = await asyncio.to_thread(
+            interactions_ref
+            .where('guildId', '==', guild_id)
+            .where('timestamp', '>=', start_time)
+            .order_by('timestamp', direction=firestore.Query.DESCENDING)
+            .get
+        )
+        
+        # 分析データの集計
+        total_interactions = len(interactions_docs)
+        active_users = set()
+        hourly_activity = {}
+        popular_keywords = {}
+        channel_engagement = {}
+        
+        for doc in interactions_docs:
+            interaction = doc.to_dict()
+            
+            user_id = interaction.get('userId')
+            if user_id:
+                active_users.add(user_id)
+            
+            # 時間別活動
+            timestamp = interaction.get('timestamp')
+            if timestamp:
+                if isinstance(timestamp, str):
+                    hour = datetime.datetime.fromisoformat(timestamp.replace('Z', '+00:00')).hour
+                else:
+                    hour = timestamp.hour
+                hourly_activity[hour] = hourly_activity.get(hour, 0) + 1
+            
+            # キーワード分析
+            keywords = interaction.get('keywords', [])
+            for keyword in keywords:
+                popular_keywords[keyword] = popular_keywords.get(keyword, 0) + 1
+            
+            # チャンネル別エンゲージメント
+            channel_name = interaction.get('channelName', 'unknown')
+            channel_engagement[channel_name] = channel_engagement.get(channel_name, 0) + 1
+        
+        # 分析結果
+        insights = {
+            'period': {
+                'start': start_time.isoformat(),
+                'end': current_time.isoformat(),
+                'days': days
+            },
+            'summary': {
+                'totalInteractions': total_interactions,
+                'activeUsers': len(active_users),
+                'averageInteractionsPerUser': total_interactions / max(len(active_users), 1),
+                'averageInteractionsPerDay': total_interactions / days
+            },
+            'hourlyActivity': dict(sorted(hourly_activity.items())),
+            'topKeywords': dict(sorted(popular_keywords.items(), key=lambda x: x[1], reverse=True)[:20]),
+            'channelEngagement': dict(sorted(channel_engagement.items(), key=lambda x: x[1], reverse=True)[:10]),
+            'generatedAt': current_time.isoformat()
+        }
+        
+        print(f"📈 エンゲージメント分析完了: {days}日間 ({total_interactions}インタラクション)")
+        return insights
+        
+    except Exception as e:
+        print(f'❌ エンゲージメント分析エラー: {e}')
+        return None
