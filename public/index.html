@@ -1411,6 +1411,7 @@
           // アナリティクス統計
           const analyticsList = Object.values(analyticsSessions || {});
           console.log("Analytics data:", analyticsList); // デバッグ用
+          console.log("Analytics sessions raw:", analyticsSessions); // デバッグ用
           
           // 日付でソートして最新のデータを取得
           const latestAnalytics = analyticsList.length > 0 ? 
@@ -1421,6 +1422,30 @@
             })[0] : null;
           
           console.log("Latest analytics:", latestAnalytics); // デバッグ用
+          console.log("Analytics list length:", analyticsList.length); // デバッグ用
+          
+          // サンプルデータまたは実際のデータを使用
+          const displayAnalytics = latestAnalytics || {
+            date: "2024-12-07",
+            activeUsers: 42,
+            messageCount: 189,
+            newMembers: 3,
+            reengagements: 2,
+            topTopics: {
+              "AI・機械学習": 35,
+              "React開発": 28,
+              "デザイン": 24,
+              "TypeScript": 19,
+              "ポッドキャスト": 16
+            },
+            channelActivity: {
+              "general": 58,
+              "tech-talk": 47,
+              "ai-research": 32,
+              "design": 28,
+              "random": 24
+            }
+          };
           
           document.getElementById('dashboard-analytics-sessions').innerHTML = `
             <div class="dashboard-card">
@@ -1431,46 +1456,48 @@
                 </h3>
               </div>
               <div class="card-content">
-                ${latestAnalytics ? `
-                  <div class="stats-grid">
-                    <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.activeUsers || 0}</span>
-                      <span class="stat-label">アクティブユーザー</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.messageCount || 0}</span>
-                      <span class="stat-label">メッセージ数</span>
-                    </div>
-                    <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.newMembers || 0}</span>
-                      <span class="stat-label">新規メンバー</span>
-                    </div>
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${displayAnalytics.activeUsers || 0}</span>
+                    <span class="stat-label">アクティブユーザー</span>
                   </div>
-                  <ul class="info-list">
-                    <li class="info-item">
-                      <span class="info-label">最新データ</span>
-                      <span class="info-value">${latestAnalytics.date || '-'}</span>
-                    </li>
-                    <li class="info-item">
-                      <span class="info-label">再エンゲージメント</span>
-                      <span class="info-value">${latestAnalytics.reengagements || 0}</span>
-                    </li>
-                  </ul>
+                  <div class="stat-item">
+                    <span class="stat-number">${displayAnalytics.messageCount || 0}</span>
+                    <span class="stat-label">メッセージ数</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${displayAnalytics.newMembers || 0}</span>
+                    <span class="stat-label">新規メンバー</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${displayAnalytics.reengagements || 0}</span>
+                    <span class="stat-label">再エンゲージメント</span>
+                  </div>
+                </div>
+                <ul class="info-list">
+                  <li class="info-item">
+                    <span class="info-label">データ日付</span>
+                    <span class="info-value">${displayAnalytics.date || new Date().toISOString().split('T')[0]}</span>
+                  </li>
+                  <li class="info-item">
+                    <span class="info-label">データ状態</span>
+                    <span class="info-value">${latestAnalytics ? 'リアルタイム' : 'サンプル'}</span>
+                  </li>
+                </ul>
+                <div style="margin-top: 1rem;">
+                  <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
+                  ${Object.entries(displayAnalytics.topTopics || {}).map(([topic, count]) => 
+                    `<span class="tag">${topic} (${count})</span>`
+                  ).join('')}
+                </div>
+                ${displayAnalytics.channelActivity ? `
                   <div style="margin-top: 1rem;">
-                    <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
-                    ${Object.entries(latestAnalytics.topTopics || {}).map(([topic, count]) => 
-                      `<span class="tag">${topic} (${count})</span>`
+                    <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
+                    ${Object.entries(displayAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
+                      `<span class="tag">#${channel}: ${count}</span>`
                     ).join('')}
                   </div>
-                  ${latestAnalytics.channelActivity ? `
-                    <div style="margin-top: 1rem;">
-                      <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
-                      ${Object.entries(latestAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
-                        `<span class="tag">#${channel}: ${count}</span>`
-                      ).join('')}
-                    </div>
-                  ` : ''}
-                ` : '<div class="no-data"><i class="material-icons">insights</i><div>アナリティクスデータがありません</div></div>'}
+                ` : ''}
               </div>
             </div>
           `;
