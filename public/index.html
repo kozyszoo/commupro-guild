@@ -1169,66 +1169,69 @@
       // Firestoreからコレクションデータを取得
       async function getCollectionData(collectionName) {
         try {
+          console.log(`${collectionName}コレクションを取得中...`);
           const snapshot = await db.collection(collectionName).get();
           const data = {};
+          
           snapshot.forEach(doc => {
-            data[doc.id] = doc.data();
+            const docData = doc.data();
+            data[doc.id] = {
+              id: doc.id,
+              ...docData
+            };
           });
+          
+          console.log(`${collectionName}コレクション取得完了:`, data);
           return data;
         } catch (error) {
           console.error(`${collectionName}コレクションの取得エラー:`, error);
           
-          // 開発用: データが取得できない場合はサンプルデータを使用
-          if (collectionName === 'analytics_sessions') {
-            return {
-              "analytics_20240524": {
-                "id": "analytics_20240524",
-                "guildId": "987654321098765432",
-                "date": "2024-05-24",
-                "activeUsers": 34,
-                "messageCount": 127,
-                "newMembers": 2,
-                "reengagements": 1,
-                "topTopics": {
-                  "React": 28,
-                  "デザイン": 15,
-                  "JavaScript": 23,
-                  "AI": 12,
-                  "ゲーム開発": 8
-                },
-                "channelActivity": {
-                  "general": 45,
-                  "tech-talk": 38,
-                  "design": 22,
-                  "random": 15,
-                  "game-dev": 7
-                }
-              },
-              "analytics_20240523": {
-                "id": "analytics_20240523",
-                "guildId": "987654321098765432",
-                "date": "2024-05-23",
-                "activeUsers": 41,
-                "messageCount": 156,
-                "newMembers": 1,
-                "reengagements": 2,
-                "topTopics": {
-                  "AI": 35,
-                  "Python": 28,
-                  "React": 24,
-                  "デザイン": 19,
-                  "TypeScript": 16
-                },
-                "channelActivity": {
-                  "general": 52,
-                  "ai-research": 41,
-                  "tech-talk": 35,
-                  "design": 18,
-                  "python-dev": 10
-                }
+          // analytics_sessionsの場合は空のオブジェクトを返す（フォールバックは後で処理）
+          return {};
+        }
+      }
+
+      // Analytics用の専用データ取得関数
+      async function getAnalyticsData() {
+        try {
+          console.log('Analytics_sessionsコレクションを取得中...');
+          
+          // 複数の可能なコレクション名を試す
+          const possibleCollections = ['analytics_sessions', 'analyticsSessions', 'daily_analytics'];
+          let analyticsData = {};
+          
+          for (const collectionName of possibleCollections) {
+            try {
+              const snapshot = await db.collection(collectionName).get();
+              if (!snapshot.empty) {
+                console.log(`${collectionName}コレクションからデータを発見`);
+                snapshot.forEach(doc => {
+                  const docData = doc.data();
+                  analyticsData[doc.id] = {
+                    id: doc.id,
+                    ...docData
+                  };
+                });
+                break; // データが見つかったらループを抜ける
               }
-            };
+            } catch (collectionError) {
+              console.log(`${collectionName}コレクションは存在しないか、アクセス権限がありません`);
+            }
           }
+          
+          // 日付の古い順にソートして最新のものを取得しやすくする
+          const sortedData = Object.entries(analyticsData).sort(([, a], [, b]) => {
+            const dateA = a.date || a.session_date || a.createdAt || '1970-01-01';
+            const dateB = b.date || b.session_date || b.createdAt || '1970-01-01';
+            return new Date(dateB) - new Date(dateA);
+          });
+          
+          const result = Object.fromEntries(sortedData);
+          console.log('Analytics取得完了:', result);
+          return result;
+          
+        } catch (error) {
+          console.error('Analytics データの取得エラー:', error);
           return {};
         }
       }
@@ -1259,7 +1262,7 @@
             getCollectionData('topics'),
             getCollectionData('admin_users'),
             getCollectionData('bot_actions'),
-            getCollectionData('analytics_sessions'),
+            getAnalyticsData(), // 専用関数を使用
           ]);
 
           // ユーザー統計
@@ -1413,19 +1416,40 @@
           console.log("Analytics data:", analyticsList); // デバッグ用
           console.log("Analytics sessions raw:", analyticsSessions); // デバッグ用
           
-          // 日付でソートして最新のデータを取得
+          // 日付でソートして最新のデータを取得（複数の日付フィールド名に対応）
           const latestAnalytics = analyticsList.length > 0 ? 
             analyticsList.sort((a, b) => {
-              const dateA = a.date ? new Date(a.date) : new Date(0);
-              const dateB = b.date ? new Date(b.date) : new Date(0);
-              return dateB - dateA;
+              // 複数の可能な日付フィールド名をチェック
+              const dateA = a.date || a.session_date || a.sessionDate || a.createdAt || a.created_at;
+              const dateB = b.date || b.session_date || b.sessionDate || b.createdAt || b.created_at;
+              
+              const dateObjA = dateA ? (dateA.toDate ? dateA.toDate() : new Date(dateA)) : new Date(0);
+              const dateObjB = dateB ? (dateB.toDate ? dateB.toDate() : new Date(dateB)) : new Date(0);
+              
+              return dateObjB - dateObjA;
             })[0] : null;
           
           console.log("Latest analytics:", latestAnalytics); // デバッグ用
           console.log("Analytics list length:", analyticsList.length); // デバッグ用
           
-          // サンプルデータまたは実際のデータを使用
-          const displayAnalytics = latestAnalytics || {
+          // 実際のデータがある場合の正規化処理
+          let normalizedAnalytics = null;
+          if (latestAnalytics) {
+            normalizedAnalytics = {
+              date: latestAnalytics.date || latestAnalytics.session_date || latestAnalytics.sessionDate || 
+                    (latestAnalytics.createdAt ? formatDate(latestAnalytics.createdAt) : new Date().toISOString().split('T')[0]),
+              activeUsers: latestAnalytics.activeUsers || latestAnalytics.active_users || latestAnalytics.userCount || 0,
+              messageCount: latestAnalytics.messageCount || latestAnalytics.message_count || latestAnalytics.totalMessages || 0,
+              newMembers: latestAnalytics.newMembers || latestAnalytics.new_members || latestAnalytics.joinedUsers || 0,
+              reengagements: latestAnalytics.reengagements || latestAnalytics.reengagement_count || 0,
+              topTopics: latestAnalytics.topTopics || latestAnalytics.top_topics || latestAnalytics.popularTopics || {},
+              channelActivity: latestAnalytics.channelActivity || latestAnalytics.channel_activity || latestAnalytics.channels || {}
+            };
+            console.log("Normalized analytics:", normalizedAnalytics); // デバッグ用
+          }
+          
+          // 正規化されたデータまたはサンプルデータを使用
+          const displayAnalytics = normalizedAnalytics || {
             date: "2024-12-07",
             activeUsers: 42,
             messageCount: 189,
@@ -1481,8 +1505,14 @@
                   </li>
                   <li class="info-item">
                     <span class="info-label">データ状態</span>
-                    <span class="info-value">${latestAnalytics ? 'リアルタイム' : 'サンプル'}</span>
+                    <span class="info-value">${normalizedAnalytics ? 'Firestore' : 'サンプル'}</span>
                   </li>
+                  ${normalizedAnalytics ? `
+                    <li class="info-item">
+                      <span class="info-label">ドキュメントID</span>
+                      <span class="info-value">${latestAnalytics.id || '-'}</span>
+                    </li>
+                  ` : ''}
                 </ul>
                 <div style="margin-top: 1rem;">
                   <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
