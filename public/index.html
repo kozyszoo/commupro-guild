@@ -715,9 +715,28 @@
         measurementId: "G-VR49RLP5NX"
       };
 
-      // Firebase初期化
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
+      // Firebase初期化とエラーハンドリング
+      let db = null;
+      let firebaseInitialized = false;
+      
+      try {
+        console.log('Firebase初期化開始...');
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseInitialized = true;
+        console.log('Firebase初期化完了');
+        
+        // Firestoreの接続テスト
+        db.enableNetwork().then(() => {
+          console.log('Firestore接続成功');
+        }).catch((error) => {
+          console.error('Firestore接続エラー:', error);
+        });
+        
+      } catch (error) {
+        console.error('Firebase初期化エラー:', error);
+        firebaseInitialized = false;
+      }
 
       function formatDate(dateValue) {
         if (!dateValue) return '-';
@@ -1173,8 +1192,17 @@
 
       // Firestoreからコレクションデータを取得
       async function getCollectionData(collectionName) {
+        if (!firebaseInitialized || !db) {
+          console.warn(`Firebase未初期化のため${collectionName}コレクションをスキップ`);
+          return {};
+        }
+        
         try {
           console.log(`${collectionName}コレクションを取得中...`);
+          
+          // 接続状態をチェック
+          await db.enableNetwork();
+          
           const snapshot = await db.collection(collectionName).get();
           const data = {};
           
@@ -1186,20 +1214,32 @@
             };
           });
           
-          console.log(`${collectionName}コレクション取得完了:`, data);
+          console.log(`${collectionName}コレクション取得完了: ${Object.keys(data).length}件`);
           return data;
         } catch (error) {
           console.error(`${collectionName}コレクションの取得エラー:`, error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name
+          });
           
-          // analytics_sessionsの場合は空のオブジェクトを返す（フォールバックは後で処理）
           return {};
         }
       }
 
       // Analytics用の専用データ取得関数
       async function getAnalyticsData() {
+        if (!firebaseInitialized || !db) {
+          console.warn('Firebase未初期化のためAnalyticsデータをスキップ');
+          return {};
+        }
+        
         try {
           console.log('Analytics_sessionsコレクションを取得中...');
+          
+          // 接続状態をチェック
+          await db.enableNetwork();
           
           // 複数の可能なコレクション名を試す
           const possibleCollections = ['analytics_sessions', 'analyticsSessions', 'daily_analytics'];
@@ -1209,7 +1249,7 @@
             try {
               const snapshot = await db.collection(collectionName).get();
               if (!snapshot.empty) {
-                console.log(`${collectionName}コレクションからデータを発見`);
+                console.log(`${collectionName}コレクションからデータを発見: ${snapshot.size}件`);
                 snapshot.forEach(doc => {
                   const docData = doc.data();
                   analyticsData[doc.id] = {
@@ -1218,9 +1258,11 @@
                   };
                 });
                 break; // データが見つかったらループを抜ける
+              } else {
+                console.log(`${collectionName}コレクションは空です`);
               }
             } catch (collectionError) {
-              console.log(`${collectionName}コレクションは存在しないか、アクセス権限がありません`);
+              console.log(`${collectionName}コレクションアクセスエラー:`, collectionError.message);
             }
           }
           
@@ -1232,28 +1274,71 @@
           });
           
           const result = Object.fromEntries(sortedData);
-          console.log('Analytics取得完了:', result);
+          console.log(`Analytics取得完了: ${Object.keys(result).length}件`);
           return result;
           
         } catch (error) {
           console.error('Analytics データの取得エラー:', error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name
+          });
           return {};
         }
       }
 
       async function loadDashboard() {
+        // Firebase設定の検証
+        console.log('Firebase設定確認:', {
+          projectId: firebaseConfig.projectId,
+          authDomain: firebaseConfig.authDomain,
+          initialized: firebaseInitialized,
+          dbInstance: !!db
+        });
+        
         // Show loading state
-        const sections = ['users', 'guilds', 'interactions', 'podcasts', 'events', 'user-matches', 'topics', 'admin-users', 'bot-actions', 'analytics-sessions'];
+        const sections = ['users', 'guilds', 'interactions', 'podcasts', 'events', 'user-matches', 'topics', 'admin-users', 'bot-actions', 'analytics-sessions', 'discord-logs'];
         sections.forEach(section => {
           document.getElementById(`dashboard-${section}`).innerHTML = `
             <div class="dashboard-card">
               <div class="loading">
                 <div class="spinner"></div>
                 Firestoreからデータを読み込み中...
+                <div style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-muted);">
+                  Firebase初期化: ${firebaseInitialized ? '✅' : '❌'}
+                </div>
               </div>
             </div>
           `;
         });
+        
+        // Firebase未初期化の場合は早期終了
+        if (!firebaseInitialized || !db) {
+          setTimeout(() => {
+            sections.forEach(section => {
+              document.getElementById(`dashboard-${section}`).innerHTML = `
+                <div class="dashboard-card">
+                  <div class="no-data">
+                    <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
+                    <div style="font-weight: 600; margin-bottom: 1rem;">Firebase初期化エラー</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                      ${!firebaseInitialized ? 'Firebase初期化に失敗しました' : 'Firestoreインスタンスが作成されていません'}
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm); text-align: left;">
+                      <div style="font-weight: 600; margin-bottom: 0.5rem;">確認事項:</div>
+                      <div>• Firebase SDKが正しく読み込まれているか</div>
+                      <div>• プロジェクトIDが正しいか: ${firebaseConfig.projectId}</div>
+                      <div>• ネットワーク接続が正常か</div>
+                      <div>• Firestoreが有効になっているか</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+          }, 1000);
+          return;
+        }
 
         try {
           // Firestoreからデータを並列取得
@@ -2418,13 +2503,52 @@
 
         } catch (error) {
           console.error('Firestoreからのデータ読み込みに失敗しました:', error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name,
+            firebaseInitialized: firebaseInitialized,
+            dbInstance: !!db
+          });
+          
+          // エラーの詳細情報を準備
+          let errorDetails = '';
+          if (!firebaseInitialized) {
+            errorDetails = 'Firebase初期化に失敗しました';
+          } else if (!db) {
+            errorDetails = 'Firestoreインスタンスが作成されていません';
+          } else if (error.code) {
+            switch (error.code) {
+              case 'permission-denied':
+                errorDetails = 'アクセス権限がありません（Firestoreルールを確認してください）';
+                break;
+              case 'unavailable':
+                errorDetails = 'Firestoreサービスが利用できません（ネットワーク接続を確認してください）';
+                break;
+              case 'unauthenticated':
+                errorDetails = '認証が必要です';
+                break;
+              default:
+                errorDetails = `エラーコード: ${error.code} - ${error.message}`;
+            }
+          } else {
+            errorDetails = error.message || '不明なエラーが発生しました';
+          }
+          
           sections.forEach(section => {
             document.getElementById(`dashboard-${section}`).innerHTML = `
               <div class="dashboard-card">
                 <div class="no-data">
                   <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
-                  <div>Firestoreからのデータ読み込みに失敗しました</div>
-                  <div style="font-size: 0.8rem; margin-top: 0.5rem;">Firebase設定を確認してください</div>
+                  <div style="font-weight: 600; margin-bottom: 1rem;">Firestoreからのデータ読み込みに失敗しました</div>
+                  <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">${errorDetails}</div>
+                  <div style="font-size: 0.8rem; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm); text-align: left;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">デバッグ情報:</div>
+                    <div>Firebase初期化: ${firebaseInitialized ? '✅' : '❌'}</div>
+                    <div>Firestoreインスタンス: ${db ? '✅' : '❌'}</div>
+                    <div>エラーコード: ${error.code || 'なし'}</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.7rem;">ブラウザのデベロッパーツール（F12）でコンソールを確認してください</div>
+                  </div>
                 </div>
               </div>
             `;
