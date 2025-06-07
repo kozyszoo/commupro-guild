@@ -1963,6 +1963,8 @@
             }
           ];
           
+          // 初期表示は時刻の降順でソート
+          const sortedInteractions = sortData(displayInteractions, 'timestamp', 'desc');
           cachedInteractions = displayInteractions; // キャッシュに保存
           
           const totalInteractions = displayInteractions.length;
@@ -1970,9 +1972,6 @@
           const reactionCount = displayInteractions.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
           const mentionCount = displayInteractions.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
           const attachmentCount = displayInteractions.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
-          
-          // 初期表示は時刻の降順でソート
-          const sortedInteractions = sortData(displayInteractions, 'timestamp', 'desc');
           
           document.getElementById('dashboard-interactions').innerHTML = `
             <div class="dashboard-card">
@@ -2033,7 +2032,7 @@
                           </tr>
                         </thead>
                         <tbody>
-                          ${sortedInteractions.slice(0, 100).map(i => `
+                          ${sortData(displayInteractions, currentSort.column, currentSort.direction, 'interactions').slice(0, 100).map(i => `
                           <tr>
                             <td>
                               <div style="font-weight: 600;">${i.username || '-'}</div>
