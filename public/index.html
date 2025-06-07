@@ -1548,70 +1548,8 @@
             </div>
           `;
 
-          // Discord ログ詳細セクション
-          const recentLogs = sortedInteractions.slice(0, 20);
-          const logTypeStats = {};
-          displayInteractions.forEach(log => {
-            const type = log.type || 'unknown';
-            logTypeStats[type] = (logTypeStats[type] || 0) + 1;
-          });
-
-          // ログタイプの日本語名マッピング
-          const logTypeNames = {
-            'message': 'メッセージ投稿',
-            'message_edit': 'メッセージ編集',
-            'message_delete': 'メッセージ削除',
-            'reaction_add': 'リアクション追加',
-            'reaction_remove': 'リアクション削除',
-            'member_join': 'メンバー参加',
-            'member_leave': 'メンバー退出',
-            'scheduled_event_create': 'イベント作成',
-            'scheduled_event_update': 'イベント更新',
-            'scheduled_event_delete': 'イベント削除',
-            'scheduled_event_user_add': 'イベント参加',
-            'scheduled_event_user_remove': 'イベント離脱',
-            'bot_action': 'ボットアクション'
-          };
-
-          // ログレベルに応じたアイコンとスタイル
-          const getLogIcon = (type) => {
-            const icons = {
-              'message': 'chat',
-              'message_edit': 'edit',
-              'message_delete': 'delete',
-              'reaction_add': 'add_reaction',
-              'reaction_remove': 'remove_circle',
-              'member_join': 'person_add',
-              'member_leave': 'person_remove',
-              'scheduled_event_create': 'event',
-              'scheduled_event_update': 'update',
-              'scheduled_event_delete': 'event_busy',
-              'scheduled_event_user_add': 'group_add',
-              'scheduled_event_user_remove': 'group_remove',
-              'bot_action': 'smart_toy'
-            };
-            return icons[type] || 'info';
-          };
-
-          const getLogColor = (type) => {
-            const colors = {
-              'message': 'var(--primary-color)',
-              'message_edit': 'var(--warning-color)',
-              'message_delete': 'var(--error-color)',
-              'reaction_add': 'var(--success-color)',
-              'reaction_remove': '#64748b',
-              'member_join': 'var(--success-color)',
-              'member_leave': 'var(--error-color)',
-              'scheduled_event_create': 'var(--accent-color)',
-              'scheduled_event_update': 'var(--warning-color)',
-              'scheduled_event_delete': 'var(--error-color)',
-              'scheduled_event_user_add': 'var(--primary-color)',
-              'scheduled_event_user_remove': '#64748b',
-              'bot_action': 'var(--secondary-color)'
-            };
-            return colors[type] || 'var(--text-muted)';
-          };
-
+          // Discord ログ詳細セクションは後で処理する（sortedInteractions定義後）
+          // 一時的にプレースホルダーを作成
           document.getElementById('dashboard-discord-logs').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1621,127 +1559,9 @@
                 </h3>
               </div>
               <div class="card-content">
-                ${interactionList.length === 0 ? `
-                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                      サンプルデータを表示中
-                    </div>
-                  </div>
-                ` : ''}
-                
-                <!-- ログタイプ統計 -->
-                <div class="stats-grid" style="margin-bottom: 1.5rem;">
-                  ${Object.entries(logTypeStats).slice(0, 6).map(([type, count]) => `
-                    <div class="stat-item">
-                      <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                        <i class="material-icons" style="color: ${getLogColor(type)}; margin-right: 0.5rem; font-size: 1.2rem;">${getLogIcon(type)}</i>
-                        <span class="stat-number" style="font-size: 1.5rem;">${count}</span>
-                      </div>
-                      <span class="stat-label" style="font-size: 0.8rem;">${logTypeNames[type] || type}</span>
-                    </div>
-                  `).join('')}
-                </div>
-
-                <!-- リアルタイムログストリーム -->
-                <div style="margin-bottom: 1rem;">
-                  <div class="info-label" style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
-                    <span>最新ログ (${recentLogs.length}件)</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">
-                      <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">update</i>
-                      リアルタイム更新
-                    </span>
-                  </div>
-                  
-                  <div style="max-height: 600px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
-                    ${recentLogs.map(log => `
-                      <div class="activity-item" style="border-bottom: 1px solid var(--border-color); padding: 1rem; margin: 0;">
-                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                          <div style="background: linear-gradient(135deg, ${getLogColor(log.type)}, ${getLogColor(log.type)}99); color: #fff; padding: 0.5rem; border-radius: 50%; min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
-                            <i class="material-icons" style="font-size: 1rem;">${getLogIcon(log.type)}</i>
-                          </div>
-                          
-                          <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                              <span style="font-weight: 700; color: var(--text-primary);">${logTypeNames[log.type] || log.type}</span>
-                              <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary-color); padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-                                ${log.type}
-                              </span>
-                              <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: auto;">
-                                ${formatDate(log.timestamp)}
-                              </span>
-                            </div>
-                            
-                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                              <strong>ユーザー:</strong> ${log.username || '-'} (ID: ${log.userId || '-'})
-                              ${log.guildName ? `<br><strong>サーバー:</strong> ${log.guildName}` : ''}
-                              ${log.channelName ? `<br><strong>チャンネル:</strong> #${log.channelName}` : ''}
-                            </div>
-                            
-                            ${log.content ? `
-                              <div style="background: rgba(99, 102, 241, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--primary-color);">
-                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">メッセージ内容:</div>
-                                <div style="color: var(--text-secondary); line-height: 1.4; word-break: break-word;">
-                                  ${truncateText(log.content, 200)}
-                                </div>
-                              </div>
-                            ` : ''}
-                            
-                            ${log.eventName ? `
-                              <div style="background: rgba(6, 182, 212, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent-color);">
-                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">イベント:</div>
-                                <div style="color: var(--text-secondary);">${log.eventName}</div>
-                              </div>
-                            ` : ''}
-                            
-                            <!-- メタデータ表示 -->
-                            ${log.metadata ? `
-                              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-                                ${Object.entries(log.metadata).slice(0, 4).map(([key, value]) => {
-                                  if (value === null || value === undefined || value === false) return '';
-                                  const displayValue = typeof value === 'boolean' ? (value ? '✓' : '✗') : 
-                                                     typeof value === 'number' ? value :
-                                                     typeof value === 'string' ? (value.length > 20 ? value.substring(0, 20) + '...' : value) :
-                                                     'オブジェクト';
-                                  return `<span style="background: rgba(100, 116, 139, 0.1); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem;">${key}: ${displayValue}</span>`;
-                                }).join('')}
-                              </div>
-                            ` : ''}
-                            
-                            <!-- キーワード表示 -->
-                            ${(log.keywords || []).length > 0 ? `
-                              <div style="margin-top: 0.5rem;">
-                                ${log.keywords.slice(0, 5).map(keyword => `<span class="tag" style="font-size: 0.7rem;">${keyword}</span>`).join('')}
-                              </div>
-                            ` : ''}
-                          </div>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
-                </div>
-                
-                <!-- ログ統計サマリー -->
-                <div style="margin-top: 1rem; padding: 1rem; background: rgba(99, 102, 241, 0.05); border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.1);">
-                  <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">ログ統計</div>
-                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; font-size: 0.875rem;">
-                    <div>
-                      <span style="color: var(--text-secondary);">総ログ数:</span>
-                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${totalInteractions}</span>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary);">ユニークユーザー:</span>
-                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.userId).filter(Boolean)).size}</span>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary);">アクティブチャンネル:</span>
-                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.channelName).filter(Boolean)).size}</span>
-                    </div>
-                    <div>
-                      <span style="color: var(--text-secondary);">最新ログ:</span>
-                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${recentLogs.length > 0 ? formatDate(recentLogs[0].timestamp) : '-'}</span>
-                    </div>
-                  </div>
+                <div class="loading">
+                  <div class="spinner"></div>
+                  Discord ログデータを処理中...
                 </div>
               </div>
             </div>
@@ -2065,6 +1885,205 @@
                     </table>
                   </div>
                 ` : '<div class="no-data"><i class="material-icons">chat</i><div>インタラクションデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // Discord ログ詳細セクション（sortedInteractions定義後）
+          const recentLogs = sortedInteractions.slice(0, 20);
+          const logTypeStats = {};
+          displayInteractions.forEach(log => {
+            const type = log.type || 'unknown';
+            logTypeStats[type] = (logTypeStats[type] || 0) + 1;
+          });
+
+          // ログタイプの日本語名マッピング
+          const logTypeNames = {
+            'message': 'メッセージ投稿',
+            'message_edit': 'メッセージ編集',
+            'message_delete': 'メッセージ削除',
+            'reaction_add': 'リアクション追加',
+            'reaction_remove': 'リアクション削除',
+            'member_join': 'メンバー参加',
+            'member_leave': 'メンバー退出',
+            'scheduled_event_create': 'イベント作成',
+            'scheduled_event_update': 'イベント更新',
+            'scheduled_event_delete': 'イベント削除',
+            'scheduled_event_user_add': 'イベント参加',
+            'scheduled_event_user_remove': 'イベント離脱',
+            'bot_action': 'ボットアクション'
+          };
+
+          // ログレベルに応じたアイコンとスタイル
+          const getLogIcon = (type) => {
+            const icons = {
+              'message': 'chat',
+              'message_edit': 'edit',
+              'message_delete': 'delete',
+              'reaction_add': 'add_reaction',
+              'reaction_remove': 'remove_circle',
+              'member_join': 'person_add',
+              'member_leave': 'person_remove',
+              'scheduled_event_create': 'event',
+              'scheduled_event_update': 'update',
+              'scheduled_event_delete': 'event_busy',
+              'scheduled_event_user_add': 'group_add',
+              'scheduled_event_user_remove': 'group_remove',
+              'bot_action': 'smart_toy'
+            };
+            return icons[type] || 'info';
+          };
+
+          const getLogColor = (type) => {
+            const colors = {
+              'message': 'var(--primary-color)',
+              'message_edit': 'var(--warning-color)',
+              'message_delete': 'var(--error-color)',
+              'reaction_add': 'var(--success-color)',
+              'reaction_remove': '#64748b',
+              'member_join': 'var(--success-color)',
+              'member_leave': 'var(--error-color)',
+              'scheduled_event_create': 'var(--accent-color)',
+              'scheduled_event_update': 'var(--warning-color)',
+              'scheduled_event_delete': 'var(--error-color)',
+              'scheduled_event_user_add': 'var(--primary-color)',
+              'scheduled_event_user_remove': '#64748b',
+              'bot_action': 'var(--secondary-color)'
+            };
+            return colors[type] || 'var(--text-muted)';
+          };
+
+          document.getElementById('dashboard-discord-logs').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">history</i>
+                  Discord ログ詳細
+                </h3>
+              </div>
+              <div class="card-content">
+                ${interactionList.length === 0 ? `
+                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
+                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
+                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
+                      サンプルデータを表示中
+                    </div>
+                  </div>
+                ` : ''}
+                
+                <!-- ログタイプ統計 -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                  ${Object.entries(logTypeStats).slice(0, 6).map(([type, count]) => `
+                    <div class="stat-item">
+                      <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <i class="material-icons" style="color: ${getLogColor(type)}; margin-right: 0.5rem; font-size: 1.2rem;">${getLogIcon(type)}</i>
+                        <span class="stat-number" style="font-size: 1.5rem;">${count}</span>
+                      </div>
+                      <span class="stat-label" style="font-size: 0.8rem;">${logTypeNames[type] || type}</span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- リアルタイムログストリーム -->
+                <div style="margin-bottom: 1rem;">
+                  <div class="info-label" style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span>最新ログ (${recentLogs.length}件)</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">
+                      <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">update</i>
+                      リアルタイム更新
+                    </span>
+                  </div>
+                  
+                  <div style="max-height: 600px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                    ${recentLogs.map(log => `
+                      <div class="activity-item" style="border-bottom: 1px solid var(--border-color); padding: 1rem; margin: 0;">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                          <div style="background: linear-gradient(135deg, ${getLogColor(log.type)}, ${getLogColor(log.type)}99); color: #fff; padding: 0.5rem; border-radius: 50%; min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                            <i class="material-icons" style="font-size: 1rem;">${getLogIcon(log.type)}</i>
+                          </div>
+                          
+                          <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                              <span style="font-weight: 700; color: var(--text-primary);">${logTypeNames[log.type] || log.type}</span>
+                              <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary-color); padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                ${log.type}
+                              </span>
+                              <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: auto;">
+                                ${formatDate(log.timestamp)}
+                              </span>
+                            </div>
+                            
+                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                              <strong>ユーザー:</strong> ${log.username || '-'} (ID: ${log.userId || '-'})
+                              ${log.guildName ? `<br><strong>サーバー:</strong> ${log.guildName}` : ''}
+                              ${log.channelName ? `<br><strong>チャンネル:</strong> #${log.channelName}` : ''}
+                            </div>
+                            
+                            ${log.content ? `
+                              <div style="background: rgba(99, 102, 241, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--primary-color);">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">メッセージ内容:</div>
+                                <div style="color: var(--text-secondary); line-height: 1.4; word-break: break-word;">
+                                  ${truncateText(log.content, 200)}
+                                </div>
+                              </div>
+                            ` : ''}
+                            
+                            ${log.eventName ? `
+                              <div style="background: rgba(6, 182, 212, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent-color);">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">イベント:</div>
+                                <div style="color: var(--text-secondary);">${log.eventName}</div>
+                              </div>
+                            ` : ''}
+                            
+                            <!-- メタデータ表示 -->
+                            ${log.metadata ? `
+                              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                ${Object.entries(log.metadata).slice(0, 4).map(([key, value]) => {
+                                  if (value === null || value === undefined || value === false) return '';
+                                  const displayValue = typeof value === 'boolean' ? (value ? '✓' : '✗') : 
+                                                     typeof value === 'number' ? value :
+                                                     typeof value === 'string' ? (value.length > 20 ? value.substring(0, 20) + '...' : value) :
+                                                     'オブジェクト';
+                                  return `<span style="background: rgba(100, 116, 139, 0.1); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem;">${key}: ${displayValue}</span>`;
+                                }).join('')}
+                              </div>
+                            ` : ''}
+                            
+                            <!-- キーワード表示 -->
+                            ${(log.keywords || []).length > 0 ? `
+                              <div style="margin-top: 0.5rem;">
+                                ${log.keywords.slice(0, 5).map(keyword => `<span class="tag" style="font-size: 0.7rem;">${keyword}</span>`).join('')}
+                              </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                
+                <!-- ログ統計サマリー -->
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(99, 102, 241, 0.05); border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.1);">
+                  <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">ログ統計</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; font-size: 0.875rem;">
+                    <div>
+                      <span style="color: var(--text-secondary);">総ログ数:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${totalInteractions}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">ユニークユーザー:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.userId).filter(Boolean)).size}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">アクティブチャンネル:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.channelName).filter(Boolean)).size}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">最新ログ:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${recentLogs.length > 0 ? formatDate(recentLogs[0].timestamp) : '-'}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           `;
