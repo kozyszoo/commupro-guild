@@ -193,6 +193,11 @@ async def log_interaction_to_firestore(interaction_data: dict):
 
     try:
         # サーバー側のタイムスタンプを追加
+
+
+
+
+        
         interaction_data['timestamp'] = firestore.SERVER_TIMESTAMP
         
         # Firestoreへの書き込み
@@ -948,7 +953,7 @@ def extract_keywords(content: str) -> list:
     # 重複を除去し、出現頻度でソート
     from collections import Counter
     word_counts = Counter(keywords)
-    keywords = [word for word, count in word_counts.most_common()]
+    keywords = [word for word, _ in word_counts.most_common()]
     
     # 最大10個のキーワードに制限
     return keywords[:10]
@@ -1306,54 +1311,153 @@ async def handle_mention_response(message: discord.Message):
         # エラー時のフォールバック応答
         await message.reply("にゃーん？ちょっと調子が悪いみたいだにゃ... 🐱💦")
 
-async def generate_response(content: str, user_name: str, message: discord.Message) -> str:
-    """メッセージ内容に基づいて適切な応答を生成"""
+def detect_character_from_mention(content: str) -> str:
+    """メンション内容からキャラクターを判定"""
     content_lower = content.lower()
+    
+    # みやにゃん関連のキーワード
+    miya_keywords = ['みやにゃん', 'miya', '技術', 'プログラミング', 'コード', 'チュートリアル', 'ヘルプ', '進捗', '統計']
+    
+    # イヴにゃん関連のキーワード
+    eve_keywords = ['イヴにゃん', 'eve', 'データ', '分析', '統計', 'レポート']
+    
+    # キーワードマッチング
+    miya_score = sum(1 for keyword in miya_keywords if keyword in content_lower)
+    eve_score = sum(1 for keyword in eve_keywords if keyword in content_lower)
+    
+    if miya_score > eve_score:
+        return 'miya'
+    elif eve_score > miya_score:
+        return 'eve'
+    else:
+        # デフォルトはランダム（ユーザー名のハッシュ値で決定）
+        return 'miya' if hash(content) % 2 == 0 else 'eve'
+
+async def generate_response(content: str, user_name: str, message: discord.Message) -> str:
+    """メッセージ内容に基づいて適切な応答を生成（みやにゃん・イヴにゃん仕様）"""
+    content_lower = content.lower()
+    
+    # キャラクターを判定
+    character = detect_character_from_mention(content)
+    
+    # キャラクター別の基本設定
+    if character == 'miya':
+        char_emoji = '🐈'
+    else:  # eve
+        char_emoji = '🐱'
     
     # 挨拶系
     if any(word in content_lower for word in ['こんにちは', 'おはよう', 'こんばんは', 'はじめまして', 'よろしく']):
-        responses = [
-            f"にゃーん！{user_name}さん、こんにちはだにゃ！ 🐱✨\n**トラにゃん**: 新しいお友達かにゃ？よろしくお願いしますにゃ！",
-            f"こんにちはにゃ〜！{user_name}さん！ 🐱💫\n**クロにゃん**: みんなでお話しできて嬉しいにゃ〜！",
-            f"にゃにゃ！{user_name}さん、ようこそにゃ！ 🐱🎉\n**トラにゃん**: このサーバーは楽しいことがいっぱいだにゃ！"
-        ]
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} {user_name}さん、こんにちはだにゃ！新しい技術の話ができて嬉しいにゃ〜",
+                f"{char_emoji} にゃーん！{user_name}さん、ようこそですにゃ！プログラミングのことなら何でも聞いてにゃ〜",
+                f"{char_emoji} {user_name}さん、よろしくお願いしますにゃ！一緒にコードを書いたり学んだりしましょうにゃ〜"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、こんにちはですにゃ。データ分析のお手伝いができるのですにゃ",
+                f"{char_emoji} {user_name}さん、はじめましてですにゃ。統計やレポート作成が得意なのにゃ",
+                f"{char_emoji} よろしくお願いしますにゃ、{user_name}さん。論理的に問題を解決していきましょうにゃ"
+            ]
         return responses[hash(user_name) % len(responses)]
+    
+    # 技術・プログラミング系（みやにゃん専門）
+    elif any(word in content_lower for word in ['技術', 'プログラミング', 'コード', 'code', 'プログラム', '開発', 'dev']):
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} おお！{user_name}さん、技術の話だにゃ〜！どんなプログラミング言語を使ってるのかにゃ？",
+                f"{char_emoji} {user_name}さん、コードの話は大好きだにゃ！一緒に新しい技術を学びましょうにゃ〜",
+                f"{char_emoji} 技術的な質問だにゃ？{user_name}さん、詳しく教えてくださいにゃ〜！実装方法も一緒に考えるにゃ！"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、技術的な統計分析でしょうかにゃ？データドリブンなアプローチが重要ですにゃ",
+                f"{char_emoji} プログラミングのパフォーマンス分析などでしたら、データを見て改善提案ができますにゃ",
+                f"{char_emoji} {user_name}さん、コードの効率性やバグの傾向分析などは得意分野ですにゃ"
+            ]
+        return responses[hash(content) % len(responses)]
+    
+    # データ・分析系（イヴにゃん専門）
+    elif any(word in content_lower for word in ['データ', '分析', '統計', 'data', 'analytics', 'レポート', 'report']):
+        if character == 'eve':
+            responses = [
+                f"{char_emoji} {user_name}さん、データ分析のご依頼ですにゃ？どのようなデータを分析したいのですかにゃ？",
+                f"{char_emoji} 統計分析でしたら私の得意分野ですにゃ。{user_name}さん、具体的な要件を教えてくださいにゃ",
+                f"{char_emoji} {user_name}さん、レポート作成も承りますにゃ。客観的で論理的な分析結果をお出しできますにゃ"
+            ]
+        else:  # miya
+            responses = [
+                f"{char_emoji} {user_name}さん、データ分析かにゃ？イヴにゃんの方が詳しいにゃ〜でも技術的な実装なら手伝えるにゃ！",
+                f"{char_emoji} 分析ツールの使い方とかなら教えられるにゃ〜！{user_name}さん、どんなデータを扱うのかにゃ？",
+                f"{char_emoji} {user_name}さん、統計はイヴにゃんが専門だにゃ〜でも分析用のコードを書くのは得意だにゃ！"
+            ]
+        return responses[hash(content) % len(responses)]
     
     # 質問・ヘルプ系
     elif any(word in content_lower for word in ['質問', '教えて', 'ヘルプ', 'help', '分からない', 'わからない']):
-        responses = [
-            f"にゃにゃ？{user_name}さん、何か困ったことがあるのかにゃ？ 🐱❓\n**クロにゃん**: みんなで助け合うのが一番だにゃ〜！",
-            f"質問があるのかにゃ？{user_name}さん！ 🐱💭\n**トラにゃん**: 分からないことは恥ずかしくないにゃ！みんなで解決するにゃ！",
-            f"にゃーん！{user_name}さん、どんなことで困ってるのかにゃ？ 🐱🤔\n**クロにゃん**: 詳しく教えてくれたら、みんなで考えるにゃ〜！"
-        ]
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} {user_name}さん、何か困ったことがあるのかにゃ？技術的なサポートは任せてにゃ〜！",
+                f"{char_emoji} 質問大歓迎だにゃ！{user_name}さん、どんなことでも一緒に解決していきましょうにゃ〜",
+                f"{char_emoji} {user_name}さん、チュートリアルが必要かにゃ？ステップバイステップで説明するにゃ〜！"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、どのような問題でお困りですかにゃ？データに基づいて解決策を考えましょうにゃ",
+                f"{char_emoji} 質問をありがとうございますにゃ。{user_name}さん、論理的に整理して回答いたしますにゃ",
+                f"{char_emoji} {user_name}さん、具体的な状況を教えていただければ、分析的にアプローチできますにゃ"
+            ]
         return responses[hash(content) % len(responses)]
     
     # 感謝系
     elif any(word in content_lower for word in ['ありがとう', 'ありがと', 'サンキュー', 'thanks']):
-        responses = [
-            f"にゃーん！{user_name}さん、どういたしましてにゃ！ 🐱💕\n**トラにゃん**: お役に立てて嬉しいにゃ〜！",
-            f"にゃにゃ〜！{user_name}さんの笑顔が一番の報酬だにゃ！ 🐱😊\n**クロにゃん**: また何かあったら声をかけてにゃ〜！",
-            f"にゃーん！{user_name}さん、こちらこそありがとうにゃ！ 🐱✨\n**トラにゃん**: みんなで支え合うのが大切だにゃ！"
-        ]
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} {user_name}さん、どういたしましてだにゃ〜！お役に立てて嬉しいにゃ！",
+                f"{char_emoji} にゃーん！{user_name}さんの笑顔が一番の報酬だにゃ〜また何でも聞いてにゃ！",
+                f"{char_emoji} {user_name}さん、こちらこそありがとうにゃ〜！一緒に学べて楽しいにゃ！"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、どういたしましてですにゃ。お役に立てて光栄ですにゃ",
+                f"{char_emoji} いえいえ、{user_name}さん。効率的に問題解決できて満足ですにゃ",
+                f"{char_emoji} {user_name}さん、論理的なサポートができて嬉しいですにゃ"
+            ]
         return responses[hash(user_name + content) % len(responses)]
     
     # イベント・活動系
     elif any(word in content_lower for word in ['イベント', 'event', '活動', '参加', '企画']):
-        responses = [
-            f"にゃにゃ！{user_name}さん、イベントに興味があるのかにゃ？ 🐱🎪\n**トラにゃん**: みんなで楽しいことをするのは最高だにゃ！",
-            f"イベントの話かにゃ〜？{user_name}さん！ 🐱🎉\n**クロにゃん**: 新しい企画があったら教えてほしいにゃ〜！",
-            f"にゃーん！{user_name}さん、一緒に楽しいことをするにゃ！ 🐱🌟\n**トラにゃん**: みんなの参加を待ってるにゃ〜！"
-        ]
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} {user_name}さん、イベント企画かにゃ？技術勉強会とかハッカソンとか楽しそうだにゃ〜！",
+                f"{char_emoji} イベントの話だにゃ！{user_name}さん、みんなで新しいことを学ぶのは最高だにゃ〜",
+                f"{char_emoji} {user_name}さん、コミュニティ活動は大切だにゃ〜！一緒に盛り上げていこうにゃ！"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、イベントの効果測定や参加者分析などでしたらお任せくださいにゃ",
+                f"{char_emoji} イベント企画ですかにゃ？{user_name}さん、データに基づいた企画立案をサポートできますにゃ",
+                f"{char_emoji} {user_name}さん、過去のイベント実績を分析して改善提案もできますにゃ"
+            ]
         return responses[hash(content + user_name) % len(responses)]
     
     # 一般的な応答
     else:
-        responses = [
-            f"にゃーん！{user_name}さん、お話ししてくれてありがとうにゃ！ 🐱💬\n**トラにゃん**: もっと詳しく聞かせてほしいにゃ〜！",
-            f"にゃにゃ〜！{user_name}さんのお話、興味深いにゃ！ 🐱✨\n**クロにゃん**: みんなでお話しするの楽しいにゃ〜！",
-            f"にゃーん！{user_name}さん、どんなことでも気軽に話しかけてにゃ！ 🐱😸\n**トラにゃん**: このコミュニティはみんな優しいにゃ！",
-            f"にゃにゃ！{user_name}さん、今日はどんな一日だったかにゃ？ 🐱🌅\n**クロにゃん**: みんなの日常も聞いてみたいにゃ〜！"
-        ]
+        if character == 'miya':
+            responses = [
+                f"{char_emoji} {user_name}さん、お話ししてくれてありがとうにゃ〜！もっと詳しく聞かせてほしいにゃ！",
+                f"{char_emoji} にゃにゃ〜！{user_name}さんのお話、興味深いにゃ！技術的なことでも雑談でも大歓迎だにゃ〜",
+                f"{char_emoji} {user_name}さん、このコミュニティはみんな優しくて技術好きが多いにゃ〜！",
+                f"{char_emoji} {user_name}さん、今日は何か新しいことを学んだかにゃ？みんなの学習記録も聞いてみたいにゃ〜！"
+            ]
+        else:  # eve
+            responses = [
+                f"{char_emoji} {user_name}さん、お話をありがとうございますにゃ。データ的に興味深い内容ですにゃ",
+                f"{char_emoji} {user_name}さんの観点は論理的で素晴らしいですにゃ。もう少し詳細を聞かせてくださいにゃ",
+                f"{char_emoji} {user_name}さん、客観的な視点からコメントさせていただくと興味深い話題ですにゃ",
+                f"{char_emoji} {user_name}さん、今日のコミュニティ活動の分析結果はいかがでしたかにゃ？"
+            ]
         return responses[hash(content + user_name + str(message.created_at.hour)) % len(responses)]
 
 async def log_bot_action(message: discord.Message, response: str, action_type: str):
