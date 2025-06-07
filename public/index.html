@@ -249,6 +249,28 @@
         letter-spacing: 0.05em;
       }
 
+      .sortable-header {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .sortable-header:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .sort-icon {
+        margin-left: 0.5rem;
+        font-size: 0.875rem;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+      }
+
+      .sort-icon.active {
+        opacity: 1;
+      }
+
       .dashboard-table td {
         padding: 1rem 0.75rem;
         border-bottom: 1px solid var(--border-color);
@@ -636,15 +658,15 @@
     <div class="main-container">
       <div class="container">
         <div class="row" id="dashboard-columns" style="display: flex; flex-wrap: wrap;">
-          <div class="col s12 m6 l4">
+          <!-- 上段: ユーザー統計と日次アナリティクスを2列表示 -->
+          <div class="col s12 m6 l6">
             <div class="dashboard-section" id="dashboard-users"></div>
           </div>
-          <div class="col s12 m6 l4">
+          <div class="col s12 m6 l6">
             <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
           </div>
-          <div class="col s12 m6 l4">
-            <div class="dashboard-section" id="dashboard-interactions"></div>
-          </div>
+          
+          <!-- 中段: その他のセクション -->
           <div class="col s12 m6 l6" style="order: 10;">
             <div class="dashboard-section" id="dashboard-events"></div>
           </div>
@@ -665,6 +687,11 @@
           </div>
           <div class="col s12" style="order: 40;">
             <div class="dashboard-section" id="dashboard-admin-users"></div>
+          </div>
+          
+          <!-- 最下段: インタラクション統計を1列表示 -->
+          <div class="col s12" style="order: 50;">
+            <div class="dashboard-section" id="dashboard-interactions"></div>
           </div>
         </div>
       </div>
@@ -756,6 +783,389 @@
         }
       }
 
+      // ソート機能
+      let currentSort = { column: 'timestamp', direction: 'desc' };
+      let currentTopicsSort = { column: 'popularity', direction: 'desc' };
+      let currentGuildsSort = { column: 'name', direction: 'asc' };
+      let cachedInteractions = [];
+      let cachedTopics = [];
+      let cachedGuilds = [];
+
+      function sortData(data, column, direction = 'asc', dataType = 'interactions') {
+        return [...data].sort((a, b) => {
+          let aVal, bVal;
+          
+          // インタラクションデータのソート
+          if (dataType === 'interactions') {
+            if (column === 'timestamp') {
+              // タイムスタンプの場合は日付オブジェクトに変換して比較
+              aVal = a.timestamp ? new Date(a.timestamp.seconds ? a.timestamp.seconds * 1000 : a.timestamp) : new Date(0);
+              bVal = b.timestamp ? new Date(b.timestamp.seconds ? b.timestamp.seconds * 1000 : b.timestamp) : new Date(0);
+            } else if (column === 'username') {
+              aVal = (a.username || '').toLowerCase();
+              bVal = (b.username || '').toLowerCase();
+            } else if (column === 'channelName') {
+              aVal = (a.channelName || '').toLowerCase();
+              bVal = (b.channelName || '').toLowerCase();
+            } else if (column === 'content') {
+              aVal = (a.content || '').toLowerCase();
+              bVal = (b.content || '').toLowerCase();
+            } else if (column === 'metadata') {
+              // メタデータの場合はリアクション数で比較
+              aVal = safeGet(a, 'metadata.reactionCount', 0);
+              bVal = safeGet(b, 'metadata.reactionCount', 0);
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          } 
+          // トピックデータのソート
+          else if (dataType === 'topics') {
+            if (column === 'name') {
+              aVal = (a.name || '').toLowerCase();
+              bVal = (b.name || '').toLowerCase();
+            } else if (column === 'popularity') {
+              aVal = a.popularity || 0;
+              bVal = b.popularity || 0;
+            } else if (column === 'trendScore') {
+              aVal = a.trendScore || 0;
+              bVal = b.trendScore || 0;
+            } else if (column === 'keywords') {
+              aVal = (a.keywords || []).length;
+              bVal = (b.keywords || []).length;
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          }
+          // ギルドデータのソート
+          else if (dataType === 'guilds') {
+            if (column === 'name') {
+              aVal = (a.name || '').toLowerCase();
+              bVal = (b.name || '').toLowerCase();
+            } else if (column === 'totalMembers') {
+              aVal = safeGet(a, 'analytics.totalMembers', 0);
+              bVal = safeGet(b, 'analytics.totalMembers', 0);
+            } else if (column === 'activeMembers') {
+              aVal = safeGet(a, 'analytics.activeMembers', 0);
+              bVal = safeGet(b, 'analytics.activeMembers', 0);
+            } else if (column === 'averageEngagement') {
+              aVal = safeGet(a, 'analytics.averageEngagement', 0);
+              bVal = safeGet(b, 'analytics.averageEngagement', 0);
+            } else if (column === 'updatedAt') {
+              aVal = a.updatedAt ? new Date(a.updatedAt.seconds ? a.updatedAt.seconds * 1000 : a.updatedAt) : new Date(0);
+              bVal = b.updatedAt ? new Date(b.updatedAt.seconds ? b.updatedAt.seconds * 1000 : b.updatedAt) : new Date(0);
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          }
+          else {
+            aVal = a[column] || '';
+            bVal = b[column] || '';
+          }
+          
+          if (direction === 'asc') {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
+      }
+
+      function handleSort(column, tableId) {
+        // テーブルIDに応じて適切なソート状態を更新
+        if (tableId === 'interactions') {
+          if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.column = column;
+            currentSort.direction = column === 'timestamp' ? 'desc' : 'asc'; // 時刻はデフォルトで降順
+          }
+          // インタラクションテーブルを再描画
+          refreshInteractionsTable();
+        } 
+        else if (tableId === 'topics') {
+          if (currentTopicsSort.column === column) {
+            currentTopicsSort.direction = currentTopicsSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentTopicsSort.column = column;
+            currentTopicsSort.direction = column === 'name' ? 'asc' : 'desc'; // 名前以外はデフォルトで降順
+          }
+          // トピックテーブルを再描画
+          refreshTopicsTable();
+        }
+        else if (tableId === 'guilds') {
+          if (currentGuildsSort.column === column) {
+            currentGuildsSort.direction = currentGuildsSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentGuildsSort.column = column;
+            currentGuildsSort.direction = column === 'name' ? 'asc' : 'desc'; // 名前はデフォルトで昇順
+          }
+          // ギルドテーブルを再描画
+          refreshGuildsTable();
+        }
+      }
+
+      function getSortIcon(column, tableId = 'interactions') {
+        let currentSortState;
+        
+        if (tableId === 'interactions') {
+          currentSortState = currentSort;
+        } else if (tableId === 'topics') {
+          currentSortState = currentTopicsSort;
+        } else if (tableId === 'guilds') {
+          currentSortState = currentGuildsSort;
+        }
+        
+        if (currentSortState.column !== column) {
+          return '<i class="material-icons sort-icon">unfold_more</i>';
+        }
+        const icon = currentSortState.direction === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+        return `<i class="material-icons sort-icon active">${icon}</i>`;
+      }
+
+      // インタラクションテーブルを再描画する関数
+
+      // インタラクションテーブルを再描画する関数
+      function refreshInteractionsTable() {
+        if (cachedInteractions.length === 0) return;
+        
+        const sortedData = sortData(cachedInteractions, currentSort.column, currentSort.direction, 'interactions');
+        const totalInteractions = sortedData.length;
+        const messageCount = sortedData.filter(i => i.type === 'message').length;
+        const reactionCount = sortedData.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
+        const mentionCount = sortedData.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
+        const attachmentCount = sortedData.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
+        
+        document.getElementById('dashboard-interactions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">chat</i>
+                インタラクション統計
+              </h3>
+            </div>
+            <div class="card-content">
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-number">${totalInteractions}</span>
+                  <span class="stat-label">総インタラクション</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${messageCount}</span>
+                  <span class="stat-label">メッセージ</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${mentionCount}</span>
+                  <span class="stat-label">メンション</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${attachmentCount}</span>
+                  <span class="stat-label">添付ファイル</span>
+                </div>
+              </div>
+              <div style="margin-top: 1rem; overflow-x:auto;">
+                <div style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                  <table class="dashboard-table">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                      <tr>
+                            <th class="sortable-header" onclick="handleSort('username', 'interactions')">
+                              ユーザー${getSortIcon('username', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('channelName', 'interactions')">
+                              チャンネル${getSortIcon('channelName', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('content', 'interactions')">
+                              メッセージ${getSortIcon('content', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('metadata', 'interactions')">
+                              メタデータ${getSortIcon('metadata', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('timestamp', 'interactions')">
+                              時刻${getSortIcon('timestamp', 'interactions')}
+                            </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${sortedData.slice(0, 50).map(i => `
+                        <tr>
+                          <td>
+                            <div style="font-weight: 600;">${i.username || '-'}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.userId || ''}</div>
+                          </td>
+                          <td>
+                            <div style="font-weight: 600;">#${i.channelName || '-'}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.guildName || ''}</div>
+                          </td>
+                          <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                              ${truncateText(i.content, 100)}
+                            </div>
+                            ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                          </td>
+                          <td>
+                            <div style="font-size: 0.75rem;">
+                              ${safeGet(i, 'metadata.mentionCount', 0) > 0 ? `<span class="tag">メンション: ${i.metadata.mentionCount}</span>` : ''}
+                              ${safeGet(i, 'metadata.reactionCount', 0) > 0 ? `<span class="tag">リアクション: ${i.metadata.reactionCount}</span>` : ''}
+                              ${safeGet(i, 'metadata.hasAttachments', false) ? `<span class="tag">添付ファイル</span>` : ''}
+                              ${safeGet(i, 'metadata.hasEmbeds', false) ? `<span class="tag">埋め込み</span>` : ''}
+                            </div>
+                          </td>
+                          <td style="font-size: 0.75rem;">
+                            ${formatDate(i.timestamp)}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // トピックテーブルを再描画する関数
+      function refreshTopicsTable() {
+        if (cachedTopics.length === 0) return;
+        
+        const sortedData = sortData(cachedTopics, currentTopicsSort.column, currentTopicsSort.direction, 'topics');
+        
+        document.getElementById('dashboard-topics').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">local_offer</i>
+                トピック一覧
+              </h3>
+            </div>
+            <div class="card-content">
+              ${sortedData.length ? `
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th class="sortable-header" onclick="handleSort('name', 'topics')">
+                            トピック名${getSortIcon('name', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('popularity', 'topics')">
+                            人気度${getSortIcon('popularity', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('trendScore', 'topics')">
+                            トレンド${getSortIcon('trendScore', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('keywords', 'topics')">
+                            キーワード${getSortIcon('keywords', 'topics')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sortedData.map(t => `
+                          <tr>
+                            <td style="font-weight: 600;">${t.name || '-'}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.popularity)}">
+                                ${(t.popularity || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.trendScore)}">
+                                ${(t.trendScore || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              ${(t.keywords || []).slice(0, 3).map(keyword => `<span class="tag">${keyword}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ` : '<div class="no-data"><i class="material-icons">local_offer</i><div>トピックデータがありません</div></div>'}
+            </div>
+          </div>
+        `;
+      }
+      
+      // ギルドテーブルを再描画する関数
+      function refreshGuildsTable() {
+        if (cachedGuilds.length === 0) return;
+        
+        const sortedData = sortData(cachedGuilds, currentGuildsSort.column, currentGuildsSort.direction, 'guilds');
+        
+        document.getElementById('dashboard-guilds').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">dns</i>
+                サーバー情報
+              </h3>
+            </div>
+            <div class="card-content">
+              ${sortedData.length ? `
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th class="sortable-header" onclick="handleSort('name', 'guilds')">
+                            サーバー名${getSortIcon('name', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('totalMembers', 'guilds')">
+                            総メンバー数${getSortIcon('totalMembers', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('activeMembers', 'guilds')">
+                            アクティブ${getSortIcon('activeMembers', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('averageEngagement', 'guilds')">
+                            平均エンゲージメント${getSortIcon('averageEngagement', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('updatedAt', 'guilds')">
+                            最終更新${getSortIcon('updatedAt', 'guilds')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sortedData.map(g => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${g.name || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
+                            </td>
+                            <td>${safeGet(g, 'analytics.totalMembers', 0)}</td>
+                            <td>${safeGet(g, 'analytics.activeMembers', 0)}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(safeGet(g, 'analytics.averageEngagement', 0))}">
+                                ${safeGet(g, 'analytics.averageEngagement', 0)}
+                              </span>
+                            </td>
+                            <td>${formatDate(g.updatedAt)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
+                  ${sortedData.map(g => `
+                    <span class="tag">
+                      ${g.name || '-'}: 
+                      <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
+                        ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                      </span>
+                    </span>
+                  `).join('')}
+                </div>
+              ` : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
+            </div>
+          </div>
+        `;
+      }
+
       // Firestoreからコレクションデータを取得
       async function getCollectionData(collectionName) {
         try {
@@ -767,6 +1177,58 @@
           return data;
         } catch (error) {
           console.error(`${collectionName}コレクションの取得エラー:`, error);
+          
+          // 開発用: データが取得できない場合はサンプルデータを使用
+          if (collectionName === 'analytics_sessions') {
+            return {
+              "analytics_20240524": {
+                "id": "analytics_20240524",
+                "guildId": "987654321098765432",
+                "date": "2024-05-24",
+                "activeUsers": 34,
+                "messageCount": 127,
+                "newMembers": 2,
+                "reengagements": 1,
+                "topTopics": {
+                  "React": 28,
+                  "デザイン": 15,
+                  "JavaScript": 23,
+                  "AI": 12,
+                  "ゲーム開発": 8
+                },
+                "channelActivity": {
+                  "general": 45,
+                  "tech-talk": 38,
+                  "design": 22,
+                  "random": 15,
+                  "game-dev": 7
+                }
+              },
+              "analytics_20240523": {
+                "id": "analytics_20240523",
+                "guildId": "987654321098765432",
+                "date": "2024-05-23",
+                "activeUsers": 41,
+                "messageCount": 156,
+                "newMembers": 1,
+                "reengagements": 2,
+                "topTopics": {
+                  "AI": 35,
+                  "Python": 28,
+                  "React": 24,
+                  "デザイン": 19,
+                  "TypeScript": 16
+                },
+                "channelActivity": {
+                  "general": 52,
+                  "ai-research": 41,
+                  "tech-talk": 35,
+                  "design": 18,
+                  "python-dev": 10
+                }
+              }
+            };
+          }
           return {};
         }
       }
@@ -872,6 +1334,11 @@
 
           // ギルド統計
           const guildList = Object.values(guilds || {});
+          cachedGuilds = guildList; // キャッシュに保存
+          
+          // 初期表示はサーバー名の昇順でソート
+          const sortedGuilds = sortData(guildList, 'name', 'asc', 'guilds');
+          
           document.getElementById('dashboard-guilds').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -881,45 +1348,79 @@
                 </h3>
               </div>
               <div class="card-content">
-                ${guildList.length ? guildList.map(g => `
-                  <div class="info-item">
-                    <div>
-                      <div class="info-label">${g.name || '-'}</div>
-                      <div style="font-size: 0.8rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
+                ${guildList.length ? `
+                  <div style="overflow-x:auto;">
+                    <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('name', 'guilds')">
+                              サーバー名${getSortIcon('name', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('totalMembers', 'guilds')">
+                              総メンバー数${getSortIcon('totalMembers', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('activeMembers', 'guilds')">
+                              アクティブ${getSortIcon('activeMembers', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('averageEngagement', 'guilds')">
+                              平均エンゲージメント${getSortIcon('averageEngagement', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('updatedAt', 'guilds')">
+                              最終更新${getSortIcon('updatedAt', 'guilds')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${sortedGuilds.map(g => `
+                            <tr>
+                              <td>
+                                <div style="font-weight: 600;">${g.name || '-'}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
+                              </td>
+                              <td>${safeGet(g, 'analytics.totalMembers', 0)}</td>
+                              <td>${safeGet(g, 'analytics.activeMembers', 0)}</td>
+                              <td>
+                                <span class="engagement-score ${getEngagementClass(safeGet(g, 'analytics.averageEngagement', 0))}">
+                                  ${safeGet(g, 'analytics.averageEngagement', 0)}
+                                </span>
+                              </td>
+                              <td>${formatDate(g.updatedAt)}</td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <ul class="info-list">
-                    <li class="info-item">
-                      <span class="info-label">総メンバー数</span>
-                      <span class="info-value">${safeGet(g, 'analytics.totalMembers')}</span>
-                    </li>
-                    <li class="info-item">
-                      <span class="info-label">アクティブメンバー</span>
-                      <span class="info-value">${safeGet(g, 'analytics.activeMembers')}</span>
-                    </li>
-                    <li class="info-item">
-                      <span class="info-label">平均エンゲージメント</span>
-                      <span class="info-value">${safeGet(g, 'analytics.averageEngagement')}</span>
-                    </li>
-                    <li class="info-item">
-                      <span class="info-label">マッチング機能</span>
-                      <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}">
-                        ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                  <div style="margin-top: 1rem;">
+                    <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
+                    ${sortedGuilds.map(g => `
+                      <span class="tag">
+                        ${g.name || '-'}: 
+                        <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
+                          ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                        </span>
                       </span>
-                    </li>
-                    <li class="info-item">
-                      <span class="info-label">最終更新</span>
-                      <span class="info-value">${formatDate(g.updatedAt)}</span>
-                    </li>
-                  </ul>
-                `).join('') : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
               </div>
             </div>
           `;
 
           // アナリティクス統計
           const analyticsList = Object.values(analyticsSessions || {});
-          const latestAnalytics = analyticsList.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          console.log("Analytics data:", analyticsList); // デバッグ用
+          
+          // 日付でソートして最新のデータを取得
+          const latestAnalytics = analyticsList.length > 0 ? 
+            analyticsList.sort((a, b) => {
+              const dateA = a.date ? new Date(a.date) : new Date(0);
+              const dateB = b.date ? new Date(b.date) : new Date(0);
+              return dateB - dateA;
+            })[0] : null;
+          
+          console.log("Latest analytics:", latestAnalytics); // デバッグ用
           
           document.getElementById('dashboard-analytics-sessions').innerHTML = `
             <div class="dashboard-card">
@@ -933,26 +1434,26 @@
                 ${latestAnalytics ? `
                   <div class="stats-grid">
                     <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.activeUsers}</span>
+                      <span class="stat-number">${latestAnalytics.activeUsers || 0}</span>
                       <span class="stat-label">アクティブユーザー</span>
                     </div>
                     <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.messageCount}</span>
+                      <span class="stat-number">${latestAnalytics.messageCount || 0}</span>
                       <span class="stat-label">メッセージ数</span>
                     </div>
                     <div class="stat-item">
-                      <span class="stat-number">${latestAnalytics.newMembers}</span>
+                      <span class="stat-number">${latestAnalytics.newMembers || 0}</span>
                       <span class="stat-label">新規メンバー</span>
                     </div>
                   </div>
                   <ul class="info-list">
                     <li class="info-item">
                       <span class="info-label">最新データ</span>
-                      <span class="info-value">${latestAnalytics.date}</span>
+                      <span class="info-value">${latestAnalytics.date || '-'}</span>
                     </li>
                     <li class="info-item">
                       <span class="info-label">再エンゲージメント</span>
-                      <span class="info-value">${latestAnalytics.reengagements}</span>
+                      <span class="info-value">${latestAnalytics.reengagements || 0}</span>
                     </li>
                   </ul>
                   <div style="margin-top: 1rem;">
@@ -961,6 +1462,14 @@
                       `<span class="tag">${topic} (${count})</span>`
                     ).join('')}
                   </div>
+                  ${latestAnalytics.channelActivity ? `
+                    <div style="margin-top: 1rem;">
+                      <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
+                      ${Object.entries(latestAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
+                        `<span class="tag">#${channel}: ${count}</span>`
+                      ).join('')}
+                    </div>
+                  ` : ''}
                 ` : '<div class="no-data"><i class="material-icons">insights</i><div>アナリティクスデータがありません</div></div>'}
               </div>
             </div>
@@ -968,11 +1477,16 @@
 
           // インタラクション統計
           const interactionList = Object.values(interactions || {});
+          cachedInteractions = interactionList; // キャッシュに保存
+          
           const totalInteractions = interactionList.length;
           const messageCount = interactionList.filter(i => i.type === 'message').length;
           const reactionCount = interactionList.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
           const mentionCount = interactionList.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
           const attachmentCount = interactionList.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
+          
+          // 初期表示は時刻の降順でソート
+          const sortedInteractions = sortData(interactionList, 'timestamp', 'desc');
           
           document.getElementById('dashboard-interactions').innerHTML = `
             <div class="dashboard-card">
@@ -1003,18 +1517,29 @@
                 </div>
                 ${interactionList.length ? `
                   <div style="margin-top: 1rem; overflow-x:auto;">
-                    <table class="dashboard-table">
-                      <thead>
-                        <tr>
-                          <th>ユーザー</th>
-                          <th>チャンネル</th>
-                          <th>メッセージ</th>
-                          <th>メタデータ</th>
-                          <th>時刻</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${interactionList.slice(0, 10).map(i => `
+                    <div style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('username', 'interactions')">
+                              ユーザー${getSortIcon('username')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('channelName', 'interactions')">
+                              チャンネル${getSortIcon('channelName')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('content', 'interactions')">
+                              メッセージ${getSortIcon('content')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('metadata', 'interactions')">
+                              メタデータ${getSortIcon('metadata')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('timestamp', 'interactions')">
+                              時刻${getSortIcon('timestamp')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${sortedInteractions.slice(0, 50).map(i => `
                           <tr>
                             <td>
                               <div style="font-weight: 600;">${i.username || '-'}</div>
@@ -1239,6 +1764,11 @@
 
           // トピック一覧
           const topicList = Object.values(topics || {});
+          cachedTopics = topicList; // キャッシュに保存
+          
+          // 初期表示は人気度の降順でソート
+          const sortedTopics = sortData(topicList, 'popularity', 'desc', 'topics');
+          
           document.getElementById('dashboard-topics').innerHTML = `
             <div class="dashboard-card">
               <div class="card-header">
@@ -1250,17 +1780,26 @@
               <div class="card-content">
                 ${topicList.length ? `
                   <div style="overflow-x:auto;">
-                    <table class="dashboard-table">
-                      <thead>
-                        <tr>
-                          <th>トピック名</th>
-                          <th>人気度</th>
-                          <th>トレンド</th>
-                          <th>キーワード</th>
-                        </tr>
-                      </thead>
+                    <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('name', 'topics')">
+                              トピック名${getSortIcon('name', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('popularity', 'topics')">
+                              人気度${getSortIcon('popularity', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('trendScore', 'topics')">
+                              トレンド${getSortIcon('trendScore', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('keywords', 'topics')">
+                              キーワード${getSortIcon('keywords', 'topics')}
+                            </th>
+                          </tr>
+                        </thead>
                       <tbody>
-                        ${topicList.slice(0, 8).map(t => `
+                        ${sortedTopics.map(t => `
                           <tr>
                             <td style="font-weight: 600;">${t.name || '-'}</td>
                             <td>

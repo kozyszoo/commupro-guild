@@ -6,3 +6,5 @@ service-account.json
 
 script/nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json
 script/.env
+
+*/.env*

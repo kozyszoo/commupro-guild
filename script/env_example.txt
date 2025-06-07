@@ -1,9 +1,0 @@
-# Discord Bot Token
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
-
-# Firebase Service Account (JSON形式の文字列、またはファイルパス)
-# オプション1: JSON文字列として設定
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"your-project-id",...}
-
-# オプション2: ファイルパスとして設定
-FIREBASE_SERVICE_ACCOUNT_KEY_PATH=/path/to/your/service-account-key.json 

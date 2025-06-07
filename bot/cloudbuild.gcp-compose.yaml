@@ -1,0 +1,119 @@
+# Discord にゃんこエージェント ボット - GCP Docker Compose 用 Cloud Build 設定
+# Compute Engine 上の Docker Compose デプロイメント用
+
+steps:
+  # みやにゃんボットのDockerイメージをビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', 'Dockerfile.single',
+      '-t', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-miya:$BUILD_ID',
+      '-t', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-miya:latest',
+      '--build-arg', 'BOT_CHARACTER=miya',
+      '.'
+    ]
+    id: 'build-miya'
+
+  # イヴにゃんボットのDockerイメージをビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-f', 'Dockerfile.single',
+      '-t', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-eve:$BUILD_ID',
+      '-t', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-eve:latest',
+      '--build-arg', 'BOT_CHARACTER=eve',
+      '.'
+    ]
+    id: 'build-eve'
+
+  # みやにゃんボットイメージをContainer Registryにプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-miya:$BUILD_ID']
+    waitFor: ['build-miya']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-miya:latest']
+    waitFor: ['build-miya']
+
+  # イヴにゃんボットイメージをContainer Registryにプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-eve:$BUILD_ID']
+    waitFor: ['build-eve']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/discord-nyanco-agent-eve:latest']
+    waitFor: ['build-eve']
+
+  # Compute Engine インスタンスが存在するかチェック
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if gcloud compute instances describe nyanco-bot-compose --zone=asia-northeast1-a > /dev/null 2>&1; then
+          echo "✅ Instance exists, proceeding with deployment"
+        else
+          echo "❌ Instance does not exist. Please run: ./deploy_gcp_compose.sh create"
+          exit 1
+        fi
+    id: 'check-instance'
+
+  # Compute Engine インスタンス上でDocker Composeを更新
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # 設定ファイルをインスタンスに送信
+        gcloud compute scp docker-compose.gcp.yml nyanco-bot-compose:~/docker-compose.yml --zone=asia-northeast1-a
+        gcloud compute scp nginx.conf nyanco-bot-compose:~/nginx.conf --zone=asia-northeast1-a
+        
+        # 新しいイメージをプル
+        gcloud compute ssh nyanco-bot-compose --zone=asia-northeast1-a --command="docker pull gcr.io/$PROJECT_ID/discord-nyanco-agent-miya:latest"
+        gcloud compute ssh nyanco-bot-compose --zone=asia-northeast1-a --command="docker pull gcr.io/$PROJECT_ID/discord-nyanco-agent-eve:latest"
+        
+        # Docker Composeを再起動
+        gcloud compute ssh nyanco-bot-compose --zone=asia-northeast1-a --command="cd ~ && docker-compose down"
+        gcloud compute ssh nyanco-bot-compose --zone=asia-northeast1-a --command="cd ~ && docker-compose up -d"
+        
+        echo "✅ Deployment completed successfully"
+    waitFor: ['check-instance']
+
+  # デプロイ後のヘルスチェック
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # 外部IPを取得
+        EXTERNAL_IP=$(gcloud compute instances describe nyanco-bot-compose --zone=asia-northeast1-a --format="value(networkInterfaces[0].accessConfigs[0].natIP)")
+        
+        echo "🌐 External IP: $EXTERNAL_IP"
+        echo "📍 Health Check URLs:"
+        echo "  - Overall: http://$EXTERNAL_IP/health"
+        echo "  - Miya Bot: http://$EXTERNAL_IP/miya/health"
+        echo "  - Eve Bot: http://$EXTERNAL_IP/eve/health"
+        
+        # ヘルスチェック実行
+        sleep 30  # サービス起動を待機
+        
+        echo "🔍 Performing health checks..."
+        if curl -f "http://$EXTERNAL_IP/health" > /dev/null 2>&1; then
+          echo "✅ Overall health check passed"
+        else
+          echo "❌ Overall health check failed"
+        fi
+
+# ビルド設定
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 100
+
+# タイムアウト設定（30分）
+timeout: '1800s'
+
+# 置換変数
+substitutions:
+  _INSTANCE_NAME: 'nyanco-bot-compose'
+  _ZONE: 'asia-northeast1-a'

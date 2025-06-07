@@ -65,7 +65,7 @@ class PodcastGenerator:
                     'language_code': 'ja-JP',
                     'name': 'ja-JP-Neural2-C',  # 低めの男性の声
                     'ssml_gender': texttospeech.SsmlVoiceGender.MALE,
-                    'speaking_rate': 1.0,  # 標準的な速さで落ち着いた印象
+                    体'speaking_rate': 1.0,  # 標準的な速さで落ち着いた印象
                     'pitch': -1.5,  # 低めで男性らしく、適度な差
                     'volume_gain_db': 0.0,  # 標準的な音量で落ち着いた印象
                     'sample_rate_hertz': 24000
