@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY discord_bot.py .
 COPY multi_bot_manager.py .
 COPY run_bot.py .
+COPY tutorial_content.py .
 
 # 環境変数の設定（デフォルト値）
 ENV PYTHONUNBUFFERED=1
