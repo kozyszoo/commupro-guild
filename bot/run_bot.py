@@ -93,17 +93,17 @@ def main():
     is_cloud_run = os.getenv('K_SERVICE') is not None
     if is_cloud_run:
         print("☁️ Cloud Run 環境を検出しました")
-        # ヘルスチェックサーバーを最初に開始
+        # ヘルスチェックサーバーを別スレッドで開始
         if not start_health_server():
             print("⚠️ ヘルスチェックサーバーの起動に失敗しましたが、ボットの起動を続行します")
     
     # 環境確認
     if not check_requirements():
+        print("❌ 環境設定に問題があります")
         if is_cloud_run:
-            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
-            print("⚠️ 環境設定エラーですが、Cloud Run環境のためヘルスサーバーを維持します")
+            print("☁️ Cloud Run環境のため、ヘルスサーバーのみ動作させます")
+            # ヘルスサーバーがすでに別スレッドで起動しているので、メインスレッドで待機
             try:
-                # 無限ループでヘルスサーバーを維持
                 while True:
                     time.sleep(60)
             except KeyboardInterrupt:
@@ -111,11 +111,11 @@ def main():
         sys.exit(1)
     
     if not install_dependencies():
+        print("❌ 依存関係に問題があります")
         if is_cloud_run:
-            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
-            print("⚠️ 依存関係エラーですが、Cloud Run環境のためヘルスサーバーを維持します")
+            print("☁️ Cloud Run環境のため、ヘルスサーバーのみ動作させます")
+            # ヘルスサーバーがすでに別スレッドで起動しているので、メインスレッドで待機
             try:
-                # 無限ループでヘルスサーバーを維持
                 while True:
                     time.sleep(60)
             except KeyboardInterrupt:
@@ -131,28 +131,48 @@ def main():
     print("=" * 50)
     
     try:
-        # 全てのボットを非同期で起動
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(bot_manager.start_all_bots())
-        
-        # 成功したボットがあれば待機
-        if any(results.values()):
-            print("\n📱 Botが起動しました。Ctrl+Cで停止します。")
-            loop.run_until_complete(bot_manager.wait_for_bots())
-        else:
-            print("❌ 全てのBotの起動に失敗しました")
+        # 非同期でボットを起動
+        async def run_bots():
+            # 全てのボットを非同期で起動
+            results = await bot_manager.start_all_bots()
+            
+            # ヘルスチェックサーバーにボット状態を通知
             if is_cloud_run:
-                print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
-                while True: time.sleep(60)
+                try:
+                    from health_server import update_bot_status
+                    update_bot_status(any(results.values()))
+                except Exception as e:
+                    print(f"⚠️ ヘルスステータス更新に失敗: {e}")
+            
+            # 成功したボットがあれば待機
+            if any(results.values()):
+                print("\n📱 Botが起動しました。")
+                if is_cloud_run:
+                    print("☁️ Cloud Run環境で動作中...")
+                else:
+                    print("   停止するには Ctrl+C を押してください")
+                await bot_manager.wait_for_bots()
+            else:
+                print("❌ 全てのBotの起動に失敗しました")
+                if is_cloud_run:
+                    print("☁️ Cloud Run環境のため、ヘルスサーバーのみ維持します")
+                    # 無限待機（ヘルスサーバーは別スレッドで動作）
+                    while True:
+                        await asyncio.sleep(60)
+        
+        # イベントループで実行
+        asyncio.run(run_bots())
 
     except KeyboardInterrupt:
         print("\n🛑 ボットが停止されました")
         if is_cloud_run:
             try:
                 from health_server import update_bot_status
-                update_bot_status(False) # ヘルスチェックサーバーにも通知
-            except: pass
-        loop.run_until_complete(bot_manager.stop_all_bots()) # 全ボット停止
+                update_bot_status(False)
+            except:
+                pass
+        # ボット停止処理
+        asyncio.run(bot_manager.stop_all_bots())
                 
     except Exception as e:
         print(f"❌ ボット実行中にエラーが発生しました: {e}")
@@ -161,13 +181,16 @@ def main():
         if is_cloud_run:
             try:
                 from health_server import update_bot_status
-                update_bot_status(False) # ヘルスチェックサーバーにも通知
+                update_bot_status(False)
                 print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
-                while True: time.sleep(60)
+                # 無限待機（ヘルスサーバーは別スレッドで動作）
+                while True:
+                    time.sleep(60)
             except KeyboardInterrupt:
                 pass
         
-        loop.run_until_complete(bot_manager.stop_all_bots()) # エラー時も全ボット停止
+        # エラー時もボット停止処理
+        asyncio.run(bot_manager.stop_all_bots())
         sys.exit(1)
 
 if __name__ == "__main__":
