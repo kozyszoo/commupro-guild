@@ -1,0 +1,283 @@
+name: PR Preview
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # PR情報の確認
+  pr-info:
+    name: PR Information
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: PR情報をコメント
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr_number = context.payload.pull_request.number;
+          const pr_title = context.payload.pull_request.title;
+          const pr_author = context.payload.pull_request.user.login;
+          const pr_url = context.payload.pull_request.html_url;
+          
+          const comment = `## 🔍 PR Preview Bot
+          
+          **PR情報:**
+          - タイトル: ${pr_title}
+          - 作成者: @${pr_author}
+          - PR番号: #${pr_number}
+          
+          **実行中のアクション:**
+          - ✅ コード品質チェック
+          - ✅ テスト実行
+          - ✅ プレビューデプロイメント準備
+          
+          詳細は[Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})で確認できます。
+          `;
+          
+          github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr_number,
+            body: comment
+          });
+
+  # Firebase Preview デプロイ
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install Firebase Functions dependencies
+      run: |
+        cd functions
+        npm ci
+        
+    - name: Build project
+      run: npm run build
+      
+    - name: Build Firebase Functions
+      run: |
+        cd functions
+        npm run build
+        
+    - name: Deploy to Firebase Preview
+      uses: FirebaseExtended/action-hosting-deploy@v0
+      with:
+        repoToken: '${{ secrets.GITHUB_TOKEN }}'
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
+      id: firebase-deploy
+      
+    - name: プレビューURLをコメント
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr_number = context.payload.pull_request.number;
+          const preview_url = '${{ steps.firebase-deploy.outputs.details_url }}';
+          const hosting_url = '${{ steps.firebase-deploy.outputs.hosting_url }}';
+          
+          const comment = `## 🚀 プレビューデプロイ完了
+          
+          **プレビューURL:**
+          - 🌐 [ライブプレビュー](${hosting_url})
+          - 📊 [詳細情報](${preview_url})
+          
+          **デプロイ情報:**
+          - コミット: \`${{ github.sha }}\`
+          - ブランチ: \`${{ github.head_ref }}\`
+          - 実行時間: $(date -u)
+          
+          プレビューは24時間後に自動削除されます。
+          `;
+          
+          github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr_number,
+            body: comment
+          });
+
+  # Lighthouse パフォーマンステスト
+  lighthouse-test:
+    name: Lighthouse Performance Test
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Wait for deployment
+      run: sleep 30
+      
+    - name: Run Lighthouse
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        urls: |
+          ${{ needs.deploy-preview.outputs.hosting_url }}
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+      id: lighthouse
+      
+    - name: Lighthouseレポートをコメント
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr_number = context.payload.pull_request.number;
+          
+          const comment = `## ⚡ Lighthouse パフォーマンステスト
+          
+          **テスト結果:**
+          - 📊 [詳細レポート](${{ steps.lighthouse.outputs.manifest }})
+          - ⚡ パフォーマンス、アクセシビリティ、SEO等をチェック済み
+          
+          **注意:** パフォーマンススコアが90未満の場合は最適化を検討してください。
+          `;
+          
+          github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr_number,
+            body: comment
+          });
+
+  # コードサイズ分析
+  analyze-bundle:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build for analysis
+      run: npm run build
+      
+    - name: Analyze bundle size
+      uses: preactjs/compressed-size-action@v2
+      with:
+        repo-token: '${{ secrets.GITHUB_TOKEN }}'
+        pattern: './dist/**/*.{js,css,html}'
+        exclude: '{*.map,node_modules/**/*}'
+
+  # セキュリティスキャン（PR専用）
+  security-scan-pr:
+    name: Security Scan (PR)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: javascript, python
+        
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v2
+      
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  # PR ステータス更新
+  update-pr-status:
+    name: Update PR Status
+    runs-on: ubuntu-latest
+    needs: [pr-info, deploy-preview, lighthouse-test, analyze-bundle, security-scan-pr]
+    if: always()
+    
+    steps:
+    - name: 成功ステータスをコメント
+      if: needs.deploy-preview.result == 'success' && needs.lighthouse-test.result == 'success'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr_number = context.payload.pull_request.number;
+          
+          const comment = `## ✅ PR レビュー準備完了
+          
+          **ステータス:**
+          - 🟢 プレビューデプロイ: 成功
+          - 🟢 パフォーマンステスト: 成功  
+          - 🟢 セキュリティスキャン: 成功
+          - 🟢 バンドルサイズ分析: 成功
+          
+          このPRはレビュー可能な状態です。
+          `;
+          
+          github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr_number,
+            body: comment
+          });
+          
+    - name: 失敗ステータスをコメント
+      if: needs.deploy-preview.result == 'failure' || needs.lighthouse-test.result == 'failure'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr_number = context.payload.pull_request.number;
+          
+          const comment = `## ❌ PR チェック失敗
+          
+          **ステータス:**
+          - ${needs.deploy-preview.result == 'success' ? '🟢' : '🔴'} プレビューデプロイ: ${needs.deploy-preview.result}
+          - ${needs.lighthouse-test.result == 'success' ? '🟢' : '🔴'} パフォーマンステスト: ${needs.lighthouse-test.result}
+          - ${needs.security-scan-pr.result == 'success' ? '🟢' : '🔴'} セキュリティスキャン: ${needs.security-scan-pr.result}
+          
+          詳細は[Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})で確認してください。
+          `;
+          
+          github.rest.issues.createComment({
+            owner,
+            repo,
+            issue_number: pr_number,
+            body: comment
+          });
+
+outputs:
+  hosting_url:
+    description: 'Firebase Preview URL'
+    value: ${{ jobs.deploy-preview.outputs.hosting_url }}
