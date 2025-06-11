@@ -45,9 +45,15 @@ FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./nyanco-bot-firebase-adminsdk-fbsvc-d65403c7c
 # AI API 設定（AI機能使用時）
 # -----------------------------------------------------------------------------
 
-# Gemini API Key（Google AI Studio で取得）
-# https://makersuite.google.com/ でAPIキーを生成
-GEMINI_API_KEY=your_gemini_api_key_here
+# Google Cloud Project ID（Vertex AI使用時必須）
+GCP_PROJECT_ID=your-gcp-project-id
+
+# Google Cloud リージョン（Vertex AI使用時）
+# 利用可能なリージョン: us-central1, us-east1, us-west1, europe-west1, asia-northeast1 など
+GCP_LOCATION=us-central1
+
+# 旧Gemini API Key（非推奨 - Vertex AIへの移行を推奨）
+# GEMINI_API_KEY=your_gemini_api_key_here
 
 # -----------------------------------------------------------------------------
 # Cloud Run / GCP 設定（クラウドデプロイ時）

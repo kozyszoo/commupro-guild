@@ -15,7 +15,8 @@ import random
 from typing import Dict, List, Optional, Set
 from dotenv import load_dotenv
 from dataclasses import dataclass, asdict
-import google.generativeai as genai
+from google.cloud import aiplatform
+from vertexai.generative_models import GenerativeModel
 from tutorial_content import TutorialStep
 
 load_dotenv()
@@ -63,8 +64,8 @@ class MultiBotManager:
     """複数Discord Botの管理クラス"""
     
     def __init__(self):
-        # Gemini API の初期化
-        self.init_gemini_api()
+        # Vertex AI の初期化
+        self.init_vertex_ai()
         
         # チュートリアルデータの永続化ファイル
         self.tutorial_data_file = "tutorial_progress.json"
@@ -153,20 +154,26 @@ class MultiBotManager:
         # リマインダータスクの管理
         self.reminder_tasks: Dict[str, asyncio.Task] = {}
         
-    def init_gemini_api(self):
-        """Gemini API を初期化"""
+    def init_vertex_ai(self):
+        """Vertex AI を初期化"""
         try:
-            api_key = os.getenv('GEMINI_API_KEY')
-            if not api_key:
-                print("⚠️ GEMINI_API_KEY が設定されていません。固定応答モードで動作します。")
+            # プロジェクトIDとリージョンを環境変数から取得
+            project_id = os.getenv('GCP_PROJECT_ID')
+            location = os.getenv('GCP_LOCATION', 'us-central1')
+            
+            if not project_id:
+                print("⚠️ GCP_PROJECT_ID が設定されていません。固定応答モードで動作します。")
                 self.gemini_model = None
                 return
             
-            genai.configure(api_key=api_key)
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash-002')
-            print("✅ Gemini API が初期化されました")
+            # Vertex AI を初期化
+            aiplatform.init(project=project_id, location=location)
+            
+            # Gemini モデルを初期化
+            self.gemini_model = GenerativeModel('gemini-1.5-flash-002')
+            print(f"✅ Vertex AI が初期化されました (Project: {project_id}, Location: {location})")
         except Exception as e:
-            print(f"❌ Gemini API の初期化に失敗: {e}")
+            print(f"❌ Vertex AI の初期化に失敗: {e}")
             self.gemini_model = None
     
     def get_character_system_prompt(self, character_id: str) -> str:
@@ -659,20 +666,20 @@ class MultiBotManager:
                        f"• フィードバックなら「フィードバック」と言ってくださいにゃ〜\n"
                        f"• 技術的な質問なら詳しく教えてくださいにゃ〜")
         
-        # Gemini API を使用した応答生成
+        # Vertex AI を使用した応答生成
         if self.gemini_model:
             try:
                 return await self.generate_gemini_response(content, character_id, user_name, message)
             except Exception as e:
-                print(f"❌ Gemini API エラー ({character.name}): {e}")
+                print(f"❌ Vertex AI エラー ({character.name}): {e}")
                 # フォールバック応答
                 return await self.generate_fallback_response(character_id, user_name)
         else:
-            # Gemini APIが利用できない場合のフォールバック
+            # Vertex AIが利用できない場合のフォールバック
             return await self.generate_fallback_response(character_id, user_name)
     
     async def generate_gemini_response(self, content: str, character_id: str, user_name: str, message: discord.Message = None) -> str:
-        """Gemini APIを使用して応答を生成"""
+        """Vertex AIを使用して応答を生成"""
         try:
             # システムプロンプトを取得
             system_prompt = self.get_character_system_prompt(character_id)
@@ -693,7 +700,7 @@ class MultiBotManager:
 
 上記の設定とコンテキストを踏まえて、ユーザーのメッセージに応答してください。"""
             
-            # Gemini APIに送信
+            # Vertex AIに送信
             response = await asyncio.to_thread(
                 self.gemini_model.generate_content,
                 full_prompt
@@ -709,7 +716,7 @@ class MultiBotManager:
                 return await self.generate_fallback_response(character_id, user_name)
                 
         except Exception as e:
-            print(f"❌ Gemini応答生成エラー: {e}")
+            print(f"❌ Vertex AI応答生成エラー: {e}")
             return await self.generate_fallback_response(character_id, user_name)
     
     async def generate_fallback_response(self, character_id: str, user_name: str) -> str:
