@@ -781,64 +781,12 @@
 
         } catch (error) {
           console.error('AI 分析 API エラー:', error);
-          // エラー時はキャッシュされたデータまたはデフォルトデータを返す
-          return cachedAIAnalysis || getDefaultAnalysisData();
+          // エラーを再スローしてサンプルデータを使用しないようにする
+          throw error;
         }
       }
 
-      /**
-       * デフォルトの分析データ（API エラー時のフォールバック）
-       */
-      function getDefaultAnalysisData() {
-        return {
-          analysis: {
-            userPostRanking: [
-              { username: 'テストユーザー1', count: 25, ratio: 31.2 },
-              { username: 'テストユーザー2', count: 18, ratio: 22.5 },
-              { username: 'テストユーザー3', count: 12, ratio: 15.0 }
-            ],
-            channelActivity: [
-              { channel: 'general', count: 45, ratio: 56.2 },
-              { channel: 'tech-talk', count: 20, ratio: 25.0 },
-              { channel: 'random', count: 15, ratio: 18.8 }
-            ],
-            neglectedUsers: [
-              { username: 'NeglectedUser1', posts: 8, reactions: 2, neglectRate: 0.25 },
-              { username: 'NeglectedUser2', posts: 5, reactions: 1, neglectRate: 0.20 }
-            ],
-            suspiciousContent: [],
-            communityHealth: {
-              participation: 75,
-              engagement: 68,
-              safety: 100,
-              overall: 81
-            }
-          },
-          aiAdvices: [
-            {
-              type: 'participation',
-              priority: 'medium',
-              title: '参加バランスの改善',
-              message: 'テストユーザー1さんの投稿が集中しています（31.2%）。他のメンバーの発言を促すような話題振りや質問投稿を増やすことで、コミュニティ全体の参加率向上が期待できます。',
-              action: '定期的な質問投稿やアイスブレイク企画の実施を検討してください',
-              icon: 'group_work',
-              timestamp: new Date()
-            },
-            {
-              type: 'health',
-              priority: 'info',
-              title: 'コミュニティ健康度レポート',
-              message: '参加度: 75%, エンゲージメント: 68%, 安全性: 100%',
-              action: '定期的な健康度チェックを継続し、数値の改善を目指してください',
-              icon: 'health_and_safety',
-              timestamp: new Date()
-            }
-          ],
-          logCount: 0,
-          analysisDate: new Date(),
-          isDefault: true
-        };
-      }
+
 
       /**
        * AI 分析結果をダッシュボードに反映
@@ -893,21 +841,13 @@
         discordLogsElement.innerHTML = `
           <div class="dashboard-card">
             <div class="card-header">
-              <h3 class="dashboard-title">
+                              <h3 class="dashboard-title">
                 <i class="material-icons">analytics</i>
                 Discord ログ分析ダッシュボード
-                ${isDefaultData ? ' <span style="color: var(--warning-color); font-size: 0.8rem;">(デモ)</span>' : ''}
               </h3>
             </div>
             <div class="card-content">
-              ${isDefaultData ? `
-                <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                  <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                    <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                    デモデータ表示中 - 実際の分析にはFirebase Functionsが必要です
-                  </div>
-                </div>
-              ` : ''}
+              
 
               <!-- AI運営アドバイス -->
               <div style="margin-bottom: 2rem;">
@@ -1718,9 +1658,31 @@
           updateDashboardWithAIAnalysis(analysisData);
         }).catch(error => {
           console.error('AI分析に失敗しました:', error);
-          // デフォルトデータで表示
-          const defaultData = getDefaultAnalysisData();
-          updateDashboardWithAIAnalysis(defaultData);
+          // エラー情報を表示（サンプルデータは使用しない）
+          document.getElementById('dashboard-discord-logs').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">analytics</i>
+                  Discord ログ分析ダッシュボード
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="no-data">
+                  <i class="material-icons" style="color: var(--error-color);">error</i>
+                  <div style="font-weight: 600; margin-bottom: 1rem;">分析データ取得エラー</div>
+                  <div style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    Firebase Functionsから実際のDiscordログデータを取得できませんでした
+                  </div>
+                  <div style="font-size: 0.8rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm);">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">エラー詳細:</div>
+                    <div>${error.message || error}</div>
+                    <div style="margin-top: 0.5rem;">Firestoreの'interactions'コレクションにデータがあることを確認してください</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
         });
         
         // Firebase未初期化の場合は早期終了
@@ -1838,53 +1800,13 @@
           // ギルド統計
           const guildList = Object.values(guilds || {});
           
-          // サンプルデータ（データがない場合）
-          const displayGuilds = guildList.length > 0 ? guildList : [
-            {
-              id: "sample-guild-1",
-              name: "Discord Community",
-              analytics: {
-                totalMembers: 1245,
-                activeMembers: 423,
-                averageEngagement: 85
-              },
-              botSettings: {
-                matchingEnabled: true
-              },
-              updatedAt: new Date()
-            },
-            {
-              id: "sample-guild-2", 
-              name: "Tech Developers",
-              analytics: {
-                totalMembers: 892,
-                activeMembers: 234,
-                averageEngagement: 72
-              },
-              botSettings: {
-                matchingEnabled: false
-              },
-              updatedAt: new Date(Date.now() - 3600000)
-            },
-            {
-              id: "sample-guild-3",
-              name: "AI & ML Research",
-              analytics: {
-                totalMembers: 567,
-                activeMembers: 189,
-                averageEngagement: 91
-              },
-              botSettings: {
-                matchingEnabled: true
-              },
-              updatedAt: new Date(Date.now() - 7200000)
-            }
-          ];
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayGuilds = guildList;
           
           cachedGuilds = displayGuilds; // キャッシュに保存
           
           // 初期表示はサーバー名の昇順でソート
-          const sortedGuilds = sortData(displayGuilds, 'name', 'asc', 'guilds');
+          const sortedGuilds = displayGuilds.length > 0 ? sortData(displayGuilds, 'name', 'asc', 'guilds') : [];
           
           document.getElementById('dashboard-guilds').innerHTML = `
             <div class="dashboard-card">
@@ -2011,28 +1933,8 @@
             console.log("Normalized analytics:", normalizedAnalytics); // デバッグ用
           }
           
-          // 正規化されたデータまたはサンプルデータを使用
-          const displayAnalytics = normalizedAnalytics || {
-            date: "2024-12-07",
-            activeUsers: 42,
-            messageCount: 189,
-            newMembers: 3,
-            reengagements: 2,
-            topTopics: {
-              "AI・機械学習": 35,
-              "React開発": 28,
-              "デザイン": 24,
-              "TypeScript": 19,
-              "ポッドキャスト": 16
-            },
-            channelActivity: {
-              "general": 58,
-              "tech-talk": 47,
-              "ai-research": 32,
-              "design": 28,
-              "random": 24
-            }
-          };
+          // 正規化されたデータのみを使用（サンプルデータは使用しない）
+          const displayAnalytics = normalizedAnalytics;
           
           document.getElementById('dashboard-analytics-sessions').innerHTML = `
             <div class="dashboard-card">
@@ -2043,54 +1945,62 @@
                 </h3>
               </div>
               <div class="card-content">
-                <div class="stats-grid">
-                  <div class="stat-item">
-                    <span class="stat-number">${displayAnalytics.activeUsers || 0}</span>
-                    <span class="stat-label">アクティブユーザー</span>
+                ${displayAnalytics ? `
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.activeUsers || 0}</span>
+                      <span class="stat-label">アクティブユーザー</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.messageCount || 0}</span>
+                      <span class="stat-label">メッセージ数</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.newMembers || 0}</span>
+                      <span class="stat-label">新規メンバー</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.reengagements || 0}</span>
+                      <span class="stat-label">再エンゲージメント</span>
+                    </div>
                   </div>
-                  <div class="stat-item">
-                    <span class="stat-number">${displayAnalytics.messageCount || 0}</span>
-                    <span class="stat-label">メッセージ数</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">${displayAnalytics.newMembers || 0}</span>
-                    <span class="stat-label">新規メンバー</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">${displayAnalytics.reengagements || 0}</span>
-                    <span class="stat-label">再エンゲージメント</span>
-                  </div>
-                </div>
-                <ul class="info-list">
-                  <li class="info-item">
-                    <span class="info-label">データ日付</span>
-                    <span class="info-value">${displayAnalytics.date || new Date().toISOString().split('T')[0]}</span>
-                  </li>
-                  <li class="info-item">
-                    <span class="info-label">データ状態</span>
-                    <span class="info-value">${normalizedAnalytics ? 'Firestore' : 'サンプル'}</span>
-                  </li>
-                  ${normalizedAnalytics ? `
+                  <ul class="info-list">
+                    <li class="info-item">
+                      <span class="info-label">データ日付</span>
+                      <span class="info-value">${displayAnalytics.date || new Date().toISOString().split('T')[0]}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">データ状態</span>
+                      <span class="info-value">Firestore</span>
+                    </li>
                     <li class="info-item">
                       <span class="info-label">ドキュメントID</span>
-                      <span class="info-value">${latestAnalytics.id || '-'}</span>
+                      <span class="info-value">${latestAnalytics?.id || '-'}</span>
                     </li>
-                  ` : ''}
-                </ul>
-                <div style="margin-top: 1rem;">
-                  <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
-                  ${Object.entries(displayAnalytics.topTopics || {}).map(([topic, count]) => 
-                    `<span class="tag">${topic} (${count})</span>`
-                  ).join('')}
-                </div>
-                ${displayAnalytics.channelActivity ? `
+                  </ul>
                   <div style="margin-top: 1rem;">
-                    <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
-                    ${Object.entries(displayAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
-                      `<span class="tag">#${channel}: ${count}</span>`
+                    <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
+                    ${Object.entries(displayAnalytics.topTopics || {}).map(([topic, count]) => 
+                      `<span class="tag">${topic} (${count})</span>`
                     ).join('')}
                   </div>
-                ` : ''}
+                  ${displayAnalytics.channelActivity ? `
+                    <div style="margin-top: 1rem;">
+                      <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
+                      ${Object.entries(displayAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
+                        `<span class="tag">#${channel}: ${count}</span>`
+                      ).join('')}
+                    </div>
+                  ` : ''}
+                ` : `
+                  <div class="no-data">
+                    <i class="material-icons">insights</i>
+                    <div>アナリティクスデータがありません</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                      Firestoreの'analytics_sessions'コレクションにデータを追加してください
+                    </div>
+                  </div>
+                `}
               </div>
             </div>
           `;
@@ -2098,100 +2008,11 @@
           // インタラクション統計
           const interactionList = Object.values(interactions || {});
           
-          // サンプルデータ（データがない場合）
-          const displayInteractions = interactionList.length > 0 ? interactionList : [
-            {
-              type: 'message',
-              userId: 'user_12345',
-              username: 'テストユーザー1',
-              guildId: 'sample-guild-1',
-              guildName: 'Discord Community',
-              channelId: 'channel_001',
-              channelName: 'general',
-              messageId: 'msg_001',
-              content: 'こんにちは！新しいプロジェクトについて話し合いましょう。',
-              keywords: ['挨拶', 'プロジェクト', '相談'],
-              timestamp: new Date(),
-              metadata: {
-                hasAttachments: false,
-                hasEmbeds: false,
-                mentionCount: 0,
-                reactionCount: 3,
-                messageLength: 32
-              }
-            },
-            {
-              type: 'reaction_add',
-              userId: 'user_67890',
-              username: 'テストユーザー2',
-              guildId: 'sample-guild-1',
-              guildName: 'Discord Community',
-              channelId: 'channel_001',
-              channelName: 'general',
-              messageId: 'msg_001',
-              keywords: ['リアクション', '👍'],
-              timestamp: new Date(Date.now() - 300000),
-              metadata: {
-                emojiName: '👍',
-                emojiId: null,
-                isCustomEmoji: false
-              }
-            },
-            {
-              type: 'member_join',
-              userId: 'user_34567',
-              username: 'NewUser',
-              guildId: 'sample-guild-1',
-              guildName: 'Discord Community',
-              keywords: ['新規参加', 'ウェルカム'],
-              timestamp: new Date(Date.now() - 3600000),
-              metadata: {
-                accountCreated: new Date(Date.now() - 86400000 * 30).toISOString(),
-                isBot: false,
-                roles: ['@everyone'],
-                joinedAt: new Date(Date.now() - 3600000).toISOString()
-              }
-            },
-            {
-              type: 'message_edit',
-              userId: 'user_12345',
-              username: 'テストユーザー1',
-              guildId: 'sample-guild-1',
-              guildName: 'Discord Community',
-              channelId: 'channel_002',
-              channelName: 'tech-talk',
-              messageId: 'msg_002',
-              content: 'React Hooksの使い方について詳しく説明します。修正版です。',
-              keywords: ['React', 'Hooks', '説明', '修正'],
-              timestamp: new Date(Date.now() - 7200000),
-              metadata: {
-                contentBefore: 'React Hooksの使い方について説明します。',
-                contentAfter: 'React Hooksの使い方について詳しく説明します。修正版です。',
-                hasAttachments: false,
-                hasEmbeds: true
-              }
-            },
-            {
-              type: 'scheduled_event_create',
-              userId: 'user_89012',
-              username: 'イベント管理者',
-              guildId: 'sample-guild-1',
-              guildName: 'Discord Community',
-              eventId: 'event_001',
-              eventName: '週次技術勉強会',
-              keywords: ['イベント作成', 'スケジュール', '勉強会'],
-              timestamp: new Date(Date.now() - 10800000),
-              metadata: {
-                eventDescription: 'みんなで技術について学ぶ勉強会です',
-                startTime: new Date(Date.now() + 86400000).toISOString(),
-                endTime: new Date(Date.now() + 86400000 + 7200000).toISOString(),
-                entityType: 'voice'
-              }
-            }
-          ];
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayInteractions = interactionList;
           
           // 初期表示は時刻の降順でソート
-          const sortedInteractions = sortData(displayInteractions, 'timestamp', 'desc');
+          const sortedInteractions = displayInteractions.length > 0 ? sortData(displayInteractions, 'timestamp', 'desc') : [];
           cachedInteractions = displayInteractions; // キャッシュに保存
           
           const totalInteractions = displayInteractions.length;
@@ -2227,14 +2048,6 @@
                     <span class="stat-label">添付ファイル</span>
                   </div>
                 </div>
-                ${interactionList.length === 0 ? `
-                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                      サンプルデータを表示中
-                    </div>
-                  </div>
-                ` : ''}
                 ${displayInteractions.length ? `
                   <div style="margin-top: 1rem; overflow-x:auto;">
                     <div style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
@@ -2369,14 +2182,6 @@
                 </h3>
               </div>
               <div class="card-content">
-                ${interactionList.length === 0 ? `
-                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                      サンプルデータを表示中
-                    </div>
-                  </div>
-                ` : ''}
                 
                 <!-- ログタイプ統計 -->
                 <div class="stats-grid" style="margin-bottom: 1.5rem;">
@@ -2621,41 +2426,8 @@
           // ユーザーマッチング
           const matchList = Object.values(userMatches || {});
           
-          // サンプルデータ（データがない場合）
-          const displayMatches = matchList.length > 0 ? matchList : [
-            {
-              user1Id: "user_12345",
-              user2Id: "user_67890", 
-              commonInterests: ["AI・機械学習", "Web開発", "React"],
-              matchScore: 0.87,
-              status: "active",
-              createdAt: new Date()
-            },
-            {
-              user1Id: "user_34567",
-              user2Id: "user_89012",
-              commonInterests: ["デザイン", "UI/UX"],
-              matchScore: 0.72,
-              status: "pending",
-              createdAt: new Date(Date.now() - 3600000)
-            },
-            {
-              user1Id: "user_56789",
-              user2Id: "user_23456",
-              commonInterests: ["TypeScript", "Node.js", "API開発"],
-              matchScore: 0.94,
-              status: "active",
-              createdAt: new Date(Date.now() - 7200000)
-            },
-            {
-              user1Id: "user_78901",
-              user2Id: "user_45678",
-              commonInterests: ["ポッドキャスト", "音声配信"],
-              matchScore: 0.63,
-              status: "completed",
-              createdAt: new Date(Date.now() - 86400000)
-            }
-          ];
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayMatches = matchList;
           
           document.getElementById('dashboard-user-matches').innerHTML = `
             <div class="dashboard-card">
@@ -2684,14 +2456,7 @@
                     <span class="stat-label">平均スコア</span>
                   </div>
                 </div>
-                ${matchList.length === 0 ? `
-                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                      サンプルデータを表示中
-                    </div>
-                  </div>
-                ` : ''}
+
                 ${displayMatches.length ? `
                   <div style="overflow-x:auto;">
                     <table class="dashboard-table">
@@ -2704,7 +2469,7 @@
                         </tr>
                       </thead>
                       <tbody>
-                        ${matchList.slice(0, 5).map(m => `
+                        ${displayMatches.slice(0, 5).map(m => `
                           <tr>
                             <td>
                               <div style="font-size: 0.85rem;">
@@ -2737,50 +2502,13 @@
           // トピック一覧
           const topicList = Object.values(topics || {});
           
-          // サンプルデータ（データがない場合）
-          const displayTopics = topicList.length > 0 ? topicList : [
-            {
-              name: 'AI・機械学習',
-              popularity: 95,
-              trendScore: 88,
-              keywords: ['AI', '機械学習', 'ML', 'ディープラーニング', 'TensorFlow']
-            },
-            {
-              name: 'React開発',
-              popularity: 87,
-              trendScore: 92,
-              keywords: ['React', 'JavaScript', 'JSX', 'Hooks', 'Component']
-            },
-            {
-              name: 'TypeScript',
-              popularity: 82,
-              trendScore: 85,
-              keywords: ['TypeScript', 'TS', '型定義', 'JavaScript', '開発効率']
-            },
-            {
-              name: 'デザイン',
-              popularity: 76,
-              trendScore: 79,
-              keywords: ['UI', 'UX', 'デザイン', 'Figma', 'Adobe']
-            },
-            {
-              name: 'バックエンド開発',
-              popularity: 71,
-              trendScore: 74,
-              keywords: ['Node.js', 'Express', 'API', 'サーバー', 'データベース']
-            },
-            {
-              name: 'ポッドキャスト',
-              popularity: 68,
-              trendScore: 72,
-              keywords: ['音声配信', 'コンテンツ', 'エンターテイメント']
-            }
-          ];
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayTopics = topicList;
           
           cachedTopics = displayTopics; // キャッシュに保存
           
           // 初期表示は人気度の降順でソート
-          const sortedTopics = sortData(displayTopics, 'popularity', 'desc', 'topics');
+          const sortedTopics = displayTopics.length > 0 ? sortData(displayTopics, 'popularity', 'desc', 'topics') : [];
           
           document.getElementById('dashboard-topics').innerHTML = `
             <div class="dashboard-card">
@@ -2791,14 +2519,7 @@
                 </h3>
               </div>
               <div class="card-content">
-                ${topicList.length === 0 ? `
-                  <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-radius: var(--border-radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
-                    <div style="color: var(--warning-color); font-weight: 600; font-size: 0.875rem;">
-                      <i class="material-icons" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">info</i>
-                      サンプルデータを表示中
-                    </div>
-                  </div>
-                ` : ''}
+
                 ${displayTopics.length ? `
                   <div style="overflow-x:auto;">
                     <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
