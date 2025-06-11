@@ -1,35 +1,159 @@
 # =============================================================================
-# Discord にゃんこエージェント - 環境変数設定例
+# Discord にゃんこエージェント - 環境変数設定テンプレート
+# =============================================================================
+# 
+# このファイルをコピーして .env を作成し、実際の値を設定してください:
+# cp env_example.txt .env
+#
+# セキュリティ上の注意:
+# - .env ファイルは .gitignore に含まれており、GitHubにコミットされません
+# - 本番環境では Google Cloud Secret Manager の使用を推奨します
+# - 認証情報をハードコードしないでください
+#
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Discord Bot Token（複数ボット管理システム用）
 # -----------------------------------------------------------------------------
+
 # みやにゃん用Discord Bot Token（必須）
+# Discord Developer Portal で作成したアプリケーションのBot Tokenを設定
 DISCORD_BOT_TOKEN_MIYA=your_miya_discord_bot_token_here
 
-# イヴにゃん用Discord Bot Token（必須）
+# イヴにゃん用Discord Bot Token（必須）  
+# Discord Developer Portal で作成したアプリケーションのBot Tokenを設定
 DISCORD_BOT_TOKEN_EVE=your_eve_discord_bot_token_here
 
 # レガシーボット用Discord Bot Token（レガシーシステム使用時のみ）
+# 後方互換性のため残してありますが、新規デプロイでは上記2つを使用してください
 DISCORD_BOT_TOKEN=your_legacy_discord_bot_token_here
 
 # -----------------------------------------------------------------------------
 # Firebase Service Account 設定（どちらか一方を設定）
 # -----------------------------------------------------------------------------
-# オプション1: JSON文字列として設定（GCP環境推奨）
-FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"your-project-id",...}
+
+# オプション1: JSON文字列として設定（GCP環境・本番環境推奨）
+# Firebase Console > プロジェクト設定 > サービスアカウント > 新しい秘密鍵の生成
+# 生成されたJSONファイルの内容を文字列として設定
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"your-project-id","private_key_id":"...","private_key":"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n","client_email":"...","client_id":"...","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"...","universe_domain":"googleapis.com"}
 
 # オプション2: ファイルパスとして設定（ローカル開発推奨）
+# Firebase Service Account のJSONファイルへの相対パス
 FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json
 
 # -----------------------------------------------------------------------------
-# Gemini API 設定（AI機能使用時）
+# AI API 設定（AI機能使用時）
 # -----------------------------------------------------------------------------
+
+# Gemini API Key（Google AI Studio で取得）
+# https://makersuite.google.com/ でAPIキーを生成
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # -----------------------------------------------------------------------------
-# Cloud Run 設定（クラウドデプロイ時）
+# Cloud Run / GCP 設定（クラウドデプロイ時）
 # -----------------------------------------------------------------------------
-# K_SERVICE=nyanco-bot-service
-# PORT=8080
+
+# Google Cloud プロジェクト ID
+PROJECT_ID=nyanco-bot
+
+# Cloud Run サービス名（自動設定される場合があります）
+K_SERVICE=nyanco-bot-service
+
+# アプリケーションのポート番号（Cloud Runでは通常8080）
+PORT=8080
+
+# Cloud Run リージョン
+REGION=asia-northeast1
+
+# -----------------------------------------------------------------------------
+# デバッグ・ログ設定
+# -----------------------------------------------------------------------------
+
+# Python標準出力のバッファリング無効化（ログの即座出力）
+PYTHONUNBUFFERED=1
+
+# ログレベル設定（DEBUG, INFO, WARNING, ERROR, CRITICAL）
+LOG_LEVEL=INFO
+
+# 開発モード（true/false）
+DEBUG_MODE=false
+
+# -----------------------------------------------------------------------------
+# 分離デプロイメント設定（分離デプロイ使用時）
+# -----------------------------------------------------------------------------
+
+# ボットキャラクター識別子（"miya" または "eve"）
+# 分離デプロイメント時に各コンテナで設定
+BOT_CHARACTER=miya
+
+# -----------------------------------------------------------------------------
+# ネットワーク・セキュリティ設定
+# -----------------------------------------------------------------------------
+
+# CORS設定（Web管理パネル使用時）
+CORS_ORIGINS=http://localhost:3000,https://your-domain.com
+
+# セッション暗号化キー（ランダムな文字列を生成して設定）
+SESSION_SECRET=your_random_session_secret_here
+
+# -----------------------------------------------------------------------------
+# モニタリング・メトリクス設定
+# -----------------------------------------------------------------------------
+
+# ヘルスチェックエンドポイント有効化
+HEALTH_CHECK_ENABLED=true
+
+# メトリクス収集間隔（秒）
+METRICS_INTERVAL=300
+
+# -----------------------------------------------------------------------------
+# データベース・ストレージ設定
+# -----------------------------------------------------------------------------
+
+# Firestore エミュレータ使用（ローカル開発時）
+USE_FIRESTORE_EMULATOR=false
+
+# Firestore エミュレータホスト
+FIRESTORE_EMULATOR_HOST=localhost:8080
+
+# -----------------------------------------------------------------------------
+# Discord Bot 動作設定
+# -----------------------------------------------------------------------------
+
+# コマンドプレフィックス（スラッシュコマンドを推奨）
+COMMAND_PREFIX=!
+
+# ボットのアクティビティメッセージ
+BOT_ACTIVITY=にゃんこと遊んでるにゃ〜
+
+# ボットのアクティビティタイプ（PLAYING, LISTENING, WATCHING, STREAMING）
+BOT_ACTIVITY_TYPE=PLAYING
+
+# メッセージの最大長（Discordの制限: 2000文字）
+MAX_MESSAGE_LENGTH=2000
+
+# レスポンス生成のタイムアウト（秒）
+RESPONSE_TIMEOUT=30
+
+# -----------------------------------------------------------------------------
+# 使用例・補足
+# -----------------------------------------------------------------------------
+#
+# 1. ローカル開発環境の設定例:
+#    DISCORD_BOT_TOKEN_MIYA=MTM3NDA...
+#    FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./firebase-key.json
+#    DEBUG_MODE=true
+#    USE_FIRESTORE_EMULATOR=true
+#
+# 2. 本番環境（Cloud Run）の設定例:
+#    DISCORD_BOT_TOKEN_MIYA=MTM3NDA...
+#    FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+#    DEBUG_MODE=false
+#    LOG_LEVEL=WARNING
+#
+# 3. 分離デプロイ環境の設定例:
+#    BOT_CHARACTER=miya
+#    DISCORD_BOT_TOKEN_MIYA=MTM3NDA...
+#    PORT=8081
+#
+# =============================================================================
