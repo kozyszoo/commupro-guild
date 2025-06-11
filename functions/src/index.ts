@@ -12,6 +12,7 @@ import {onDocumentCreated} from "firebase-functions/v2/firestore";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import { setGlobalOptions } from 'firebase-functions/v2';
 
 // ユーザータイプの定義
 interface User {
@@ -39,6 +40,19 @@ admin.initializeApp();
 //   logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
+// グローバル設定
+setGlobalOptions({
+  region: 'asia-northeast1', // 東京リージョン
+  maxInstances: 10
+});
+
+// Discord 分析機能をエクスポート
+export { 
+  analyzeDiscordLogs, 
+  onInteractionAdded, 
+  getAnalysisHistory 
+} from './discord-analytics';
 
 // Discordウェルカムメッセージの関数
 export const welcomeNewMember = onDocumentCreated("users/{userId}", async (event) => {

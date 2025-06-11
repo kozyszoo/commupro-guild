@@ -1,5 +1,5 @@
 # =============================================================================
-# Discord にゃんこエージェント - 環境変数設定テンプレート
+# Discord エンタメコンテンツ制作アプリ - 環境変数設定テンプレート
 # =============================================================================
 # 
 # このファイルをコピーして .env を作成し、実際の値を設定してください:
@@ -13,20 +13,21 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Discord Bot Token（複数ボット管理システム用）
+# Discord エンタメBot 設定
 # -----------------------------------------------------------------------------
 
-# みやにゃん用Discord Bot Token（必須）
+# Discord Bot Token（必須）
 # Discord Developer Portal で作成したアプリケーションのBot Tokenを設定
-DISCORD_BOT_TOKEN_MIYA=your_miya_discord_bot_token_here
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
 
-# イヴにゃん用Discord Bot Token（必須）  
-# Discord Developer Portal で作成したアプリケーションのBot Tokenを設定
-DISCORD_BOT_TOKEN_EVE=your_eve_discord_bot_token_here
+# Bot コマンドプレフィックス
+BOT_COMMAND_PREFIX=!
 
-# レガシーボット用Discord Bot Token（レガシーシステム使用時のみ）
-# 後方互換性のため残してありますが、新規デプロイでは上記2つを使用してください
-DISCORD_BOT_TOKEN=your_legacy_discord_bot_token_here
+# Bot 管理者ユーザーID（カンマ区切りで複数指定可能）
+BOT_ADMIN_USER_IDS=123456789012345678,987654321098765432
+
+# 週次まとめ投稿先チャンネルID
+DISCORD_SUMMARY_CHANNEL_ID=your_summary_channel_id_here
 
 # -----------------------------------------------------------------------------
 # Firebase Service Account 設定（どちらか一方を設定）
@@ -46,14 +47,40 @@ FIREBASE_SERVICE_ACCOUNT_KEY_PATH=./nyanco-bot-firebase-adminsdk-fbsvc-d65403c7c
 # -----------------------------------------------------------------------------
 
 # Google Cloud Project ID（Vertex AI使用時必須）
-GCP_PROJECT_ID=your-gcp-project-id
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
 
 # Google Cloud リージョン（Vertex AI使用時）
 # 利用可能なリージョン: us-central1, us-east1, us-west1, europe-west1, asia-northeast1 など
-GCP_LOCATION=us-central1
+GOOGLE_CLOUD_LOCATION=asia-northeast1
 
-# 旧Gemini API Key（非推奨 - Vertex AIへの移行を推奨）
-# GEMINI_API_KEY=your_gemini_api_key_here
+# -----------------------------------------------------------------------------
+# Google Drive 設定
+# -----------------------------------------------------------------------------
+
+# Google Drive 保存先フォルダID
+GOOGLE_DRIVE_FOLDER_ID=your_google_drive_folder_id_here
+
+# -----------------------------------------------------------------------------
+# スケジューラー設定
+# -----------------------------------------------------------------------------
+
+# スケジューラー自動開始（true/false）
+AUTO_START_SCHEDULER=true
+
+# 週次実行スケジュール（曜日）
+# monday, tuesday, wednesday, thursday, friday, saturday, sunday
+WEEKLY_SCHEDULE_DAY=monday
+
+# 週次実行スケジュール（時刻）
+# HH:MM 形式（24時間表記）
+WEEKLY_SCHEDULE_TIME=09:00
+
+# -----------------------------------------------------------------------------
+# システム設定
+# -----------------------------------------------------------------------------
+
+# ローカルファイル自動削除（true/false）
+CLEANUP_LOCAL_FILES=true
 
 # -----------------------------------------------------------------------------
 # Cloud Run / GCP 設定（クラウドデプロイ時）

@@ -19,6 +19,8 @@ intents.message_content = True
 intents.members = True
 intents.reactions = True
 intents.guild_scheduled_events = True  # スケジュールイベント権限を追加
+intents.voice_states = True  # ボイスチャンネル状態監視
+intents.presences = True     # ユーザーアクティビティ監視
 bot = discord.Client(intents=intents)
 
 # --- Firebase Firestore の設定 ---
