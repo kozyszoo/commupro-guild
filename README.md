@@ -28,3 +28,25 @@ Discordサーバーの参加者エンゲージメントを強化するボット�
 - 非アクティブユーザー再エンゲージメント機能
 - ユーザーマッチング機能（同じ関心を持つメンバー紹介）
 - 定期的なポッドキャスト形式情報配信
+
+## プロジェクト構造
+
+- `src/` - メインのソースコード
+- `functions/` - Firebase Functions
+- `public/` - 静的ファイル（管理パネル）
+- `dist/` - ビルド済みファイル
+- `docs/` - プロジェクトドキュメント
+- `bot/` - Discordボット関連のコード
+
+## ドキュメント
+
+- `system_structure.md` - システム構造の詳細
+- `data_structure.md` - データ構造の詳細
+- `checklist.md` - 開発チェックリスト
+
+## 開発環境
+
+- TypeScript
+- Node.js 18+
+- Firebase Functions v2
+- Discord.js v14
