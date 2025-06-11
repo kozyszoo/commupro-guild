@@ -98,11 +98,19 @@ setup_secrets() {
                 --data-file=-
         fi
         
-        # Gemini API KeyをSecret Managerに保存
-        if [ ! -z "$GEMINI_API_KEY" ]; then
-            echo "$GEMINI_API_KEY" | gcloud secrets create gemini-api-key \
+        # GCP Project IDをSecret Managerに保存（Vertex AI用）
+        if [ ! -z "$GCP_PROJECT_ID" ]; then
+            echo "$GCP_PROJECT_ID" | gcloud secrets create gcp-project-id \
                 --data-file=- --replication-policy="automatic" || \
-            echo "$GEMINI_API_KEY" | gcloud secrets versions add gemini-api-key \
+            echo "$GCP_PROJECT_ID" | gcloud secrets versions add gcp-project-id \
+                --data-file=-
+        fi
+        
+        # GCP LocationをSecret Managerに保存（Vertex AI用）
+        if [ ! -z "$GCP_LOCATION" ]; then
+            echo "$GCP_LOCATION" | gcloud secrets create gcp-location \
+                --data-file=- --replication-policy="automatic" || \
+            echo "$GCP_LOCATION" | gcloud secrets versions add gcp-location \
                 --data-file=-
         fi
         
@@ -195,7 +203,8 @@ deploy_bots() {
 DISCORD_BOT_TOKEN_MIYA=$(gcloud secrets versions access latest --secret="discord-bot-token-miya" || echo "")
 DISCORD_BOT_TOKEN_EVE=$(gcloud secrets versions access latest --secret="discord-bot-token-eve" || echo "")
 FIREBASE_SERVICE_ACCOUNT=$(gcloud secrets versions access latest --secret="firebase-service-account" || echo "")
-GEMINI_API_KEY=$(gcloud secrets versions access latest --secret="gemini-api-key" || echo "")
+GCP_PROJECT_ID=$(gcloud secrets versions access latest --secret="gcp-project-id" || echo "")
+GCP_LOCATION=$(gcloud secrets versions access latest --secret="gcp-location" || echo "")
 EOF
         gcloud compute scp gcp.env "$INSTANCE_NAME":~/.env --zone="$ZONE"
         rm gcp.env

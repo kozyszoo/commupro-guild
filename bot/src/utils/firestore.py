@@ -19,6 +19,26 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 
+# エンターテイメントボット用の独立した初期化関数
+async def initialize_firebase():
+    """
+    Firebase Firestoreを初期化（エンターテイメントボット用）
+    
+    Returns:
+        FirestoreManager: 初期化されたFirestoreManagerインスタンス
+    """
+    try:
+        manager = FirestoreManager()
+        if manager.db:
+            print("✅ Firebase Firestore初期化完了（エンターテイメントボット用）")
+            return manager
+        else:
+            print("❌ Firebase Firestore初期化失敗")
+            return None
+    except Exception as e:
+        print(f"❌ Firebase初期化エラー: {e}")
+        return None
+
 class FirestoreManager:
     """Firestore管理クラス"""
     

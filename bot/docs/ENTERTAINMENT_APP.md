@@ -1,8 +1,6 @@
 # Discord エンタメコンテンツ制作アプリ
 
-Discord内のアクションに対するまとめ情報生成、週次コンテンツ自動制作システムです。3匹のキャラクター（みやにゃん・イヴにゃん・ナレにゃん）によるAI対話形式のエンタメコンテンツを自動生成し、テキスト・音声ファイルをGoogle Driveに保存してDiscordに投稿する統合システムです。
-
-[![CI/CD Pipeline](https://github.com/kozyszoo/commupro-guild/actions/workflows/ci.yml/badge.svg)](https://github.com/kozyszoo/commupro-guild/actions/workflows/ci.yml)
+Discord内のアクションに対するまとめ情報生成、週次コンテンツ自動制作システムです。
 
 ## 🎯 主要機能
 
@@ -36,27 +34,20 @@ Discord内のアクションに対するまとめ情報生成、週次コンテ�
 - 手動実行コマンド対応
 - 実行ログとエラー監視
 
-## 🚀 セットアップ手順
+## 🚀 セットアップ
 
-### 1. 必要な依存関係をインストール
+### 1. 必要な依存関係のインストール
 
-#### Python依存関係（Discord Bot）
 ```bash
 cd bot
 pip install -r requirements.txt
 ```
 
-#### Node.js依存関係（Firebase Functions）
-```bash
-npm install
-```
+### 2. 環境変数設定
 
-### 2. 環境変数の設定
-
-`bot/env_example.txt` をコピーして `bot/.env` を作成し、必要な値を設定：
+`env_example.txt` をコピーして `.env` を作成し、必要な値を設定：
 
 ```bash
-cd bot
 cp env_example.txt .env
 ```
 
@@ -88,18 +79,10 @@ cp env_example.txt .env
 2. フォルダIDを取得（URLの最後の部分）
 3. サービスアカウントにフォルダの編集権限を付与
 
-### 4. 実行
+### 4. Bot の実行
 
-#### エンタメコンテンツ制作Bot
 ```bash
-cd bot
 python run_entertainment_bot.py
-```
-
-#### Firebase Functions（従来システム）
-```bash
-npm run build
-npm start
 ```
 
 ## 🎮 使用方法
@@ -130,6 +113,25 @@ WEEKLY_SCHEDULE_TIME=09:00
 ```
 
 これにより、毎週月曜日の9:00に自動でコンテンツが生成・投稿されます。
+
+## 📁 ファイル構成
+
+```
+bot/
+├── src/
+│   ├── core/
+│   │   ├── discord_analytics.py      # Discord活動分析
+│   │   ├── content_creator.py        # コンテンツ制作統合
+│   │   ├── scheduler.py             # スケジューラー
+│   │   ├── entertainment_bot.py     # メインBot実装
+│   │   └── podcast.py              # 既存ポッドキャスト機能
+│   └── utils/
+│       ├── firestore.py            # Firestore接続
+│       └── ...
+├── run_entertainment_bot.py         # メイン実行スクリプト
+├── requirements.txt                # Python依存関係
+└── env_example.txt                 # 環境変数テンプレート
+```
 
 ## 🎭 キャラクター設定
 
@@ -167,79 +169,19 @@ AI生成された週次まとめデータ
 #### `scheduler_logs`
 スケジューラー実行ログ
 
-## 🎬 動作確認結果
+## 🔧 カスタマイズ
 
-### ✅ 確認済み機能
+### 1. キャラクター設定の変更
+`src/core/discord_analytics.py` の `bot_personas` を編集
 
-1. **すべての依存関係のインストール**
-2. **全モジュールのインポート**
-3. **システム初期化**
-   - Discord Analytics
-   - Content Creator
-   - Weekly Scheduler
-   - Character Configuration
+### 2. 音声設定の調整
+`src/core/podcast.py` の `characters` 音声設定を変更
 
-4. **AI プロンプト生成機能**
-   - キャラクター設定
-   - データ駆動型プロンプト
-   - フォールバック機能
+### 3. AI プロンプトの調整
+`src/core/discord_analytics.py` の `_create_summary_prompt` を編集
 
-5. **統合システム機能**
-   - Google APIs初期化
-   - Firebase接続
-   - スケジューラー設定
-
-### 🧪 テスト実行
-
-```bash
-cd bot
-python test_startup.py
-```
-
-### 従来機能（後方互換性）
-- 新規参加者自動歓迎機能
-- 過去の人気投稿・イベント案内機能
-- 非アクティブユーザー再エンゲージメント機能
-- ユーザーマッチング機能（同じ関心を持つメンバー紹介）
-
-## 📁 プロジェクト構造
-
-```
-commupro-guild/
-├── bot/                                  # Discord エンタメコンテンツ制作Bot
-│   ├── src/
-│   │   ├── core/
-│   │   │   ├── discord_analytics.py    # Discord活動分析
-│   │   │   ├── content_creator.py      # コンテンツ制作統合
-│   │   │   ├── scheduler.py           # スケジューラー
-│   │   │   ├── entertainment_bot.py   # メインBot実装
-│   │   │   └── podcast.py            # 既存ポッドキャスト機能
-│   │   └── utils/
-│   │       ├── firestore.py          # Firestore接続
-│   │       └── ...
-│   ├── docs/
-│   │   └── ENTERTAINMENT_APP.md       # 詳細ドキュメント
-│   ├── run_entertainment_bot.py       # メイン実行スクリプト
-│   ├── test_startup.py               # 起動テスト
-│   ├── requirements.txt              # Python依存関係
-│   └── env_example.txt              # 環境変数テンプレート
-├── src/                              # Firebase Functions（従来システム）
-├── functions/                        # Firebase Functions
-├── public/                          # 静的ファイル（管理パネル）
-├── dist/                           # ビルド済みファイル
-└── docs/                          # プロジェクトドキュメント
-```
-
-## 📚 ドキュメント
-
-### エンタメコンテンツ制作アプリ
-- `bot/docs/ENTERTAINMENT_APP.md` - 詳細ドキュメント
-- `bot/test_startup.py` - 起動テスト・動作確認
-
-### 従来システム
-- `system_structure.md` - システム構造の詳細
-- `data_structure.md` - データ構造の詳細
-- `checklist.md` - 開発チェックリスト
+### 4. スケジュール設定の変更
+環境変数または `!scheduler set` コマンドで変更
 
 ## 🚨 トラブルシューティング
 
@@ -269,26 +211,8 @@ commupro-guild/
 実行ログを確認してエラーの詳細を調べてください：
 
 ```bash
-cd bot
 python run_entertainment_bot.py
 ```
-
-## 🛠️ 開発環境
-
-### エンタメコンテンツ制作Bot
-- Python 3.9+
-- Discord.py v2.3+
-- Firebase Admin SDK v6.2+
-- Google Cloud AI Platform
-- Vertex AI (Gemini)
-- Google Cloud Text-to-Speech
-- Google Drive API
-
-### 従来システム
-- TypeScript
-- Node.js 18+
-- Firebase Functions v2
-- Discord.js v14
 
 ## 📈 今後の拡張予定
 
@@ -302,4 +226,4 @@ python run_entertainment_bot.py
 
 ## 📝 ライセンス
 
-このプロジェクトは既存のpodcastアプリを拡張したDiscordエンタメコンテンツ制作システムです。
+このプロジェクトは既存のpodcastアプリを拡張したものです。

@@ -33,5 +33,14 @@ google-cloud-texttospeech==2.16.3  # Google Cloud TTS（高品質音声、speaki
 # 音声ファイル処理
 pydub==0.25.1
 
-# Gemini AI API
-google-generativeai==0.3.2
+# Vertex AI API（Gemini モデル使用）
+google-cloud-aiplatform>=1.43.0
+vertexai>=1.43.0
+
+# スケジューラー
+schedule==1.2.0
+
+# Google Drive API
+google-api-python-client==2.108.0
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
