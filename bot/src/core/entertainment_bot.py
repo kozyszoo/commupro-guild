@@ -60,6 +60,9 @@ class EntertainmentBot(discord.Client):
         print(f'✅ {self.user} がログインしました')
         print(f'📊 接続サーバー数: {len(self.guilds)}')
         
+        # ギルド情報をFirestoreに記録
+        await self._update_guild_info()
+        
         # 自動スケジューラー開始（設定されている場合）
         auto_start_scheduler = os.getenv('AUTO_START_SCHEDULER', 'false').lower() == 'true'
         if auto_start_scheduler:
@@ -115,6 +118,12 @@ class EntertainmentBot(discord.Client):
             elif command == 'status':
                 await self._cmd_status(message)
             
+            elif command == 'dashboard':
+                await self._cmd_dashboard(message)
+            
+            elif command == 'testlog':
+                await self._cmd_test_log(message)
+            
             else:
                 await message.reply(f"❓ 不明なコマンド: {command}")
         
@@ -135,6 +144,8 @@ class EntertainmentBot(discord.Client):
             value="""
 `!help` - このヘルプを表示
 `!status` - Bot状態を表示
+`!dashboard` - 分析ダッシュボードリンクを表示
+`!testlog` - テストログを記録（デバッグ用）
             """,
             inline=False
         )
@@ -347,7 +358,78 @@ class EntertainmentBot(discord.Client):
         )
         
         await message.reply(embed=embed)
-    
+
+    async def _cmd_dashboard(self, message):
+        """ダッシュボードリンク表示コマンド"""
+        # Firebase HostingのURL（設定から取得）
+        dashboard_url = os.getenv('FIREBASE_HOSTING_URL', 'https://your-project.web.app')
+        
+        embed = discord.Embed(
+            title="📊 Discord ログ分析ダッシュボード",
+            description="Web上でサーバーのアクティビティ分析をご覧いただけます",
+            color=0x7289da
+        )
+        
+        embed.add_field(
+            name="🔗 ダッシュボードアクセス",
+            value=f"[Discord ログ分析ダッシュボード]({dashboard_url})",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📈 利用可能な分析機能",
+            value="""• メッセージ統計
+• ユーザーアクティビティ
+• チャンネル分析
+• キーワードトレンド
+• リアクション統計
+• メンバー参加/退出""",
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🔄 データ更新",
+            value="リアルタイムでDiscordアクティビティを記録中",
+            inline=True
+        )
+        
+        embed.set_footer(text="このボットがアクティビティデータを自動収集しています")
+        
+        await message.reply(embed=embed)
+
+    async def _cmd_test_log(self, message):
+        """テストログ記録コマンド（デバッグ用）"""
+        if message.author.id not in self.admin_user_ids:
+            await message.reply("❌ このコマンドは管理者専用です")
+            return
+        
+        try:
+            # テスト用のログエントリを作成
+            test_data = {
+                'type': 'test_log',
+                'userId': str(message.author.id),
+                'username': message.author.display_name,
+                'channelId': str(message.channel.id),
+                'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
+                'guildId': str(message.guild.id) if message.guild else None,
+                'guildName': message.guild.name if message.guild else None,
+                'content': 'テストログエントリ - ダッシュボード確認用',
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'metadata': {
+                    'isTestData': True,
+                    'generatedBy': 'testlog_command'
+                },
+                'keywords': ['テスト', 'ダッシュボード', '動作確認']
+            }
+            
+            # Firestoreに保存
+            await asyncio.to_thread(self.db.collection('interactions').add, test_data)
+            
+            await message.reply("✅ テストログを記録しました。ダッシュボードで確認できます。")
+            
+        except Exception as e:
+            await message.reply(f"❌ テストログ記録エラー: {e}")
+
     async def _log_message_activity(self, message):
         """メッセージアクティビティをログ記録（既存システムとの連携）"""
         try:
@@ -373,6 +455,43 @@ class EntertainmentBot(discord.Client):
             
         except Exception as e:
             print(f"⚠️ メッセージアクティビティログエラー: {e}")
+
+    async def _update_guild_info(self):
+        """ギルド情報をFirestoreに更新"""
+        try:
+            for guild in self.guilds:
+                guild_data = {
+                    'guildId': str(guild.id),
+                    'name': guild.name,
+                    'memberCount': guild.member_count,
+                    'description': guild.description if guild.description else None,
+                    'icon': str(guild.icon.url) if guild.icon else None,
+                    'ownerID': str(guild.owner_id),
+                    'createdAt': guild.created_at.isoformat(),
+                    'premiumTier': guild.premium_tier,
+                    'premiumSubscriptionCount': guild.premium_subscription_count,
+                    'channels': {
+                        'text': len([ch for ch in guild.channels if str(ch.type) == 'text']),
+                        'voice': len([ch for ch in guild.channels if str(ch.type) == 'voice']),
+                        'category': len([ch for ch in guild.channels if str(ch.type) == 'category']),
+                        'total': len(guild.channels)
+                    },
+                    'roles': len(guild.roles),
+                    'emojis': len(guild.emojis),
+                    'lastUpdated': datetime.datetime.now(datetime.timezone.utc),
+                    'features': list(guild.features) if guild.features else []
+                }
+                
+                # Firestoreのguildsコレクションに保存（ドキュメントIDはguildId）
+                await asyncio.to_thread(
+                    self.db.collection('guilds').document(str(guild.id)).set,
+                    guild_data
+                )
+                
+                print(f"📊 ギルド情報更新: {guild.name} ({guild.member_count}名)")
+                
+        except Exception as e:
+            print(f"⚠️ ギルド情報更新エラー: {e}")
     
     def _extract_keywords(self, content: str) -> List[str]:
         """メッセージからキーワードを抽出"""
