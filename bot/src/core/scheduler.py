@@ -10,7 +10,7 @@ scheduler.py
 import asyncio
 import datetime
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import schedule
 import time
 import threading

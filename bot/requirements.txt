@@ -34,8 +34,8 @@ google-cloud-texttospeech==2.16.3  # Google Cloud TTS（高品質音声、speaki
 pydub==0.25.1
 
 # Vertex AI API（Gemini モデル使用）
-google-cloud-aiplatform==1.38.1
-vertexai==1.38.1
+google-cloud-aiplatform>=1.43.0
+vertexai>=1.43.0
 
 # スケジューラー
 schedule==1.2.0
