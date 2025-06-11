@@ -78,6 +78,62 @@ class EntertainmentBot(discord.Client):
         
         # メッセージログ記録（既存機能との連携）
         await self._log_message_activity(message)
+
+    async def on_message_edit(self, before, after):
+        """メッセージ編集時の処理"""
+        if after.author == self.user:
+            return
+        
+        await self._log_message_edit_activity(before, after)
+
+    async def on_message_delete(self, message):
+        """メッセージ削除時の処理"""
+        if message.author == self.user:
+            return
+        
+        await self._log_message_delete_activity(message)
+
+    async def on_reaction_add(self, reaction, user):
+        """リアクション追加時の処理"""
+        if user == self.user:
+            return
+        
+        await self._log_reaction_activity(reaction, user, 'reaction_add')
+
+    async def on_reaction_remove(self, reaction, user):
+        """リアクション削除時の処理"""
+        if user == self.user:
+            return
+        
+        await self._log_reaction_activity(reaction, user, 'reaction_remove')
+
+    async def on_member_join(self, member):
+        """メンバー参加時の処理"""
+        await self._log_member_activity(member, 'member_join')
+
+    async def on_member_remove(self, member):
+        """メンバー退出時の処理"""
+        await self._log_member_activity(member, 'member_leave')
+
+    async def on_scheduled_event_create(self, event):
+        """スケジュールイベント作成時の処理"""
+        await self._log_event_activity(event, 'scheduled_event_create')
+
+    async def on_scheduled_event_update(self, before, after):
+        """スケジュールイベント更新時の処理"""
+        await self._log_event_activity(after, 'scheduled_event_update', before)
+
+    async def on_scheduled_event_delete(self, event):
+        """スケジュールイベント削除時の処理"""
+        await self._log_event_activity(event, 'scheduled_event_delete')
+
+    async def on_scheduled_event_user_add(self, event, user):
+        """スケジュールイベント参加時の処理"""
+        await self._log_event_user_activity(event, user, 'scheduled_event_user_add')
+
+    async def on_scheduled_event_user_remove(self, event, user):
+        """スケジュールイベント離脱時の処理"""
+        await self._log_event_user_activity(event, user, 'scheduled_event_user_remove')
     
     async def _handle_command(self, message):
         """コマンド処理"""

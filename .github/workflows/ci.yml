@@ -92,10 +92,13 @@ jobs:
         pip install pytest pytest-cov pytest-asyncio flake8
         
     - name: Run linter
-      run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+      run: |
+        cd bot
+        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
       
     - name: Run tests with coverage
       run: |
+        cd bot
         PYTHONPATH=$PYTHONPATH:$(pwd)/src
         export PYTHONPATH
         pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
@@ -111,6 +114,7 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         file: ./bot/coverage.xml
+        working-directory: ./bot
         flags: python-bot
         name: python-bot-coverage
 
@@ -132,7 +136,7 @@ jobs:
         output: 'trivy-results.sarif'
         
     - name: Upload Trivy scan results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
