@@ -1,5 +1,8 @@
 # Discord にゃんこエージェント プロジェクト - Cursor ルール
 
+## お願いしたいこと
+firebase 関連ファイルを更新したら、 firebase deploy を実行してください。
+
 ## プロジェクト概要
 このプロジェクトは、Discord上で動作するAIエージェント「にゃんこエージェント」の管理システムです。
 Firebase/Firestore、TypeScript、Node.js、Discord.jsを使用しています。
@@ -13,10 +16,7 @@ Firebase/Firestore、TypeScript、Node.js、Discord.jsを使用しています�
 - Discord.js v14 を使用
 
 ### ファイル構成
-- `src/` - メインのソースコード
-- `functions/` - Firebase Functions
-- `public/` - 静的ファイル（管理パネル）
-- `dist/` - ビルド済みファイル
+- PROJECT_STRUCTURE.md を参照してください
 
 ### コーディングスタイル
 - インデント: 2スペース

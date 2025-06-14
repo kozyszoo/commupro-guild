@@ -435,22 +435,32 @@ export const analyzeDiscordLogs = onRequest(
       }
 
       const logs: DiscordLog[] = [];
-      interactionsSnapshot.forEach(doc => {
-        const data = doc.data();
-        logs.push({
-          type: data.type || 'unknown',
-          userId: data.userId || '',
-          username: data.username || '',
-          guildId: data.guildId || '',
-          guildName: data.guildName || '',
-          channelId: data.channelId || '',
-          channelName: data.channelName || '',
-          content: data.content,
-          timestamp: data.timestamp?.toDate() || new Date(),
-          metadata: data.metadata || {},
-          keywords: data.keywords || []
+      if (interactionsSnapshot && !interactionsSnapshot.empty) {
+        interactionsSnapshot.forEach(doc => {
+          try {
+            const data = doc.data();
+            if (data) {
+              logs.push({
+                type: data.type || 'unknown',
+                userId: data.userId || '',
+                username: data.username || '',
+                guildId: data.guildId || '',
+                guildName: data.guildName || '',
+                channelId: data.channelId || '',
+                channelName: data.channelName || '',
+                content: data.content,
+                timestamp: data.timestamp?.toDate() || new Date(),
+                metadata: data.metadata || {},
+                keywords: data.keywords || []
+              });
+            }
+          } catch (docError) {
+            logger.warn('ドキュメント処理エラー', { docId: doc.id, docError });
+          }
         });
-      });
+      } else {
+        logger.warn('Firestoreクエリ結果が空です');
+      }
 
       logger.info(`${logs.length}件のログを取得しました`);
 
