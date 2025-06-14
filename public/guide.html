@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Discord にゃんこエージェント - 使い方ガイド</title>
+    <meta name="description" content="DiscordでのエンターテインメントコンテンツとポッドキャストAI作成ボットの使い方を分かりやすく解説">
+    
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-light: #8b5cf6;
+            --primary-dark: #4f46e5;
+            --secondary-color: #f59e0b;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background-color: #0f172a;
+            --surface-color: #1e293b;
+            --card-background: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border-color: #475569;
+            --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--background-color);
+            min-height: 100vh;
+            font-family: 'Inter', 'Roboto', sans-serif;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .hero-section {
+            background: var(--gradient-primary);
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.05"><circle cx="30" cy="30" r="2"/></g></svg>') repeat;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .feature-section {
+            padding: 80px 0;
+            background: var(--surface-color);
+        }
+
+        .feature-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 40px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-medium);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-large);
+            border-color: var(--primary-color);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--gradient-accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: white;
+        }
+
+        .feature-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .steps-section {
+            padding: 80px 0;
+            background: var(--background-color);
+        }
+
+        .section-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 60px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .step-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: var(--shadow-medium);
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateX(10px);
+            border-left-color: var(--accent-color);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .step-description {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .cta-section {
+            padding: 80px 0;
+            background: var(--gradient-secondary);
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .cta-description {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-large {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: var(--border-radius-sm);
+            background: white;
+            color: var(--primary-dark);
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-large:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-large);
+            color: var(--primary-dark);
+        }
+
+        .footer {
+            background: var(--surface-color);
+            padding: 40px 0;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-text {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-light);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 0 20px;
+        }
+
+        .navbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 70px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -15px;
+        }
+
+        .col {
+            flex: 1;
+            padding: 0 15px;
+        }
+
+        .col-4 {
+            flex: 0 0 33.333333%;
+            max-width: 33.333333%;
+            padding: 0 15px;
+        }
+
+        .col-12 {
+            flex: 0 0 100%;
+            max-width: 100%;
+            padding: 0 15px;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .col-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .section-title {
+                font-size: 2.2rem;
+            }
+        }
+
+        .highlight {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .demo-section {
+            padding: 80px 0;
+            background: var(--surface-color);
+        }
+
+        .demo-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--border-color);
+        }
+
+        .demo-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-content {
+            background: var(--background-color);
+            padding: 20px;
+            border-radius: var(--border-radius-sm);
+            font-family: 'Courier New', monospace;
+            color: var(--text-secondary);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .command {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .bot-response {
+            color: var(--accent-color);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="#" class="logo">🐱 にゃんこエージェント</a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">機能</a>
+                <a href="#steps" class="nav-link">使い方</a>
+                <a href="#demo" class="nav-link">デモ</a>
+                <a href="index.html" class="nav-link">管理パネル</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="container">
+                <h1 class="hero-title">Discord にゃんこエージェント</h1>
+                <p class="hero-subtitle">
+                    DiscordでのコミュニケーションをAIが自動分析し、<br>
+                    週間サマリーとポッドキャストを生成する革新的なボット
+                </p>
+                <a href="#steps" class="btn-large">今すぐ始める</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="feature-section">
+        <div class="container">
+            <h2 class="section-title">主な機能</h2>
+            <p class="section-subtitle">
+                あなたのDiscordサーバーを次のレベルへ
+            </p>
+            
+            <div class="row">
+                <div class="col-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="material-icons">analytics</i>
+                        </div>
+                        <h3 class="feature-title">AI Discord分析</h3>
+                        <p class="feature-description">
+                            Vertex AI (Gemini) を活用して、Discordでの会話やアクションを自動分析。トレンドやトピックを抽出し、有意義な情報をまとめます。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="material-icons">summarize</i>
+                        </div>
+                        <h3 class="feature-title">週間サマリー生成</h3>
+                        <p class="feature-description">
+                            1週間のDiscordアクティビティを自動で集計し、AI対話形式で分かりやすいサマリーテキストを生成。重要な出来事を見逃しません。
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="material-icons">podcast</i>
+                        </div>
+                        <h3 class="feature-title">ポッドキャスト自動作成</h3>
+                        <p class="feature-description">
+                            Text to Speech技術で週間サマリーを音声ファイルに変換。Google Driveに保存し、Discordで共有できるポッドキャストを自動作成。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Steps Section -->
+    <section id="steps" class="steps-section">
+        <div class="container">
+            <h2 class="section-title">使い方ガイド</h2>
+            <p class="section-subtitle">
+                簡単3ステップで始められます
+            </p>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3 class="step-title">ボットをDiscordサーバーに招待</h3>
+                        <p class="step-description">
+                            にゃんこエージェントボットをあなたのDiscordサーバーに招待します。必要な権限（メッセージ読み取り、チャンネル管理等）を付与してください。ボットが3つのモード（分析、エンターテインメント、アップロード）で動作します。
+                        </p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3 class="step-title">自動分析の開始</h3>
+                        <p class="step-description">
+                            ボットが自動的にDiscordでの会話、リアクション、メンション等のアクティビティを記録・分析開始。Vertex AIが内容を解析し、トピックや感情を抽出します。管理パネルでリアルタイムデータを確認できます。
+                        </p>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3 class="step-title">週間ポッドキャスト受け取り</h3>
+                        <p class="step-description">
+                            毎週自動で週間サマリーが生成され、ポッドキャスト音声ファイルとしてGoogle Driveに保存。Discordチャンネルに投稿されるので、メンバー全員で聞くことができます。過去のポッドキャストもいつでもアクセス可能。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="container">
+            <h2 class="section-title">使用例・デモ</h2>
+            <p class="section-subtitle">
+                実際の動作を見てみましょう
+            </p>
+            
+            <div class="row">
+                <div class="col-4">
+                    <div class="demo-card">
+                        <h3 class="demo-title">
+                            <i class="material-icons">chat</i>
+                            Discord コマンド
+                        </h3>
+                        <div class="demo-content">
+                            <div class="command">!podcast_create</div>
+                            <div class="bot-response">🎙️ ポッドキャスト作成を開始します...<br>
+                            📊 過去7日間のデータを分析中...<br>
+                            ✅ 週間サマリー生成完了！</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="demo-card">
+                        <h3 class="demo-title">
+                            <i class="material-icons">auto_awesome</i>
+                            AI 分析結果
+                        </h3>
+                        <div class="demo-content">
+                            今週のトレンド:<br>
+                            🔥 ゲーム配信 (45%)<br>
+                            💬 雑談 (30%)<br>
+                            🎨 イラスト投稿 (25%)<br><br>
+                            アクティブ時間: 21:00-23:00
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-4">
+                    <div class="demo-card">
+                        <h3 class="demo-title">
+                            <i class="material-icons">cloud_upload</i>
+                            自動配信
+                        </h3>
+                        <div class="demo-content">
+                            📁 Google Drive保存<br>
+                            🎵 podcast_2024-06-14.mp3<br>
+                            📄 summary_2024-06-14.txt<br><br>
+                            🤖 Discord投稿完了<br>
+                            #podcast チャンネル
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">今すぐ始めよう</h2>
+            <p class="cta-description">
+                あなたのDiscordコミュニティを次のレベルへ。<br>
+                AIが作る週間ポッドキャストで、みんなの思い出を残しませんか？
+            </p>
+            <a href="index.html" class="btn-large">管理パネルへ</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                © 2024 Discord にゃんこエージェント. Powered by AI & ❤️
+            </p>
+            <p class="footer-text">
+                <span class="highlight">技術スタック:</span> 
+                Discord.py • Vertex AI (Gemini) • Google Text-to-Speech • Firebase • Google Drive API
+            </p>
+        </div>
+    </footer>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
+    <!-- Smooth scrolling -->
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to navbar
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(15, 23, 42, 0.98)';
+            } else {
+                navbar.style.background = 'rgba(15, 23, 42, 0.95)';
+            }
+        });
+
+        // Add loading animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.feature-card, .step-card, .demo-card');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
