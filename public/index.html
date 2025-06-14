@@ -12,6 +12,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     <style>
       :root {
         --primary-color: #6366f1;
@@ -2401,6 +2402,27 @@
                 </h3>
               </div>
               <div class="card-content">
+                <div style="margin-bottom: 1rem;">
+                  <button id="create-podcast-btn" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'">
+                    <i class="material-icons" style="font-size: 18px;">add</i>
+                    過去1週間のポッドキャストを作成
+                  </button>
+                </div>
                 ${podcastList.length ? `
                   <div class="recent-activity">
                     ${podcastList.slice(0, 3).map(p => `
@@ -2702,6 +2724,82 @@
         }
       }
 
+      // ポッドキャスト作成関数
+      async function createWeeklyPodcast() {
+        const btn = document.getElementById('create-podcast-btn');
+        const originalText = btn.innerHTML;
+        
+        try {
+          // ボタンを無効化してローディング状態にする
+          btn.disabled = true;
+          btn.innerHTML = `
+            <div class="spinner" style="width: 18px; height: 18px; margin-right: 8px;"></div>
+            作成中...
+          `;
+          btn.style.cursor = 'not-allowed';
+          btn.style.opacity = '0.7';
+          
+          // Cloud Functionを呼び出し
+          console.log('ポッドキャスト作成APIを呼び出し中...');
+          
+          const functions = firebase.functions();
+          const createPodcast = functions.httpsCallable('createWeeklyPodcast');
+          
+          const result = await createPodcast();
+          
+          console.log('ポッドキャスト作成結果:', result);
+          
+          if (result.data.success) {
+            // 成功時のメッセージ表示
+            btn.innerHTML = `
+              <i class="material-icons" style="font-size: 18px;">check</i>
+              作成開始しました
+            `;
+            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            
+            // 3秒後に元の状態に戻す
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+              btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+              btn.disabled = false;
+              btn.style.cursor = 'pointer';
+              btn.style.opacity = '1';
+            }, 3000);
+            
+            // ダッシュボードを再読み込み
+            setTimeout(loadDashboard, 2000);
+            
+          } else {
+            throw new Error(result.data.message || 'ポッドキャスト作成に失敗しました');
+          }
+          
+        } catch (error) {
+          console.error('ポッドキャスト作成エラー:', error);
+          
+          // エラー時のメッセージ表示
+          btn.innerHTML = `
+            <i class="material-icons" style="font-size: 18px;">error</i>
+            作成に失敗しました
+          `;
+          btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+          
+          // 3秒後に元の状態に戻す
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            btn.disabled = false;
+            btn.style.cursor = 'pointer';
+            btn.style.opacity = '1';
+          }, 3000);
+          
+          // エラーの詳細をコンソールに表示
+          if (error.code) {
+            console.error('Firebase Functions エラーコード:', error.code);
+            console.error('Firebase Functions エラーメッセージ:', error.message);
+          }
+        }
+      }
+
       // Initialize dashboard
       document.addEventListener('DOMContentLoaded', function() {
         loadDashboard();
@@ -2709,6 +2807,22 @@
         // 現在時刻を初期化し、1秒ごとに更新
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
+        
+        // ポッドキャスト作成ボタンのイベントリスナーを設定
+        // ボタンがDOM上に存在するまで待機してから設定
+        function addPodcastButtonListener() {
+          const btn = document.getElementById('create-podcast-btn');
+          if (btn) {
+            btn.addEventListener('click', createWeeklyPodcast);
+            console.log('ポッドキャスト作成ボタンのイベントリスナーを設定しました');
+          } else {
+            // ボタンがまだ存在しない場合は少し待ってから再試行
+            setTimeout(addPodcastButtonListener, 500);
+          }
+        }
+        
+        // 初期表示後にボタンリスナーを設定
+        setTimeout(addPodcastButtonListener, 1000);
       });
     </script>
   </body>

@@ -98,7 +98,7 @@ def main():
     print("✅ Firebase接続が完了しました")
     
     # データディレクトリのパス
-    data_dir = Path(__file__).parent / 'data'
+    data_dir = Path(__file__).parent.parent.parent.parent / 'public' / 'data' / 'tmp'
     
     if not data_dir.exists():
         print(f"❌ データディレクトリが見つかりません: {data_dir}")

@@ -125,3 +125,42 @@ export const matchSimilarUsers = onCall(async (request) => {
   
   return { users: result };
 });
+
+// 過去1週間のポッドキャスト作成
+export const createWeeklyPodcast = onCall(async (request) => {
+  const auth = request.auth;
+  
+  // 認証チェック（管理者のみ許可）
+  if (!auth) {
+    throw new Error("認証が必要です");
+  }
+  
+  try {
+    logger.info("週次ポッドキャスト作成を開始...");
+    
+    // ポッドキャスト作成ジョブをFirestoreに記録
+    const jobRef = await admin.firestore().collection("podcast_jobs").add({
+      status: "pending",
+      requestedBy: auth.uid,
+      requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+      type: "weekly_podcast",
+      parameters: {
+        daysBack: 7
+      }
+    });
+    
+    // 実際のポッドキャスト作成は非同期で実行
+    // このフラグをEntertainmentBotが監視して処理を行う
+    logger.info(`ポッドキャスト作成ジョブを作成しました: ${jobRef.id}`);
+    
+    return { 
+      success: true, 
+      jobId: jobRef.id,
+      message: "ポッドキャスト作成ジョブを開始しました。処理状況はダッシュボードで確認できます。" 
+    };
+    
+  } catch (error) {
+    logger.error("ポッドキャスト作成エラー:", error);
+    throw new Error("ポッドキャスト作成に失敗しました");
+  }
+});

@@ -500,11 +500,13 @@ class EntertainmentBot(discord.Client):
     async def _log_message_activity(self, message):
         """メッセージアクティビティをログ記録（既存システムとの連携）"""
         try:
-            # 既存のinteractionsコレクションに記録
+            # ユーザー情報を分離して保存
+            await self._ensure_user_exists(message.author)
+            
+            # 既存のinteractionsコレクションに記録（usernameを削除）
             interaction_data = {
                 'type': 'message',
                 'userId': str(message.author.id),
-                'username': message.author.display_name,
                 'channelId': str(message.channel.id),
                 'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
                 'guildId': str(message.guild.id) if message.guild else None,
@@ -526,10 +528,11 @@ class EntertainmentBot(discord.Client):
     async def _log_message_edit_activity(self, before, after):
         """メッセージ編集アクティビティをログ記録"""
         try:
+            await self._ensure_user_exists(after.author)
+            
             interaction_data = {
                 'type': 'message_edit',
                 'userId': str(after.author.id),
-                'username': after.author.display_name,
                 'channelId': str(after.channel.id),
                 'channelName': after.channel.name if hasattr(after.channel, 'name') else 'DM',
                 'guildId': str(after.guild.id) if after.guild else None,
@@ -554,10 +557,11 @@ class EntertainmentBot(discord.Client):
     async def _log_message_delete_activity(self, message):
         """メッセージ削除アクティビティをログ記録"""
         try:
+            await self._ensure_user_exists(message.author)
+            
             interaction_data = {
                 'type': 'message_delete',
                 'userId': str(message.author.id),
-                'username': message.author.display_name,
                 'channelId': str(message.channel.id),
                 'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
                 'guildId': str(message.guild.id) if message.guild else None,
@@ -581,10 +585,11 @@ class EntertainmentBot(discord.Client):
     async def _log_reaction_activity(self, reaction, user, reaction_type):
         """リアクションアクティビティをログ記録"""
         try:
+            await self._ensure_user_exists(user)
+            
             interaction_data = {
                 'type': reaction_type,
                 'userId': str(user.id),
-                'username': user.display_name,
                 'channelId': str(reaction.message.channel.id),
                 'channelName': reaction.message.channel.name if hasattr(reaction.message.channel, 'name') else 'DM',
                 'guildId': str(reaction.message.guild.id) if reaction.message.guild else None,
@@ -608,10 +613,11 @@ class EntertainmentBot(discord.Client):
     async def _log_member_activity(self, member, activity_type):
         """メンバーアクティビティをログ記録"""
         try:
+            await self._ensure_user_exists(member)
+            
             interaction_data = {
                 'type': activity_type,
                 'userId': str(member.id),
-                'username': member.display_name,
                 'guildId': str(member.guild.id),
                 'guildName': member.guild.name,
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
@@ -632,10 +638,12 @@ class EntertainmentBot(discord.Client):
     async def _log_event_activity(self, event, activity_type, before_event=None):
         """スケジュールイベントアクティビティをログ記録"""
         try:
+            if event.creator:
+                await self._ensure_user_exists(event.creator)
+            
             interaction_data = {
                 'type': activity_type,
                 'userId': str(event.creator.id) if event.creator else None,
-                'username': event.creator.display_name if event.creator else 'システム',
                 'guildId': str(event.guild.id),
                 'guildName': event.guild.name,
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
@@ -660,10 +668,11 @@ class EntertainmentBot(discord.Client):
     async def _log_event_user_activity(self, event, user, activity_type):
         """イベントユーザーアクティビティをログ記録"""
         try:
+            await self._ensure_user_exists(user)
+            
             interaction_data = {
                 'type': activity_type,
                 'userId': str(user.id),
-                'username': user.display_name,
                 'guildId': str(event.guild.id),
                 'guildName': event.guild.name,
                 'timestamp': datetime.datetime.now(datetime.timezone.utc),
