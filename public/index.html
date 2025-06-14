@@ -3004,17 +3004,43 @@
         try {
           console.log('Firestoreから直接Bot Actionsデータを取得中...');
           
-          const botActionsSnapshot = await db.collection('bot_actions')
-            .orderBy('timestamp', 'desc')
-            .limit(50)
-            .get();
+          // タイムスタンプフィールドでのソートを試行、失敗した場合はソートなしで取得
+          let botActionsSnapshot;
+          try {
+            botActionsSnapshot = await db.collection('bot_actions')
+              .orderBy('timestamp', 'desc')
+              .limit(50)
+              .get();
+          } catch (orderByError) {
+            console.warn('timestamp順でのソートに失敗、ソートなしで取得:', orderByError);
+            botActionsSnapshot = await db.collection('bot_actions')
+              .limit(50)
+              .get();
+          }
           
           const botActionsData = [];
           botActionsSnapshot.forEach(doc => {
+            const data = doc.data();
+            let timestamp;
+            
+            // タイムスタンプの処理を安全に行う
+            if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+              timestamp = data.timestamp.toDate();
+            } else if (data.timestamp && data.timestamp.seconds) {
+              // Firestore Timestampオブジェクトの場合
+              timestamp = new Date(data.timestamp.seconds * 1000);
+            } else if (data.timestamp) {
+              // 文字列またはミリ秒の場合
+              timestamp = new Date(data.timestamp);
+            } else {
+              // タイムスタンプがない場合は現在時刻
+              timestamp = new Date();
+            }
+            
             botActionsData.push({
               id: doc.id,
-              ...doc.data(),
-              timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp)
+              ...data,
+              timestamp: timestamp
             });
           });
           
@@ -3023,6 +3049,13 @@
             ...action,
             username: resolveUsername(action.userId) || 'Unknown'
           }));
+          
+          // データを時刻順でソート（最新順）
+          enrichedData.sort((a, b) => {
+            const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+            const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+            return timeB - timeA;
+          });
           
           // 統計情報を生成
           const stats = generateBotActionStats(enrichedData);
@@ -3170,7 +3203,7 @@
                             <td>
                               <div>${formatDate(action.timestamp)}</div>
                               <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                ${action.timestamp ? new Date(action.timestamp).toLocaleTimeString('ja-JP') : 'N/A'}
+                                ${action.timestamp ? (action.timestamp instanceof Date ? action.timestamp.toLocaleTimeString('ja-JP') : new Date(action.timestamp).toLocaleTimeString('ja-JP')) : 'N/A'}
                               </div>
                             </td>
                             <td>
