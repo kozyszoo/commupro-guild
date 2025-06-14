@@ -792,6 +792,70 @@
         }
       }
 
+      // ユーザー名解決のためのキャッシュ
+      let usersCache = {};
+      let usersCacheLastUpdate = null;
+
+      /**
+       * ユーザーIDからユーザー名を解決する関数
+       */
+      function resolveUsername(userId, users = null) {
+        if (!userId) return 'Unknown User';
+        
+        // usersが提供されている場合はそれを使用
+        const userSource = users || usersCache;
+        
+        // ユーザーIDでの直接検索
+        if (userSource[userId]) {
+          const user = userSource[userId];
+          return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+        }
+        
+        // users配列の場合の検索
+        if (Array.isArray(userSource)) {
+          const user = userSource.find(u => u.id === userId || u.userId === userId);
+          if (user) {
+            return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+          }
+        }
+        
+        // usersオブジェクト内での検索
+        for (const key in userSource) {
+          const user = userSource[key];
+          if (user && (user.id === userId || user.userId === userId)) {
+            return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+          }
+        }
+        
+        // 見つからない場合はフォールバック
+        return `User_${userId.slice(0, 8)}`;
+      }
+
+      /**
+       * ユーザー名解決をバッチで行う関数
+       */
+      function resolveUsernames(userIds, users = null) {
+        const userMap = {};
+        if (!Array.isArray(userIds)) return userMap;
+        
+        userIds.forEach(userId => {
+          userMap[userId] = resolveUsername(userId, users);
+        });
+        
+        return userMap;
+      }
+
+      /**
+       * ユーザーキャッシュを更新する関数
+       */
+      function updateUsersCache(users) {
+        if (users) {
+          usersCache = users;
+          usersCacheLastUpdate = new Date();
+          console.log(`ユーザーキャッシュを更新しました (${Object.keys(users).length}ユーザー)`);
+        }
+      }
+
       /**
        * AI 分析 API を呼び出してリアルタイム分析結果を取得
        */
@@ -1808,6 +1872,9 @@
             });
           }
 
+          // ユーザーキャッシュを更新
+          updateUsersCache(users);
+
           // ユーザー統計
           const userList = Object.values(users || {});
           const totalUsers = userList.length;
@@ -2334,7 +2401,7 @@
                             </div>
                             
                             <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
-                              <strong>ユーザー:</strong> ${log.username || '-'} (ID: ${log.userId || '-'})
+                              <strong>ユーザー:</strong> ${log.username || resolveUsername(log.userId)} (ID: ${log.userId || '-'})
                               ${log.guildName ? `<br><strong>サーバー:</strong> ${log.guildName}` : ''}
                               ${log.channelName ? `<br><strong>チャンネル:</strong> #${log.channelName}` : ''}
                             </div>
@@ -2602,7 +2669,10 @@
                           <tr>
                             <td>
                               <div style="font-size: 0.85rem;">
-                                ${m.user1Id || '-'} ↔ ${m.user2Id || '-'}
+                                ${resolveUsername(m.user1Id) || '-'} ↔ ${resolveUsername(m.user2Id) || '-'}
+                              </div>
+                              <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                ID: ${m.user1Id || '-'} ↔ ${m.user2Id || '-'}
                               </div>
                             </td>
                             <td>
@@ -2936,13 +3006,10 @@
             });
           });
           
-          // ユーザー名を解決
-          const userIds = [...new Set(botActionsData.map(action => action.userId).filter(Boolean))];
-          const userMap = await resolveUserNames(userIds);
-          
+          // ユーザー名を解決（キャッシュを使用）
           const enrichedData = botActionsData.map(action => ({
             ...action,
-            username: userMap[action.userId] || `User_${action.userId?.slice(0, 8)}` || 'Unknown'
+            username: resolveUsername(action.userId) || 'Unknown'
           }));
           
           // 統計情報を生成
@@ -2956,47 +3023,6 @@
         }
       }
 
-      /**
-       * ユーザー名を解決する関数
-       */
-      async function resolveUserNames(userIds) {
-        const userMap = {};
-        
-        if (userIds.length === 0) return userMap;
-        
-        try {
-          // Firestore の in クエリ制限（10個）のためバッチ処理
-          for (let i = 0; i < userIds.length; i += 10) {
-            const batch = userIds.slice(i, i + 10);
-            const userSnapshot = await db.collection('users')
-              .where('userId', 'in', batch)
-              .get();
-            
-            userSnapshot.forEach(doc => {
-              const userData = doc.data();
-              const userId = userData.userId;
-              const username = userData.displayName || userData.username || `User_${userId.slice(0, 8)}`;
-              userMap[userId] = username;
-            });
-          }
-          
-          // 見つからなかったユーザーIDには fallback 名を設定
-          userIds.forEach(userId => {
-            if (!userMap[userId]) {
-              userMap[userId] = `User_${userId.slice(0, 8)}`;
-            }
-          });
-          
-        } catch (error) {
-          console.error('ユーザー名解決エラー:', error);
-          // エラー時はfallback名を使用
-          userIds.forEach(userId => {
-            userMap[userId] = `User_${userId.slice(0, 8)}`;
-          });
-        }
-        
-        return userMap;
-      }
 
       /**
        * Bot Action統計情報を生成
