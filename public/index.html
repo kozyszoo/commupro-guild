@@ -2876,6 +2876,357 @@
         }
       }
 
+      /**
+       * Bot Actions強化版データ読み込み関数
+       */
+      async function loadBotActionsEnhanced() {
+        try {
+          console.log('Bot Actions強化版データを読み込み中...');
+          
+          // Firebase FunctionsのBot Actions APIを呼び出し
+          const apiUrl = `${AI_ANALYSIS_API_BASE}/getBotActionsHistory?limit=50`;
+          
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer dummy-token'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          console.log('Bot Actions API レスポンス:', result);
+          
+          if (result.success && result.data) {
+            renderBotActionsEnhanced(result.data, result.stats);
+          } else {
+            // APIでデータが取得できない場合、Firestoreから直接取得
+            await loadBotActionsFromFirestore();
+          }
+          
+        } catch (error) {
+          console.error('Bot Actions API 呼び出しエラー:', error);
+          // APIエラー時はFirestoreから直接取得
+          await loadBotActionsFromFirestore();
+        }
+      }
+
+      /**
+       * Firestoreから直接Bot Actionsデータを取得
+       */
+      async function loadBotActionsFromFirestore() {
+        try {
+          console.log('Firestoreから直接Bot Actionsデータを取得中...');
+          
+          const botActionsSnapshot = await db.collection('bot_actions')
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get();
+          
+          const botActionsData = [];
+          botActionsSnapshot.forEach(doc => {
+            botActionsData.push({
+              id: doc.id,
+              ...doc.data(),
+              timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp)
+            });
+          });
+          
+          // ユーザー名を解決
+          const userIds = [...new Set(botActionsData.map(action => action.userId).filter(Boolean))];
+          const userMap = await resolveUserNames(userIds);
+          
+          const enrichedData = botActionsData.map(action => ({
+            ...action,
+            username: userMap[action.userId] || `User_${action.userId?.slice(0, 8)}` || 'Unknown'
+          }));
+          
+          // 統計情報を生成
+          const stats = generateBotActionStats(enrichedData);
+          
+          renderBotActionsEnhanced(enrichedData, stats);
+          
+        } catch (error) {
+          console.error('Firestore Bot Actions 取得エラー:', error);
+          renderBotActionsError(error);
+        }
+      }
+
+      /**
+       * ユーザー名を解決する関数
+       */
+      async function resolveUserNames(userIds) {
+        const userMap = {};
+        
+        if (userIds.length === 0) return userMap;
+        
+        try {
+          // Firestore の in クエリ制限（10個）のためバッチ処理
+          for (let i = 0; i < userIds.length; i += 10) {
+            const batch = userIds.slice(i, i + 10);
+            const userSnapshot = await db.collection('users')
+              .where('userId', 'in', batch)
+              .get();
+            
+            userSnapshot.forEach(doc => {
+              const userData = doc.data();
+              const userId = userData.userId;
+              const username = userData.displayName || userData.username || `User_${userId.slice(0, 8)}`;
+              userMap[userId] = username;
+            });
+          }
+          
+          // 見つからなかったユーザーIDには fallback 名を設定
+          userIds.forEach(userId => {
+            if (!userMap[userId]) {
+              userMap[userId] = `User_${userId.slice(0, 8)}`;
+            }
+          });
+          
+        } catch (error) {
+          console.error('ユーザー名解決エラー:', error);
+          // エラー時はfallback名を使用
+          userIds.forEach(userId => {
+            userMap[userId] = `User_${userId.slice(0, 8)}`;
+          });
+        }
+        
+        return userMap;
+      }
+
+      /**
+       * Bot Action統計情報を生成
+       */
+      function generateBotActionStats(actions) {
+        const stats = {
+          total: actions.length,
+          byActionType: {},
+          byStatus: {},
+          byCharacter: {},
+          recentActivity: actions.slice(0, 10)
+        };
+
+        actions.forEach(action => {
+          // アクション種別統計
+          const actionType = action.actionType || 'unknown';
+          stats.byActionType[actionType] = (stats.byActionType[actionType] || 0) + 1;
+
+          // ステータス統計
+          const status = action.status || 'unknown';
+          stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+
+          // キャラクター統計
+          const character = action.botCharacter || action.payload?.character || 'unknown';
+          stats.byCharacter[character] = (stats.byCharacter[character] || 0) + 1;
+        });
+
+        return stats;
+      }
+
+      /**
+       * Bot Actions強化版表示
+       */
+      function renderBotActionsEnhanced(actions, stats) {
+        const actionTypeIcons = {
+          'topic_recommendation': 'recommend',
+          'reengagement_dm': 'chat',
+          'user_matching': 'people',
+          'help_suggestion': 'help',
+          'admin_command': 'admin_panel_settings',
+          'content_generation': 'auto_awesome',
+          'moderation': 'security'
+        };
+
+        const statusColors = {
+          'completed': 'var(--success-color)',
+          'pending': 'var(--warning-color)',
+          'failed': 'var(--error-color)',
+          'pending_response': 'var(--accent-color)'
+        };
+
+        document.getElementById('dashboard-bot-actions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">smart_toy</i>
+                Botアクション履歴 (${stats.total}件)
+              </h3>
+              <button onclick="loadBotActionsEnhanced()" class="refresh-btn" title="更新">
+                <i class="material-icons">refresh</i>
+              </button>
+            </div>
+            <div class="card-content">
+              ${actions.length ? `
+                <!-- 統計サマリー -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                  <div class="stat-item">
+                    <span class="stat-number">${stats.byStatus.completed || 0}</span>
+                    <span class="stat-label">完了</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${stats.byStatus.pending || 0}</span>
+                    <span class="stat-label">保留中</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${Object.keys(stats.byActionType).length}</span>
+                    <span class="stat-label">アクション種別</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${Object.keys(stats.byCharacter).length}</span>
+                    <span class="stat-label">キャラクター</span>
+                  </div>
+                </div>
+                
+                <!-- アクション種別別統計 -->
+                <div style="margin-bottom: 1.5rem;">
+                  <div class="info-label" style="margin-bottom: 0.5rem;">アクション種別</div>
+                  ${Object.entries(stats.byActionType).map(([type, count]) => 
+                    `<span class="tag">${type}: ${count}</span>`
+                  ).join('')}
+                </div>
+                
+                <!-- 最近のアクション一覧 -->
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 500px; overflow-y: auto;">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th>アクション</th>
+                          <th>ユーザー</th>
+                          <th>ステータス</th>
+                          <th>実行日時</th>
+                          <th>詳細</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${actions.slice(0, 20).map(action => `
+                          <tr>
+                            <td>
+                              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="material-icons" style="font-size: 1.2rem; color: var(--primary-color);">
+                                  ${actionTypeIcons[action.actionType] || 'smart_toy'}
+                                </i>
+                                <div>
+                                  <div style="font-weight: 600;">${action.actionType || 'unknown'}</div>
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    ${action.botCharacter || action.payload?.character || 'system'}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <div style="font-weight: 500;">${action.username || 'Unknown'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ID: ${action.userId?.slice(0, 8) || 'N/A'}...
+                              </div>
+                            </td>
+                            <td>
+                              <span class="status-badge" style="background-color: ${statusColors[action.status] || 'var(--text-muted)'};">
+                                ${action.status || 'unknown'}
+                              </span>
+                            </td>
+                            <td>
+                              <div>${formatDate(action.timestamp)}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ${action.timestamp ? new Date(action.timestamp).toLocaleTimeString('ja-JP') : 'N/A'}
+                              </div>
+                            </td>
+                            <td>
+                              <button class="view-details-btn" onclick="showActionDetails('${action.id}')" 
+                                      style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                <i class="material-icons" style="font-size: 1rem;">visibility</i>
+                                詳細
+                              </button>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                ${actions.length > 20 ? `
+                  <div style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">
+                    表示: 20件 / 全${actions.length}件
+                  </div>
+                ` : ''}
+              ` : `
+                <div class="no-data">
+                  <i class="material-icons">smart_toy</i>
+                  <div>Botアクションデータがありません</div>
+                  <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Botが実行したアクションがここに表示されます
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        
+        // アクションデータをグローバル変数に保存（詳細表示用）
+        window.botActionsCache = actions;
+      }
+
+      /**
+       * Bot Actionsエラー表示
+       */
+      function renderBotActionsError(error) {
+        document.getElementById('dashboard-bot-actions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">smart_toy</i>
+                Botアクション履歴
+              </h3>
+            </div>
+            <div class="card-content">
+              <div class="no-data">
+                <i class="material-icons">error</i>
+                <div>データ読み込みエラー</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                  ${error.message || 'データの取得に失敗しました'}
+                </div>
+                <button onclick="loadBotActionsEnhanced()" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+                  再試行
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      /**
+       * アクション詳細を表示
+       */
+      function showActionDetails(actionId) {
+        const action = window.botActionsCache?.find(a => a.id === actionId);
+        if (!action) {
+          alert('アクションの詳細が見つかりません');
+          return;
+        }
+        
+        const details = `
+アクションID: ${action.id}
+アクション種別: ${action.actionType}
+ユーザー: ${action.username} (${action.userId})
+ステータス: ${action.status}
+実行日時: ${new Date(action.timestamp).toLocaleString('ja-JP')}
+Botキャラクター: ${action.botCharacter || 'system'}
+
+ペイロード:
+${JSON.stringify(action.payload || {}, null, 2)}
+
+結果:
+${JSON.stringify(action.result || {}, null, 2)}
+        `;
+        
+        alert(details);
+      }
+
       // Initialize dashboard
       document.addEventListener('DOMContentLoaded', function() {
         loadDashboard();

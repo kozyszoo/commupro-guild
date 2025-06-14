@@ -633,4 +633,149 @@ export const getAnalysisHistory = onRequest(
       });
     }
   }
+);
+
+/**
+ * Botアクション履歴を取得する API
+ */
+export const getBotActionsHistory = onRequest(
+  {
+    cors: true,
+    region: 'asia-northeast1'
+  },
+  async (request, response) => {
+    try {
+      logger.info('Botアクション履歴 API が呼び出されました');
+
+      // クエリパラメータの取得
+      const limit = Math.min(parseInt(request.query.limit as string) || 50, 100); // 最大100件
+      const guildId = request.query.guildId as string;
+      const actionType = request.query.actionType as string;
+      const status = request.query.status as string;
+      const userId = request.query.userId as string;
+      const startDate = request.query.startDate as string;
+      const endDate = request.query.endDate as string;
+
+      // Firestoreクエリの構築
+      let query = db.collection('bot_actions')
+        .orderBy('timestamp', 'desc')
+        .limit(limit);
+
+      // フィルター条件の適用
+      if (guildId) {
+        query = query.where('guildId', '==', guildId);
+      }
+      if (actionType) {
+        query = query.where('actionType', '==', actionType);
+      }
+      if (status) {
+        query = query.where('status', '==', status);
+      }
+      if (userId) {
+        query = query.where('userId', '==', userId);
+      }
+
+      // 日付範囲フィルター（基本的な実装）
+      if (startDate) {
+        const start = new Date(startDate);
+        query = query.where('timestamp', '>=', start);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        query = query.where('timestamp', '<=', end);
+      }
+
+      const snapshot = await query.get();
+      
+      if (snapshot.empty) {
+        response.json({
+          success: true,
+          data: [],
+          count: 0,
+          message: 'Botアクション履歴が見つかりません'
+        });
+        return;
+      }
+
+      // ドキュメントデータの処理
+      const actions: any[] = [];
+      const userIds = new Set<string>();
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        actions.push({
+          id: doc.id,
+          ...data,
+          timestamp: data.timestamp?.toDate?.() || data.timestamp
+        });
+        
+        if (data.userId) {
+          userIds.add(data.userId);
+        }
+      });
+
+      // ユーザー名を解決
+      const userMap = await resolveUsernames(Array.from(userIds));
+
+      // アクションデータにユーザー名を追加
+      const enrichedActions = actions.map(action => ({
+        ...action,
+        username: userMap[action.userId] || `User_${action.userId?.slice(0, 8)}` || 'Unknown'
+      }));
+
+      // 統計情報の生成
+      const stats = {
+        total: enrichedActions.length,
+        byActionType: {} as Record<string, number>,
+        byStatus: {} as Record<string, number>,
+        byCharacter: {} as Record<string, number>,
+        recentActivity: enrichedActions.slice(0, 10)
+      };
+
+      enrichedActions.forEach(action => {
+        // アクション種別統計
+        const actionType = action.actionType || 'unknown';
+        stats.byActionType[actionType] = (stats.byActionType[actionType] || 0) + 1;
+
+        // ステータス統計
+        const status = action.status || 'unknown';
+        stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+
+        // キャラクター統計
+        const character = action.botCharacter || action.payload?.character || 'unknown';
+        stats.byCharacter[character] = (stats.byCharacter[character] || 0) + 1;
+      });
+
+      logger.info('Botアクション履歴取得完了', {
+        count: enrichedActions.length,
+        guildId,
+        actionType,
+        status
+      });
+
+      response.json({
+        success: true,
+        data: enrichedActions,
+        count: enrichedActions.length,
+        stats,
+        query: {
+          limit,
+          guildId,
+          actionType,
+          status,
+          userId,
+          startDate,
+          endDate
+        }
+      });
+
+    } catch (error) {
+      logger.error('Botアクション履歴取得中にエラーが発生しました', { error });
+      response.status(500).json({
+        success: false,
+        error: 'Botアクション履歴の取得に失敗しました',
+        details: error instanceof Error ? error.message : String(error)
+      });
+    }
+  }
 ); 

@@ -191,6 +191,9 @@ class EntertainmentBot(discord.Client):
             elif command == 'testlog':
                 await self._cmd_test_log(message)
             
+            elif command == 'botactions':
+                await self._cmd_bot_actions(message, command_parts)
+            
             else:
                 await message.reply(f"❓ 不明なコマンド: {command}")
         
@@ -225,6 +228,7 @@ class EntertainmentBot(discord.Client):
 `!summary [days]` - 手動で週次まとめ生成
 `!analytics [days]` - アクティビティ分析
 `!podcast [days]` - ポッドキャスト生成
+`!botactions [--limit=N] [--type=TYPE]` - Botアクション履歴表示
                 """,
                 inline=False
             )
@@ -820,6 +824,156 @@ class EntertainmentBot(discord.Client):
             
         except Exception as e:
             print(f"⚠️ ユーザー情報保存エラー: {e}")
+    
+    async def _log_bot_action(self, action_type: str, user_id: str, guild_id: str = None, 
+                             payload: Dict[str, Any] = None, target_id: str = None, 
+                             status: str = "pending", result: Dict[str, Any] = None):
+        """Botアクションをログに記録"""
+        try:
+            bot_action_data = {
+                'actionType': action_type,
+                'userId': user_id,
+                'guildId': guild_id,
+                'targetId': target_id,
+                'payload': payload or {},
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'status': status,
+                'result': result or {},
+                'botCharacter': 'entertainment_bot',
+                'version': '1.0.0'
+            }
+            
+            # Firestoreのbot_actionsコレクションに保存
+            doc_ref = await asyncio.to_thread(
+                self._firestore_client.collection('bot_actions').add, 
+                bot_action_data
+            )
+            
+            print(f"📝 Botアクションログ記録: {action_type} (ID: {doc_ref[1].id})")
+            return doc_ref[1].id
+            
+        except Exception as e:
+            print(f"⚠️ Botアクションログエラー: {e}")
+            return None
+    
+    async def _cmd_bot_actions(self, message, command_parts):
+        """Botアクション履歴表示コマンド"""
+        if message.author.id not in self.admin_user_ids:
+            await message.reply("❌ このコマンドは管理者専用です")
+            return
+        
+        try:
+            # コマンドオプション解析
+            limit = 10
+            action_type = None
+            
+            if len(command_parts) > 1:
+                for i, part in enumerate(command_parts[1:], 1):
+                    if part.startswith('--limit=') or part.startswith('-l='):
+                        try:
+                            limit = int(part.split('=')[1])
+                            limit = max(1, min(50, limit))  # 1-50の範囲
+                        except ValueError:
+                            pass
+                    elif part.startswith('--type=') or part.startswith('-t='):
+                        action_type = part.split('=')[1]
+            
+            # Firestoreからbotアクション履歴を取得
+            query = self._firestore_client.collection('bot_actions') \
+                .order_by('timestamp', direction=firestore.Query.DESCENDING) \
+                .limit(limit)
+            
+            if action_type:
+                query = query.where('actionType', '==', action_type)
+            
+            if message.guild:
+                query = query.where('guildId', '==', str(message.guild.id))
+            
+            docs = await asyncio.to_thread(query.get)
+            
+            if not docs:
+                await message.reply("📋 Botアクション履歴が見つかりません")
+                return
+            
+            # 結果をDiscord Embedで表示
+            embed = discord.Embed(
+                title="🤖 Botアクション履歴",
+                description=f"最新 {len(docs)} 件のアクション",
+                color=0x7289da
+            )
+            
+            action_list = []
+            for doc in docs:
+                data = doc.to_dict()
+                timestamp = data.get('timestamp')
+                if hasattr(timestamp, 'strftime'):
+                    time_str = timestamp.strftime('%m/%d %H:%M')
+                else:
+                    time_str = str(timestamp)[:16] if timestamp else 'N/A'
+                
+                # ユーザー名を解決（存在する場合）
+                user_id = data.get('userId', 'Unknown')
+                try:
+                    if user_id != 'Unknown':
+                        user_ref = self._firestore_client.collection('users').document(user_id)
+                        user_doc = await asyncio.to_thread(user_ref.get)
+                        if user_doc.exists:
+                            user_data = user_doc.to_dict()
+                            username = user_data.get('displayName', user_data.get('username', f'User_{user_id[:8]}'))
+                        else:
+                            username = f'User_{user_id[:8]}'
+                    else:
+                        username = 'Unknown'
+                except:
+                    username = f'User_{user_id[:8]}'
+                
+                status_icon = {'completed': '✅', 'pending': '⏳', 'failed': '❌', 'pending_response': '📤'}.get(data.get('status', 'unknown'), '❓')
+                action_summary = f"{status_icon} `{data.get('actionType', 'unknown')}` - {username} ({time_str})"
+                action_list.append(action_summary)
+            
+            if action_list:
+                embed.add_field(
+                    name="📋 アクション一覧",
+                    value="\n".join(action_list[:10]),  # 最大10件表示
+                    inline=False
+                )
+            
+            # 統計情報
+            action_types = {}
+            status_counts = {}
+            for doc in docs:
+                data = doc.to_dict()
+                action_type = data.get('actionType', 'unknown')
+                status = data.get('status', 'unknown')
+                
+                action_types[action_type] = action_types.get(action_type, 0) + 1
+                status_counts[status] = status_counts.get(status, 0) + 1
+            
+            if action_types:
+                type_summary = ", ".join([f"{k}: {v}" for k, v in list(action_types.items())[:5]])
+                embed.add_field(name="📊 アクション種別", value=type_summary, inline=True)
+            
+            if status_counts:
+                status_summary = ", ".join([f"{k}: {v}" for k, v in status_counts.items()])
+                embed.add_field(name="📈 ステータス", value=status_summary, inline=True)
+            
+            embed.set_footer(text=f"使用方法: {self.command_prefix}botactions --limit=20 --type=topic_recommendation")
+            
+            await message.reply(embed=embed)
+            
+            # アクション記録
+            await self._log_bot_action(
+                'admin_command',
+                str(message.author.id),
+                str(message.guild.id) if message.guild else None,
+                {'command': 'botactions', 'options': command_parts[1:] if len(command_parts) > 1 else []},
+                status='completed',
+                result={'actions_displayed': len(docs), 'query_limit': limit}
+            )
+            
+        except Exception as e:
+            await message.reply(f"❌ Botアクション履歴取得エラー: {e}")
+            print(f"❌ Botアクション履歴コマンドエラー: {e}")
     
     async def shutdown(self):
         """Bot終了処理"""
