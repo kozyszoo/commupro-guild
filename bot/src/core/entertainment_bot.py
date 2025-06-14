@@ -32,6 +32,8 @@ class EntertainmentBot(discord.Client):
         super().__init__(*args, **kwargs)
         
         self.db = firestore_client
+        # Firestoreクライアントの正規化
+        self._firestore_client = self._get_firestore_client()
         
         # コア機能の初期化
         self.analytics = DiscordAnalytics(firestore_client)
@@ -44,6 +46,15 @@ class EntertainmentBot(discord.Client):
         self.admin_user_ids = self._load_admin_users()
         
         print("🎬 エンタメコンテンツ制作Bot初期化完了")
+    
+    def _get_firestore_client(self):
+        """Firestoreクライアントを取得"""
+        if hasattr(self.db, 'collection'):
+            return self.db
+        elif hasattr(self.db, 'db'):
+            return self.db.db
+        else:
+            raise ValueError("無効なFirestoreクライアント")
     
     def _load_admin_users(self) -> List[int]:
         """管理者ユーザーIDを読み込み"""
@@ -59,6 +70,9 @@ class EntertainmentBot(discord.Client):
         """Botが準備完了時の処理"""
         print(f'✅ {self.user} がログインしました')
         print(f'📊 接続サーバー数: {len(self.guilds)}')
+        
+        # ギルド情報をFirestoreに記録
+        await self._update_guild_info()
         
         # 自動スケジューラー開始（設定されている場合）
         auto_start_scheduler = os.getenv('AUTO_START_SCHEDULER', 'false').lower() == 'true'
@@ -78,6 +92,62 @@ class EntertainmentBot(discord.Client):
         
         # メッセージログ記録（既存機能との連携）
         await self._log_message_activity(message)
+
+    async def on_message_edit(self, before, after):
+        """メッセージ編集時の処理"""
+        if after.author == self.user:
+            return
+        
+        await self._log_message_edit_activity(before, after)
+
+    async def on_message_delete(self, message):
+        """メッセージ削除時の処理"""
+        if message.author == self.user:
+            return
+        
+        await self._log_message_delete_activity(message)
+
+    async def on_reaction_add(self, reaction, user):
+        """リアクション追加時の処理"""
+        if user == self.user:
+            return
+        
+        await self._log_reaction_activity(reaction, user, 'reaction_add')
+
+    async def on_reaction_remove(self, reaction, user):
+        """リアクション削除時の処理"""
+        if user == self.user:
+            return
+        
+        await self._log_reaction_activity(reaction, user, 'reaction_remove')
+
+    async def on_member_join(self, member):
+        """メンバー参加時の処理"""
+        await self._log_member_activity(member, 'member_join')
+
+    async def on_member_remove(self, member):
+        """メンバー退出時の処理"""
+        await self._log_member_activity(member, 'member_leave')
+
+    async def on_scheduled_event_create(self, event):
+        """スケジュールイベント作成時の処理"""
+        await self._log_event_activity(event, 'scheduled_event_create')
+
+    async def on_scheduled_event_update(self, before, after):
+        """スケジュールイベント更新時の処理"""
+        await self._log_event_activity(after, 'scheduled_event_update', before)
+
+    async def on_scheduled_event_delete(self, event):
+        """スケジュールイベント削除時の処理"""
+        await self._log_event_activity(event, 'scheduled_event_delete')
+
+    async def on_scheduled_event_user_add(self, event, user):
+        """スケジュールイベント参加時の処理"""
+        await self._log_event_user_activity(event, user, 'scheduled_event_user_add')
+
+    async def on_scheduled_event_user_remove(self, event, user):
+        """スケジュールイベント離脱時の処理"""
+        await self._log_event_user_activity(event, user, 'scheduled_event_user_remove')
     
     async def _handle_command(self, message):
         """コマンド処理"""
@@ -115,6 +185,12 @@ class EntertainmentBot(discord.Client):
             elif command == 'status':
                 await self._cmd_status(message)
             
+            elif command == 'dashboard':
+                await self._cmd_dashboard(message)
+            
+            elif command == 'testlog':
+                await self._cmd_test_log(message)
+            
             else:
                 await message.reply(f"❓ 不明なコマンド: {command}")
         
@@ -135,6 +211,8 @@ class EntertainmentBot(discord.Client):
             value="""
 `!help` - このヘルプを表示
 `!status` - Bot状態を表示
+`!dashboard` - 分析ダッシュボードリンクを表示
+`!testlog` - テストログを記録（デバッグ用）
             """,
             inline=False
         )
@@ -347,7 +425,78 @@ class EntertainmentBot(discord.Client):
         )
         
         await message.reply(embed=embed)
-    
+
+    async def _cmd_dashboard(self, message):
+        """ダッシュボードリンク表示コマンド"""
+        # Firebase HostingのURL（設定から取得）
+        dashboard_url = os.getenv('FIREBASE_HOSTING_URL', 'https://your-project.web.app')
+        
+        embed = discord.Embed(
+            title="📊 Discord ログ分析ダッシュボード",
+            description="Web上でサーバーのアクティビティ分析をご覧いただけます",
+            color=0x7289da
+        )
+        
+        embed.add_field(
+            name="🔗 ダッシュボードアクセス",
+            value=f"[Discord ログ分析ダッシュボード]({dashboard_url})",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📈 利用可能な分析機能",
+            value="""• メッセージ統計
+• ユーザーアクティビティ
+• チャンネル分析
+• キーワードトレンド
+• リアクション統計
+• メンバー参加/退出""",
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🔄 データ更新",
+            value="リアルタイムでDiscordアクティビティを記録中",
+            inline=True
+        )
+        
+        embed.set_footer(text="このボットがアクティビティデータを自動収集しています")
+        
+        await message.reply(embed=embed)
+
+    async def _cmd_test_log(self, message):
+        """テストログ記録コマンド（デバッグ用）"""
+        if message.author.id not in self.admin_user_ids:
+            await message.reply("❌ このコマンドは管理者専用です")
+            return
+        
+        try:
+            # テスト用のログエントリを作成
+            test_data = {
+                'type': 'test_log',
+                'userId': str(message.author.id),
+                'username': message.author.display_name,
+                'channelId': str(message.channel.id),
+                'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
+                'guildId': str(message.guild.id) if message.guild else None,
+                'guildName': message.guild.name if message.guild else None,
+                'content': 'テストログエントリ - ダッシュボード確認用',
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'metadata': {
+                    'isTestData': True,
+                    'generatedBy': 'testlog_command'
+                },
+                'keywords': ['テスト', 'ダッシュボード', '動作確認']
+            }
+            
+            # Firestoreに保存
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, test_data)
+            
+            await message.reply("✅ テストログを記録しました。ダッシュボードで確認できます。")
+            
+        except Exception as e:
+            await message.reply(f"❌ テストログ記録エラー: {e}")
+
     async def _log_message_activity(self, message):
         """メッセージアクティビティをログ記録（既存システムとの連携）"""
         try:
@@ -369,14 +518,212 @@ class EntertainmentBot(discord.Client):
             }
             
             # 非同期でFirestoreに保存
-            await asyncio.to_thread(self.db.collection('interactions').add, interaction_data)
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
             
         except Exception as e:
             print(f"⚠️ メッセージアクティビティログエラー: {e}")
+
+    async def _log_message_edit_activity(self, before, after):
+        """メッセージ編集アクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': 'message_edit',
+                'userId': str(after.author.id),
+                'username': after.author.display_name,
+                'channelId': str(after.channel.id),
+                'channelName': after.channel.name if hasattr(after.channel, 'name') else 'DM',
+                'guildId': str(after.guild.id) if after.guild else None,
+                'guildName': after.guild.name if after.guild else None,
+                'content': after.content[:500],
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'messageId': str(after.id),
+                'metadata': {
+                    'contentBefore': before.content[:500],
+                    'contentAfter': after.content[:500],
+                    'hasAttachments': len(after.attachments) > 0,
+                    'hasEmbeds': len(after.embeds) > 0
+                },
+                'keywords': self._extract_keywords(after.content)
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ メッセージ編集ログエラー: {e}")
+
+    async def _log_message_delete_activity(self, message):
+        """メッセージ削除アクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': 'message_delete',
+                'userId': str(message.author.id),
+                'username': message.author.display_name,
+                'channelId': str(message.channel.id),
+                'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
+                'guildId': str(message.guild.id) if message.guild else None,
+                'guildName': message.guild.name if message.guild else None,
+                'content': message.content[:500],
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'messageId': str(message.id),
+                'metadata': {
+                    'deletedAt': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    'hadAttachments': len(message.attachments) > 0,
+                    'hadEmbeds': len(message.embeds) > 0
+                },
+                'keywords': self._extract_keywords(message.content)
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ メッセージ削除ログエラー: {e}")
+
+    async def _log_reaction_activity(self, reaction, user, reaction_type):
+        """リアクションアクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': reaction_type,
+                'userId': str(user.id),
+                'username': user.display_name,
+                'channelId': str(reaction.message.channel.id),
+                'channelName': reaction.message.channel.name if hasattr(reaction.message.channel, 'name') else 'DM',
+                'guildId': str(reaction.message.guild.id) if reaction.message.guild else None,
+                'guildName': reaction.message.guild.name if reaction.message.guild else None,
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'messageId': str(reaction.message.id),
+                'metadata': {
+                    'emojiName': str(reaction.emoji),
+                    'emojiId': reaction.emoji.id if hasattr(reaction.emoji, 'id') else None,
+                    'isCustomEmoji': hasattr(reaction.emoji, 'id'),
+                    'reactionCount': reaction.count
+                },
+                'keywords': ['リアクション', str(reaction.emoji)]
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ リアクションログエラー: {e}")
+
+    async def _log_member_activity(self, member, activity_type):
+        """メンバーアクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': activity_type,
+                'userId': str(member.id),
+                'username': member.display_name,
+                'guildId': str(member.guild.id),
+                'guildName': member.guild.name,
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'metadata': {
+                    'accountCreated': member.created_at.isoformat(),
+                    'isBot': member.bot,
+                    'roles': [role.name for role in member.roles if role.name != '@everyone'],
+                    'joinedAt': member.joined_at.isoformat() if member.joined_at else None
+                },
+                'keywords': ['新規参加' if activity_type == 'member_join' else 'メンバー退出', 'ウェルカム' if activity_type == 'member_join' else 'さよなら']
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ メンバーアクティビティログエラー: {e}")
+
+    async def _log_event_activity(self, event, activity_type, before_event=None):
+        """スケジュールイベントアクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': activity_type,
+                'userId': str(event.creator.id) if event.creator else None,
+                'username': event.creator.display_name if event.creator else 'システム',
+                'guildId': str(event.guild.id),
+                'guildName': event.guild.name,
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'eventId': str(event.id),
+                'eventName': event.name,
+                'metadata': {
+                    'eventDescription': event.description[:200] if event.description else None,
+                    'startTime': event.start_time.isoformat() if event.start_time else None,
+                    'endTime': event.end_time.isoformat() if event.end_time else None,
+                    'entityType': event.entity_type.name if event.entity_type else None,
+                    'status': event.status.name if event.status else None,
+                    'userCount': event.user_count if hasattr(event, 'user_count') else 0
+                },
+                'keywords': ['イベント作成' if 'create' in activity_type else 'イベント更新' if 'update' in activity_type else 'イベント削除', 'スケジュール']
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ イベントアクティビティログエラー: {e}")
+
+    async def _log_event_user_activity(self, event, user, activity_type):
+        """イベントユーザーアクティビティをログ記録"""
+        try:
+            interaction_data = {
+                'type': activity_type,
+                'userId': str(user.id),
+                'username': user.display_name,
+                'guildId': str(event.guild.id),
+                'guildName': event.guild.name,
+                'timestamp': datetime.datetime.now(datetime.timezone.utc),
+                'eventId': str(event.id),
+                'eventName': event.name,
+                'metadata': {
+                    'eventDescription': event.description[:200] if event.description else None,
+                    'startTime': event.start_time.isoformat() if event.start_time else None,
+                    'userAction': 'joined' if 'add' in activity_type else 'left'
+                },
+                'keywords': ['イベント参加' if 'add' in activity_type else 'イベント離脱', event.name[:50]]
+            }
+            
+            await asyncio.to_thread(self._firestore_client.collection('interactions').add, interaction_data)
+            
+        except Exception as e:
+            print(f"⚠️ イベントユーザーアクティビティログエラー: {e}")
+
+    async def _update_guild_info(self):
+        """ギルド情報をFirestoreに更新"""
+        try:
+            for guild in self.guilds:
+                guild_data = {
+                    'guildId': str(guild.id),
+                    'name': guild.name,
+                    'memberCount': guild.member_count,
+                    'description': guild.description if guild.description else None,
+                    'icon': str(guild.icon.url) if guild.icon else None,
+                    'ownerID': str(guild.owner_id),
+                    'createdAt': guild.created_at.isoformat(),
+                    'premiumTier': guild.premium_tier,
+                    'premiumSubscriptionCount': guild.premium_subscription_count,
+                    'channels': {
+                        'text': len([ch for ch in guild.channels if str(ch.type) == 'text']),
+                        'voice': len([ch for ch in guild.channels if str(ch.type) == 'voice']),
+                        'category': len([ch for ch in guild.channels if str(ch.type) == 'category']),
+                        'total': len(guild.channels)
+                    },
+                    'roles': len(guild.roles),
+                    'emojis': len(guild.emojis),
+                    'lastUpdated': datetime.datetime.now(datetime.timezone.utc),
+                    'features': list(guild.features) if guild.features else []
+                }
+                
+                # Firestoreのguildsコレクションに保存（ドキュメントIDはguildId）
+                await asyncio.to_thread(
+                    self._firestore_client.collection('guilds').document(str(guild.id)).set,
+                    guild_data
+                )
+                
+                print(f"📊 ギルド情報更新: {guild.name} ({guild.member_count}名)")
+                
+        except Exception as e:
+            print(f"⚠️ ギルド情報更新エラー: {e}")
     
     def _extract_keywords(self, content: str) -> List[str]:
         """メッセージからキーワードを抽出"""
-        # 簡単なキーワード抽出（改善可能）
+        if not content:
+            return []
+        
         import re
         
         # 基本的な単語抽出
@@ -386,13 +733,47 @@ class EntertainmentBot(discord.Client):
         tech_keywords = [
             'react', 'typescript', 'javascript', 'python', 'node', 'firebase',
             'discord', 'api', 'database', 'frontend', 'backend', 'web', 'app',
-            'github', 'git', 'docker', 'aws', 'gcp', 'azure', 'ai', 'ml'
+            'github', 'git', 'docker', 'aws', 'gcp', 'azure', 'ai', 'ml',
+            'vue', 'angular', 'next', 'nuxt', 'svelte', 'php', 'java', 'kotlin',
+            'swift', 'go', 'rust', 'c++', 'sql', 'mongodb', 'mysql', 'postgres'
         ]
         
-        # マッチするキーワードを抽出
-        keywords = [word for word in words if word in tech_keywords or len(word) > 3]
+        # 日本語キーワード（感情・トピック）
+        japanese_keywords = [
+            'ありがとう', 'おめでとう', 'お疲れ', 'すごい', '面白い', '楽しい',
+            '勉強', '学習', '開発', '実装', 'バグ', 'エラー', '解決', '質問',
+            'プロジェクト', 'アプリ', 'サイト', 'システム', 'デザイン', 'ui',
+            'ux', 'テスト', 'デバッグ', 'リリース', 'デプロイ', 'レビュー'
+        ]
         
-        return list(set(keywords))[:10]  # 重複削除、最大10個
+        # URLやメンション等の特殊パターン
+        has_url = bool(re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', content))
+        has_mention = '@' in content
+        has_emoji = bool(re.search(r':[a-zA-Z0-9_]+:', content))
+        
+        # マッチするキーワードを抽出
+        keywords = []
+        
+        # 技術キーワード
+        keywords.extend([word for word in words if word in tech_keywords])
+        
+        # 日本語キーワード
+        for jp_keyword in japanese_keywords:
+            if jp_keyword in content.lower():
+                keywords.append(jp_keyword)
+        
+        # 長い単語（4文字以上）
+        keywords.extend([word for word in words if len(word) >= 4 and word not in tech_keywords])
+        
+        # 特殊パターン
+        if has_url:
+            keywords.append('URL')
+        if has_mention:
+            keywords.append('メンション')
+        if has_emoji:
+            keywords.append('絵文字')
+        
+        return list(set(keywords))[:15]  # 重複削除、最大15個
     
     async def shutdown(self):
         """Bot終了処理"""

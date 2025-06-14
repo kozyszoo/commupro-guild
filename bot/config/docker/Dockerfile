@@ -21,10 +21,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションファイルをコピー
-COPY discord_bot.py .
-COPY multi_bot_manager.py .
 COPY run_bot.py .
-COPY tutorial_content.py .
+COPY run_entertainment_bot.py .
+COPY src/ ./src/
 
 # 環境変数の設定（デフォルト値）
 ENV PYTHONUNBUFFERED=1
@@ -33,9 +32,6 @@ ENV PYTHONPATH=/app
 # ポート設定（Cloud Runで必要）
 ENV PORT=8080
 EXPOSE 8080
-
-# ヘルスチェック用の簡単なHTTPサーバーを追加
-COPY health_server.py .
 
 # 非rootユーザーを作成してセキュリティを向上
 RUN useradd --create-home --shell /bin/bash app \
