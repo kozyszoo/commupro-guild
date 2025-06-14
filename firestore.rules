@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 認証されたユーザーは全てのドキュメントを読み書きできる
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // analytics_sessionsは誰でも読み取り可能
+    match /analytics_sessions/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

@@ -40,11 +40,9 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 │   ├── run_single_bot.py        # 単一ボット起動スクリプト
 │   ├── src/                     # ソースコード
 │   │   ├── core/                # コア機能
-│   │   │   ├── bot.py           # 基本的なDiscord Bot実装（レガシー）
 │   │   │   ├── content_creator.py # コンテンツ制作のワークフロー管理
 │   │   │   ├── discord_analytics.py # Discord活動の分析機能
 │   │   │   ├── entertainment_bot.py # エンタメBot本体（全機能統合）
-│   │   │   ├── manager.py       # ボット管理機能（レガシー）
 │   │   │   ├── podcast.py       # AIキャラクター対話とTTS機能
 │   │   │   └── scheduler.py     # スケジュール管理とジョブ実行
 │   │   ├── scripts/             # ユーティリティスクリプト
