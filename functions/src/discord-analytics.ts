@@ -413,10 +413,26 @@ export const analyzeDiscordLogs = onRequest(
       }
 
       // Firestore から最新のインタラクションデータを取得
-      const interactionsSnapshot = await db.collection('interactions')
-        .orderBy('timestamp', 'desc')
-        .limit(1000) // 最新1000件を分析対象とする
-        .get();
+      logger.info('Firestoreからインタラクションデータを取得中...');
+      let interactionsSnapshot;
+      try {
+        interactionsSnapshot = await db.collection('interactions')
+          .orderBy('timestamp', 'desc')
+          .limit(1000) // 最新1000件を分析対象とする
+          .get();
+      } catch (firestoreError) {
+        logger.error('Firestoreからのデータ取得エラー', { firestoreError });
+        // timestampフィールドでのソートが失敗する場合、フィールドなしで取得
+        try {
+          interactionsSnapshot = await db.collection('interactions')
+            .limit(1000)
+            .get();
+          logger.info('timestampなしでFirestoreデータを取得しました');
+        } catch (fallbackError) {
+          logger.error('Firestore取得の代替方法も失敗', { fallbackError });
+          throw new Error(`Firestoreデータ取得失敗: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+        }
+      }
 
       const logs: DiscordLog[] = [];
       interactionsSnapshot.forEach(doc => {
@@ -439,10 +455,18 @@ export const analyzeDiscordLogs = onRequest(
       logger.info(`${logs.length}件のログを取得しました`);
 
       // ログの分析（非同期に変更）
+      logger.info('ログデータの分析を開始...');
       const analysis = await analyzeDiscordLogsData(logs);
       
       // AI による運営アドバイスの生成
-      const aiAdvices = await generateAIAdvice(analysis, logs);
+      logger.info('AI アドバイスの生成を開始...');
+      let aiAdvices;
+      try {
+        aiAdvices = await generateAIAdvice(analysis, logs);
+      } catch (aiError) {
+        logger.error('AI アドバイス生成エラー、デフォルトアドバイスを使用', { aiError });
+        aiAdvices = generateDefaultAdvice(analysis);
+      }
 
       // 分析結果を Firestore に保存
       const analysisResult = {
@@ -454,7 +478,13 @@ export const analyzeDiscordLogs = onRequest(
         channels: [...new Set(logs.map(log => log.channelName))].filter(Boolean)
       };
 
-      await db.collection('discord_analysis').add(analysisResult);
+      try {
+        await db.collection('discord_analysis').add(analysisResult);
+        logger.info('分析結果をFirestoreに保存しました');
+      } catch (saveError) {
+        logger.error('分析結果の保存エラー', { saveError });
+        // 保存に失敗してもレスポンスは返す
+      }
 
       logger.info('Discord ログ分析が完了しました', {
         logCount: logs.length,
