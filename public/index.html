@@ -23,6 +23,16 @@
         --success-color: #10b981;
         --warning-color: #f59e0b;
         --error-color: #ef4444;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+
+      /* ダークモード（デフォルト） */
+      :root,
+      [data-theme="dark"] {
         --background-color: #0f172a;
         --surface-color: #1e293b;
         --card-background: #334155;
@@ -30,14 +40,23 @@
         --text-secondary: #cbd5e1;
         --text-muted: #64748b;
         --border-color: #475569;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ライトモード */
+      [data-theme="light"] {
+        --background-color: #f8fafc;
+        --surface-color: #ffffff;
+        --card-background: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
         --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        --border-radius: 16px;
-        --border-radius-sm: 8px;
-        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
       }
 
       * {
@@ -52,6 +71,7 @@
         padding: 0;
         color: var(--text-primary);
         line-height: 1.6;
+        transition: background-color 0.3s ease, color 0.3s ease;
       }
 
       .main-container {
@@ -652,6 +672,13 @@
             <i class="material-icons" style="margin-right: 8px;">access_time</i>
             <span id="current-time">読み込み中...</span>
           </li>
+          <li>
+            <a href="#" id="theme-toggle" onclick="toggleTheme()" 
+               style="display: flex; align-items: center; gap: 0.5rem; color: #fff !important; padding: 0 16px;">
+              <i class="material-icons" id="theme-icon">dark_mode</i>
+              <span id="theme-text">ライト</span>
+            </a>
+          </li>
         </ul>
       </div>
     </nav>
@@ -987,45 +1014,30 @@
               
 
               <!-- AI運営アドバイス -->
-              <div style="margin-bottom: 2rem;">
+              <div id="advice-section" style="margin-bottom: 2rem;">
                 <div class="info-label" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
                   <span>
                     <i class="material-icons" style="color: var(--primary-color); margin-right: 0.5rem;">psychology</i>
                     Vertex AI による運営アドバイス
                   </span>
-                  ${lastAnalysisUpdate ? `
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">
-                      <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">schedule</i>
-                      ${formatDate(lastAnalysisUpdate)}
-                    </span>
-                  ` : ''}
-                </div>
-                ${aiAdvices.map(advice => `
-                  <div style="margin-bottom: 1rem; padding: 1rem; border-radius: var(--border-radius-sm); border-left: 4px solid ${getAdvicePriorityColor(advice.priority)}; background: ${getAdvicePriorityBg(advice.priority)};">
-                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
-                      <i class="material-icons" style="color: ${getAdvicePriorityColor(advice.priority)}; font-size: 1.5rem;">${advice.icon}</i>
-                      <div style="flex: 1;">
-                        <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-primary);">
-                          ${advice.title}
-                          <span style="background: ${getAdvicePriorityColor(advice.priority)}; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.7rem; margin-left: 0.5rem;">
-                            ${getAdvicePriorityLabel(advice.priority)}
-                          </span>
-                        </div>
-                        <div style="color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.5;">
-                          ${advice.message}
-                        </div>
-                        <div style="background: rgba(99, 102, 241, 0.1); padding: 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.2);">
-                          <div style="font-weight: 600; color: var(--primary-color); font-size: 0.875rem; margin-bottom: 0.25rem;">
-                            💡 推奨アクション:
-                          </div>
-                          <div style="color: var(--text-primary); font-size: 0.875rem;">
-                            ${advice.action}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    ${lastAnalysisUpdate ? `
+                      <span style="font-size: 0.75rem; color: var(--text-muted);">
+                        <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">schedule</i>
+                        ${formatDate(lastAnalysisUpdate)}
+                      </span>
+                    ` : ''}
+                    <button id="toggle-advice-btn" 
+                            onclick="toggleAdviceVisibility()" 
+                            style="background: var(--border-color); border: none; color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 0.25rem;">
+                      <i class="material-icons" style="font-size: 1rem;" id="toggle-advice-icon">visibility_off</i>
+                      <span id="toggle-advice-text">非表示</span>
+                    </button>
                   </div>
-                `).join('')}
+                </div>
+                <div id="advice-content">
+                  <!-- 週次アドバイスコンテンツがここに動的に読み込まれます -->
+                </div>
               </div>
 
               <!-- 投稿数ランキング -->
@@ -3253,13 +3265,182 @@ ${JSON.stringify(action.result || {}, null, 2)}
         alert(details);
       }
 
+      /**
+       * アドバイス表示/非表示の切り替え
+       */
+      function toggleAdviceVisibility() {
+        const adviceContent = document.getElementById('advice-content');
+        const toggleIcon = document.getElementById('toggle-advice-icon');
+        const toggleText = document.getElementById('toggle-advice-text');
+        
+        if (adviceContent.style.display === 'none') {
+          // 表示する
+          adviceContent.style.display = 'block';
+          toggleIcon.textContent = 'visibility_off';
+          toggleText.textContent = '非表示';
+          localStorage.setItem('adviceVisible', 'true');
+        } else {
+          // 非表示にする
+          adviceContent.style.display = 'none';
+          toggleIcon.textContent = 'visibility';
+          toggleText.textContent = '表示';
+          localStorage.setItem('adviceVisible', 'false');
+        }
+      }
+
+      /**
+       * 週次アドバイスをFirestoreから読み込み
+       */
+      async function loadWeeklyAdvice() {
+        try {
+          const adviceContent = document.getElementById('advice-content');
+          if (!adviceContent) return;
+
+          // Firestoreから最新の週次アドバイスを取得
+          const adviceQuery = db.collection('weekly_advice')
+            .where('isActive', '==', true)
+            .orderBy('createdAt', 'desc')
+            .limit(1);
+          
+          const adviceSnapshot = await adviceQuery.get();
+          
+          if (adviceSnapshot.empty) {
+            adviceContent.innerHTML = `
+              <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <i class="material-icons" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">psychology</i>
+                <div>週次アドバイスがまだ生成されていません</div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  Botの !advice コマンドで生成できます
+                </div>
+              </div>
+            `;
+            return;
+          }
+
+          const adviceDoc = adviceSnapshot.docs[0];
+          const advice = adviceDoc.data();
+          
+          adviceContent.innerHTML = `
+            <div style="margin-bottom: 1rem; padding: 1rem; border-radius: var(--border-radius-sm); border-left: 4px solid var(--success-color); background: rgba(16, 185, 129, 0.05);">
+              <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                <i class="material-icons" style="color: var(--success-color); font-size: 1.5rem;">psychology</i>
+                <div style="flex: 1;">
+                  <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-primary);">
+                    週次運営アドバイス
+                    <span style="background: var(--success-color); color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.7rem; margin-left: 0.5rem;">
+                      ${advice.weekOf}
+                    </span>
+                  </div>
+                  <div style="color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.5;">
+                    ${advice.content}
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="material-icons" style="font-size: 1rem;">auto_awesome</i>
+                    Vertex AI (Gemini) による分析 • ${formatDate(advice.createdAt)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+        } catch (error) {
+          console.error('週次アドバイス読み込みエラー:', error);
+          const adviceContent = document.getElementById('advice-content');
+          if (adviceContent) {
+            adviceContent.innerHTML = `
+              <div style="text-align: center; padding: 2rem; color: var(--error-color);">
+                <i class="material-icons" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">error</i>
+                <div>アドバイスの読み込みに失敗しました</div>
+                <div style="font-size: 0.9rem; margin-top: 0.5rem;">
+                  ${error.message || 'データの取得に失敗しました'}
+                </div>
+              </div>
+            `;
+          }
+        }
+      }
+
+      /**
+       * テーマ切り替え機能
+       */
+      function toggleTheme() {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        
+        // テーマアイコンとテキストを更新
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        if (newTheme === 'light') {
+          themeIcon.textContent = 'light_mode';
+          themeText.textContent = 'ダーク';
+        } else {
+          themeIcon.textContent = 'dark_mode';
+          themeText.textContent = 'ライト';
+        }
+        
+        // ローカルストレージに保存
+        localStorage.setItem('theme', newTheme);
+        
+        console.log(`テーマを${newTheme}モードに切り替えました`);
+      }
+
+      /**
+       * 保存されたテーマを読み込み
+       */
+      function loadSavedTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const body = document.body;
+        
+        body.setAttribute('data-theme', savedTheme);
+        
+        // テーマアイコンとテキストを更新
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        if (savedTheme === 'light') {
+          themeIcon.textContent = 'light_mode';
+          themeText.textContent = 'ダーク';
+        } else {
+          themeIcon.textContent = 'dark_mode';
+          themeText.textContent = 'ライト';
+        }
+        
+        console.log(`保存されたテーマ（${savedTheme}）を適用しました`);
+      }
+
       // Initialize dashboard
       document.addEventListener('DOMContentLoaded', function() {
+        // 保存されたテーマを最初に読み込み
+        loadSavedTheme();
+        
         loadDashboard();
         
         // 現在時刻を初期化し、1秒ごとに更新
         updateCurrentTime();
         setInterval(updateCurrentTime, 1000);
+        
+        // 週次アドバイスを読み込み
+        loadWeeklyAdvice();
+        
+        // アドバイス表示設定を復元
+        const adviceVisible = localStorage.getItem('adviceVisible');
+        if (adviceVisible === 'false') {
+          setTimeout(() => {
+            const adviceContent = document.getElementById('advice-content');
+            const toggleIcon = document.getElementById('toggle-advice-icon');
+            const toggleText = document.getElementById('toggle-advice-text');
+            
+            if (adviceContent && toggleIcon && toggleText) {
+              adviceContent.style.display = 'none';
+              toggleIcon.textContent = 'visibility';
+              toggleText.textContent = '表示';
+            }
+          }, 500);
+        }
         
         // ポッドキャスト作成ボタンのイベントリスナーを設定
         // ボタンがDOM上に存在するまで待機してから設定

@@ -160,7 +160,7 @@ class EntertainmentBot(discord.Client):
         
         try:
             # 管理者権限が必要なコマンド
-            admin_commands = ['scheduler', 'summary', 'analytics', 'podcast']
+            admin_commands = ['scheduler', 'summary', 'analytics', 'podcast', 'advice']
             if command in admin_commands and message.author.id not in self.admin_user_ids:
                 await message.reply("❌ このコマンドは管理者専用です")
                 return
@@ -193,6 +193,9 @@ class EntertainmentBot(discord.Client):
             
             elif command == 'botactions':
                 await self._cmd_bot_actions(message, command_parts)
+            
+            elif command == 'advice':
+                await self._cmd_generate_advice(message)
             
             else:
                 await message.reply(f"❓ 不明なコマンド: {command}")
@@ -228,6 +231,7 @@ class EntertainmentBot(discord.Client):
 `!summary [days]` - 手動で週次まとめ生成
 `!analytics [days]` - アクティビティ分析
 `!podcast [days]` - ポッドキャスト生成
+`!advice` - 週次運営アドバイス生成
 `!botactions [--limit=N] [--type=TYPE]` - Botアクション履歴表示
                 """,
                 inline=False
@@ -856,6 +860,115 @@ class EntertainmentBot(discord.Client):
             print(f"⚠️ Botアクションログエラー: {e}")
             return None
     
+    async def generate_weekly_advice(self, guild_id: str = None) -> Dict[str, Any]:
+        """週次運営アドバイスを生成"""
+        try:
+            print("🧠 週次運営アドバイス生成開始...")
+            
+            # 過去7日間のアクティビティデータを収集
+            activities = await self.analytics.collect_weekly_activities(days=7)
+            
+            # Vertex AIを使ってアドバイスを生成
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
+            
+            # プロンプトを構築
+            prompt = f"""
+以下のDiscordサーバーの過去1週間のアクティビティデータを分析し、運営改善のためのアドバイスを日本語で提供してください。
+
+アクティビティ統計:
+- 総メッセージ数: {activities['summary_stats']['total_messages']}
+- アクティブユーザー数: {activities['summary_stats']['active_users_count']}
+- アクティブチャンネル数: {activities['summary_stats']['active_channels_count']}
+- トップユーザー: {activities['summary_stats']['top_users'][:3] if activities['summary_stats']['top_users'] else 'なし'}
+- 人気キーワード: {activities['summary_stats']['popular_keywords'][:5] if activities['summary_stats']['popular_keywords'] else 'なし'}
+
+以下の観点からアドバイスを提供してください:
+1. コミュニティの活発さ評価
+2. ユーザーエンゲージメント改善提案
+3. チャンネル運営の最適化
+4. イベントや企画の提案
+5. モデレーション改善点
+
+200-300文字程度で簡潔にまとめてください。
+            """
+            
+            # Vertex AI (Gemini) でアドバイス生成
+            model = GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            advice_content = response.text
+            
+            # 週の期間を計算
+            now = datetime.datetime.now(datetime.timezone.utc)
+            week_start = now - datetime.timedelta(days=7)
+            week_end = now
+            
+            # アドバイスデータを構造化
+            advice_data = {
+                'adviceId': f"advice_{now.strftime('%Y%m%d_%H%M%S')}",
+                'weekOf': week_start.strftime('%Y-%m-%d'),
+                'weekStart': week_start,
+                'weekEnd': week_end,
+                'content': advice_content,
+                'activityStats': activities['summary_stats'],
+                'createdAt': now,
+                'isActive': True,
+                'guildId': guild_id,
+                'generatedBy': 'vertex_ai_gemini',
+                'version': '1.0'
+            }
+            
+            # Firestoreに保存
+            doc_ref = await asyncio.to_thread(
+                self._firestore_client.collection('weekly_advice').add,
+                advice_data
+            )
+            
+            print(f"✅ 週次アドバイス生成完了: {doc_ref[1].id}")
+            
+            return {
+                'success': True,
+                'adviceId': advice_data['adviceId'],
+                'content': advice_content,
+                'docId': doc_ref[1].id,
+                'weekOf': advice_data['weekOf']
+            }
+            
+        except Exception as e:
+            print(f"❌ 週次アドバイス生成エラー: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
+    async def _cmd_generate_advice(self, message):
+        """手動で週次アドバイスを生成するコマンド"""
+        if message.author.id not in self.admin_user_ids:
+            await message.reply("❌ このコマンドは管理者専用です")
+            return
+        
+        await message.reply("🧠 週次運営アドバイスを生成中...")
+        
+        guild_id = str(message.guild.id) if message.guild else None
+        result = await self.generate_weekly_advice(guild_id)
+        
+        if result['success']:
+            embed = discord.Embed(
+                title="🧠 週次運営アドバイス",
+                description=result['content'],
+                color=0x00ff88
+            )
+            embed.add_field(
+                name="📅 対象期間",
+                value=f"{result['weekOf']} からの1週間",
+                inline=False
+            )
+            embed.set_footer(text="Vertex AI (Gemini) による分析")
+            
+            await message.reply(embed=embed)
+        else:
+            await message.reply(f"❌ アドバイス生成に失敗しました: {result['error']}")
+
     async def _cmd_bot_actions(self, message, command_parts):
         """Botアクション履歴表示コマンド"""
         if message.author.id not in self.admin_user_ids:

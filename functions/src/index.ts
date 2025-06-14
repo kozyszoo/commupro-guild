@@ -209,3 +209,135 @@ export const createWeeklyPodcast = onCall({
     throw new Error("ポッドキャスト作成に失敗しました");
   }
 });
+
+// 週次アドバイス取得API
+export const getWeeklyAdvice = onCall({
+  region: 'asia-northeast1',
+  cors: true,
+}, async (request) => {
+  try {
+    logger.info("週次アドバイス取得を開始...");
+    
+    // Firestoreから最新の週次アドバイスを取得
+    const adviceQuery = admin.firestore()
+      .collection('weekly_advice')
+      .where('isActive', '==', true)
+      .orderBy('createdAt', 'desc')
+      .limit(5); // 最新5件を取得
+    
+    const adviceSnapshot = await adviceQuery.get();
+    
+    if (adviceSnapshot.empty) {
+      return {
+        success: true,
+        data: [],
+        message: "週次アドバイスがまだ生成されていません"
+      };
+    }
+    
+    const adviceList = adviceSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.() || null,
+      weekStart: doc.data().weekStart?.toDate?.() || null,
+      weekEnd: doc.data().weekEnd?.toDate?.() || null
+    }));
+    
+    logger.info(`週次アドバイス ${adviceList.length} 件を取得しました`);
+    
+    return {
+      success: true,
+      data: adviceList
+    };
+    
+  } catch (error) {
+    logger.error("週次アドバイス取得エラー:", error);
+    throw new Error("週次アドバイスの取得に失敗しました");
+  }
+});
+
+// アドバイス表示設定の更新API
+export const updateAdviceSettings = onCall({
+  region: 'asia-northeast1',
+  cors: true,
+}, async (request) => {
+  const auth = request.auth;
+  const data = request.data;
+  
+  try {
+    logger.info("アドバイス表示設定更新を開始...");
+    
+    const userId = auth?.uid || 'anonymous';
+    const { isVisible = true, adviceId } = data;
+    
+    // ユーザーのアドバイス表示設定を更新
+    const settingsRef = admin.firestore()
+      .collection('user_advice_settings')
+      .doc(userId);
+    
+    const settingsData = {
+      userId,
+      isVisible,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...(adviceId && { lastHiddenAdviceId: adviceId })
+    };
+    
+    await settingsRef.set(settingsData, { merge: true });
+    
+    logger.info(`ユーザー ${userId} のアドバイス表示設定を更新しました: ${isVisible ? '表示' : '非表示'}`);
+    
+    return {
+      success: true,
+      message: "アドバイス表示設定を更新しました"
+    };
+    
+  } catch (error) {
+    logger.error("アドバイス表示設定更新エラー:", error);
+    throw new Error("アドバイス表示設定の更新に失敗しました");
+  }
+});
+
+// ユーザーのアドバイス表示設定を取得API
+export const getAdviceSettings = onCall({
+  region: 'asia-northeast1',
+  cors: true,
+}, async (request) => {
+  const auth = request.auth;
+  
+  try {
+    logger.info("アドバイス表示設定取得を開始...");
+    
+    const userId = auth?.uid || 'anonymous';
+    
+    const settingsDoc = await admin.firestore()
+      .collection('user_advice_settings')
+      .doc(userId)
+      .get();
+    
+    if (!settingsDoc.exists) {
+      // デフォルト設定を返す
+      return {
+        success: true,
+        data: {
+          isVisible: true,
+          updatedAt: null,
+          lastHiddenAdviceId: null
+        }
+      };
+    }
+    
+    const settings = settingsDoc.data();
+    
+    return {
+      success: true,
+      data: {
+        ...settings,
+        updatedAt: settings?.updatedAt?.toDate?.() || null
+      }
+    };
+    
+  } catch (error) {
+    logger.error("アドバイス表示設定取得エラー:", error);
+    throw new Error("アドバイス表示設定の取得に失敗しました");
+  }
+});
