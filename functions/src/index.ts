@@ -126,6 +126,48 @@ export const matchSimilarUsers = onCall(async (request) => {
   return { users: result };
 });
 
+// 接続しているサーバー情報を取得
+export const getConnectedGuilds = onCall({
+  region: 'asia-northeast1',
+  cors: true,
+}, async (request) => {
+  try {
+    logger.info("接続サーバー情報を取得中...");
+    
+    // Firestoreからguildsコレクションを取得
+    const guildsSnapshot = await admin.firestore()
+      .collection("guilds")
+      .orderBy("lastUpdated", "desc")
+      .get();
+    
+    const guilds: any[] = [];
+    
+    guildsSnapshot.forEach((doc) => {
+      const guildData = doc.data();
+      guilds.push({
+        id: doc.id,
+        ...guildData,
+        // 最終更新から5分以内のものを「オンライン」とみなす
+        isActive: guildData.lastUpdated && 
+          (new Date().getTime() - guildData.lastUpdated.toDate().getTime()) < 5 * 60 * 1000
+      });
+    });
+    
+    logger.info(`${guilds.length}個のサーバー情報を取得しました`);
+    
+    return { 
+      success: true, 
+      guilds: guilds,
+      totalCount: guilds.length,
+      activeCount: guilds.filter(g => g.isActive).length
+    };
+    
+  } catch (error) {
+    logger.error("サーバー情報取得エラー:", error);
+    throw new Error("サーバー情報の取得に失敗しました");
+  }
+});
+
 // 過去1週間のポッドキャスト作成
 export const createWeeklyPodcast = onCall({
   region: 'asia-northeast1', // リージョンを統一

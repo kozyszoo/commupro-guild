@@ -747,6 +747,52 @@
       let lastAnalysisUpdate = null;
 
       /**
+       * 接続しているサーバー情報を取得する関数（Firebase Functions API使用）
+       */
+      async function getConnectedGuildsData() {
+        try {
+          console.log('接続サーバー情報をAPIから取得中...');
+          
+          // Firebase Functionsの getConnectedGuilds API を呼び出し
+          const functions = firebase.functions();
+          const getConnectedGuilds = functions.httpsCallable('getConnectedGuilds');
+          
+          const result = await getConnectedGuilds();
+          console.log('接続サーバー情報取得成功:', result.data);
+          
+          return result.data;
+        } catch (error) {
+          console.error('接続サーバー情報取得エラー:', error);
+          
+          // フォールバックとしてFirestoreから直接取得
+          console.log('フォールバック: Firestoreから直接取得...');
+          try {
+            const guildsData = await getCollectionData('guilds');
+            const guilds = Object.values(guildsData || {}).map(guild => ({
+              ...guild,
+              isActive: false // APIからではないので非アクティブとマーク
+            }));
+            
+            return {
+              success: true,
+              guilds: guilds,
+              totalCount: guilds.length,
+              activeCount: 0
+            };
+          } catch (fallbackError) {
+            console.error('フォールバック取得も失敗:', fallbackError);
+            return {
+              success: false,
+              guilds: [],
+              totalCount: 0,
+              activeCount: 0,
+              error: fallbackError.message
+            };
+          }
+        }
+      }
+
+      /**
        * AI 分析 API を呼び出してリアルタイム分析結果を取得
        */
       async function fetchAIAnalysis() {
@@ -1740,10 +1786,10 @@
         }
 
         try {
-          // Firestoreからデータを並列取得
-          const [users, guilds, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
+          // Firestoreからデータを並列取得（guildsは新しいAPIから取得）
+          const [users, guildsData, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
             getCollectionData('users'),
-            getCollectionData('guilds'),
+            getConnectedGuildsData(), // 新しいAPI関数を使用
             getCollectionData('interactions'),
             getCollectionData('podcasts'),
             getCollectionData('events'),
@@ -1753,6 +1799,14 @@
             getCollectionData('bot_actions'),
             getAnalyticsData(), // 専用関数を使用
           ]);
+          
+          // guildsデータを既存の形式に変換
+          const guilds = {};
+          if (guildsData && guildsData.guilds) {
+            guildsData.guilds.forEach(guild => {
+              guilds[guild.id] = guild;
+            });
+          }
 
           // ユーザー統計
           const userList = Object.values(users || {});
@@ -1840,8 +1894,14 @@
               <div class="card-header">
                 <h3 class="dashboard-title">
                   <i class="material-icons">dns</i>
-                  サーバー情報
+                  接続サーバー情報 ${guildsData && guildsData.totalCount ? `(${guildsData.totalCount}サーバー)` : ''}
                 </h3>
+                ${guildsData && guildsData.totalCount > 0 ? `
+                  <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <span class="status-badge status-active">アクティブ: ${guildsData.activeCount}</span>
+                    <span class="status-badge">総数: ${guildsData.totalCount}</span>
+                  </div>
+                ` : ''}
               </div>
               <div class="card-content">
                 ${displayGuilds.length ? `
@@ -1853,17 +1913,15 @@
                             <th class="sortable-header" onclick="handleSort('name', 'guilds')">
                               サーバー名${getSortIcon('name', 'guilds')}
                             </th>
-                            <th class="sortable-header" onclick="handleSort('totalMembers', 'guilds')">
-                              総メンバー数${getSortIcon('totalMembers', 'guilds')}
+                            <th>ステータス</th>
+                            <th class="sortable-header" onclick="handleSort('memberCount', 'guilds')">
+                              メンバー数${getSortIcon('memberCount', 'guilds')}
                             </th>
-                            <th class="sortable-header" onclick="handleSort('activeMembers', 'guilds')">
-                              アクティブ${getSortIcon('activeMembers', 'guilds')}
+                            <th class="sortable-header" onclick="handleSort('channels.total', 'guilds')">
+                              チャンネル数${getSortIcon('channels.total', 'guilds')}
                             </th>
-                            <th class="sortable-header" onclick="handleSort('averageEngagement', 'guilds')">
-                              平均エンゲージメント${getSortIcon('averageEngagement', 'guilds')}
-                            </th>
-                            <th class="sortable-header" onclick="handleSort('updatedAt', 'guilds')">
-                              最終更新${getSortIcon('updatedAt', 'guilds')}
+                            <th class="sortable-header" onclick="handleSort('lastUpdated', 'guilds')">
+                              最終更新${getSortIcon('lastUpdated', 'guilds')}
                             </th>
                           </tr>
                         </thead>
@@ -1871,35 +1929,58 @@
                           ${sortedGuilds.map(g => `
                             <tr>
                               <td>
-                                <div style="font-weight: 600;">${g.name || '-'}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                  ${g.icon ? `<img src="${g.icon}" alt="アイコン" style="width: 24px; height: 24px; border-radius: 50%;">` : 
+                                    `<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold;">${(g.name || 'S').charAt(0).toUpperCase()}</div>`}
+                                  <div>
+                                    <div style="font-weight: 600;">${g.name || '-'}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.guildId || g.id || '-'}</div>
+                                  </div>
+                                </div>
                               </td>
-                              <td>${safeGet(g, 'analytics.totalMembers', 0)}</td>
-                              <td>${safeGet(g, 'analytics.activeMembers', 0)}</td>
                               <td>
-                                <span class="engagement-score ${getEngagementClass(safeGet(g, 'analytics.averageEngagement', 0))}">
-                                  ${safeGet(g, 'analytics.averageEngagement', 0)}
+                                <span class="status-badge ${g.isActive ? 'status-active' : 'status-inactive'}">
+                                  <i class="material-icons" style="font-size: 0.875rem; margin-right: 0.25rem;">${g.isActive ? 'wifi' : 'wifi_off'}</i>
+                                  ${g.isActive ? 'オンライン' : 'オフライン'}
                                 </span>
                               </td>
-                              <td>${formatDate(g.updatedAt)}</td>
+                              <td>${g.memberCount || safeGet(g, 'analytics.totalMembers', 0)}</td>
+                              <td>
+                                <div style="font-size: 0.9rem;">
+                                  ${safeGet(g, 'channels.total', 0)}
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    テキスト: ${safeGet(g, 'channels.text', 0)} / 音声: ${safeGet(g, 'channels.voice', 0)}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div style="font-size: 0.9rem;">${formatDate(g.lastUpdated || g.updatedAt)}</div>
+                                ${g.features && g.features.length > 0 ? `
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    ${g.features.slice(0, 2).join(', ')}${g.features.length > 2 ? '...' : ''}
+                                  </div>
+                                ` : ''}
+                              </td>
                             </tr>
                           `).join('')}
                         </tbody>
                       </table>
                     </div>
                   </div>
-                  <div style="margin-top: 1rem;">
-                    <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
-                    ${sortedGuilds.map(g => `
-                      <span class="tag">
-                        ${g.name || '-'}: 
-                        <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
-                          ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                  ${sortedGuilds.some(g => safeGet(g, 'botSettings.matchingEnabled') !== undefined) ? `
+                    <div style="margin-top: 1rem;">
+                      <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
+                      ${sortedGuilds.filter(g => safeGet(g, 'botSettings.matchingEnabled') !== undefined).map(g => `
+                        <span class="tag">
+                          ${g.name || '-'}: 
+                          <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
+                            ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                          </span>
                         </span>
-                      </span>
-                    `).join('')}
-                  </div>
-                ` : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                ` : '<div class="no-data"><i class="material-icons">dns</i><div>接続されているサーバーがありません</div><div style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">BotがDiscordサーバーに招待されていない可能性があります</div></div>'}
               </div>
             </div>
           `;
@@ -2615,39 +2696,8 @@
             </div>
           `;
 
-          // ボットアクション
-          const botActionList = Object.values(botActions || {});
-          document.getElementById('dashboard-bot-actions').innerHTML = `
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3 class="dashboard-title">
-                  <i class="material-icons">smart_toy</i>
-                  ボットアクション履歴
-                </h3>
-              </div>
-              <div class="card-content">
-                ${botActionList.length ? `
-                  <div class="recent-activity">
-                    ${botActionList.slice(0, 5).map(b => `
-                      <div class="activity-item">
-                        <div class="activity-icon">
-                          <i class="material-icons">smart_toy</i>
-                        </div>
-                        <div class="activity-content">
-                          <div class="activity-title">${b.actionType}</div>
-                          <div class="activity-description">ユーザー: ${b.userId}</div>
-                          <div class="activity-time">
-                            ${formatDate(b.timestamp)} | 
-                            <span class="status-badge ${getStatusClass(b.status)}">${b.status}</span>
-                          </div>
-                        </div>
-                      </div>
-                    `).join('')}
-                  </div>
-                ` : '<div class="no-data"><i class="material-icons">smart_toy</i><div>ボットアクションデータがありません</div></div>'}
-              </div>
-            </div>
-          `;
+          // ボットアクション（改良版）
+          await loadBotActionsEnhanced();
 
           // 管理者ユーザー
           const adminList = Object.values(adminUsers || {});
