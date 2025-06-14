@@ -1,0 +1,3282 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Discord にゃんこエージェント 管理パネル</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+    <style>
+      :root {
+        --primary-color: #6366f1;
+        --primary-light: #8b5cf6;
+        --primary-dark: #4f46e5;
+        --secondary-color: #f59e0b;
+        --accent-color: #06b6d4;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --background-color: #0f172a;
+        --surface-color: #1e293b;
+        --card-background: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #64748b;
+        --border-color: #475569;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--background-color);
+        min-height: 100vh;
+        font-family: 'Inter', 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text-primary);
+        line-height: 1.6;
+      }
+
+      .main-container {
+        background: var(--background-color);
+        min-height: 100vh;
+        margin-top: 64px;
+        padding: 2rem 1rem;
+      }
+
+      nav {
+        background: var(--gradient-primary) !important;
+        box-shadow: var(--shadow-medium);
+        position: fixed;
+        top: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-wrapper .brand-logo {
+        color: #fff !important;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        font-size: 1.25rem;
+        padding-left: 1rem;
+      }
+
+      .brand-logo i {
+        margin-right: 0.75rem;
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+
+      .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .dashboard-section {
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+      }
+
+      .dashboard-card {
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-light);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        height: 100%;
+        min-height: 400px;
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dashboard-card:hover {
+        box-shadow: var(--shadow-large);
+        transform: translateY(-4px);
+        border-color: var(--primary-color);
+      }
+
+      .card-header {
+        background: linear-gradient(135deg, var(--surface-color) 0%, var(--card-background) 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient-primary);
+      }
+
+      .dashboard-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+        letter-spacing: 0.025em;
+      }
+
+      .dashboard-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        padding: 0.5rem;
+        border-radius: 50%;
+        background-color: rgba(99, 102, 241, 0.1);
+        -webkit-text-fill-color: var(--primary-color);
+      }
+
+      .card-content {
+        padding: 1.5rem;
+        background: var(--card-background);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 1.25rem 1rem;
+        background: linear-gradient(135deg, var(--surface-color) 0%, rgba(99, 102, 241, 0.05) 100%);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--gradient-accent);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-item:hover::before {
+        transform: scaleX(1);
+      }
+
+      .stat-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--accent-color);
+      }
+
+      .stat-number {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: block;
+        line-height: 1;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .dashboard-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-background);
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+      }
+
+      .dashboard-table th {
+        background: var(--gradient-primary);
+        color: #fff;
+        padding: 1rem 0.75rem;
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-align: left;
+        border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .sortable-header {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        transition: all 0.2s ease;
+      }
+
+      .sortable-header:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .sort-icon {
+        margin-left: 0.5rem;
+        font-size: 0.875rem;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+      }
+
+      .sort-icon.active {
+        opacity: 1;
+      }
+
+      .dashboard-table td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .dashboard-table tr:hover {
+        background: rgba(99, 102, 241, 0.05);
+      }
+
+      .dashboard-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .status-active {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      .status-inactive {
+        background: linear-gradient(135deg, var(--text-muted), #475569);
+        color: #fff;
+      }
+
+      .status-pending {
+        background: linear-gradient(135deg, var(--warning-color), #d97706);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+
+      .status-completed {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+
+      .engagement-score {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 700;
+        font-size: 0.875rem;
+        border: 1px solid transparent;
+      }
+
+      .score-high {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      }
+
+      .score-medium {
+        background: linear-gradient(135deg, var(--warning-color), #d97706);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+      }
+
+      .score-low {
+        background: linear-gradient(135deg, var(--error-color), #dc2626);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+      }
+
+      .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .info-item {
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+      }
+
+      .info-item:hover {
+        background: rgba(99, 102, 241, 0.05);
+        margin: 0 -1rem;
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .info-value {
+        color: var(--text-secondary);
+        font-weight: 500;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 200px;
+        margin: 1rem 0;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: var(--text-muted);
+        font-style: italic;
+        background: rgba(99, 102, 241, 0.05);
+        border-radius: var(--border-radius-sm);
+        border: 2px dashed var(--border-color);
+      }
+
+      .no-data i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+      }
+
+      .tag {
+        display: inline-block;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+        color: var(--primary-light);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        margin: 0.125rem;
+        font-weight: 600;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        transition: all 0.2s ease;
+      }
+
+      .tag:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+        transform: translateY(-1px);
+      }
+
+      .recent-activity {
+        max-height: 350px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) var(--surface-color);
+      }
+
+      .recent-activity::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .recent-activity::-webkit-scrollbar-track {
+        background: var(--surface-color);
+        border-radius: 3px;
+      }
+
+      .recent-activity::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 3px;
+      }
+
+      .activity-item {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        border-radius: var(--border-radius-sm);
+        margin-bottom: 0.5rem;
+      }
+
+      .activity-item:hover {
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateX(4px);
+      }
+
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+
+      .activity-icon {
+        background: var(--gradient-primary);
+        color: #fff;
+        padding: 0.75rem;
+        border-radius: 50%;
+        font-size: 1rem;
+        min-width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-medium);
+      }
+
+      .activity-content {
+        flex: 1;
+      }
+
+      .activity-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        font-size: 0.95rem;
+      }
+
+      .activity-description {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+      }
+
+      .activity-time {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      @media (max-width: 1200px) {
+        .main-container {
+          padding: 1.5rem 0.5rem;
+        }
+        .dashboard-section {
+          padding: 0 0.25rem;
+        }
+      }
+
+      @media (max-width: 992px) {
+        .main-container {
+          padding: 1rem 0.25rem;
+        }
+        .dashboard-section {
+          margin-bottom: 1.5rem;
+          padding: 0;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.75rem;
+        }
+        .card-content {
+          padding: 1rem;
+        }
+        .card-header {
+          padding: 1rem;
+        }
+        .dashboard-title {
+          font-size: 1.125rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .main-container {
+          padding: 0.5rem 0;
+          margin-top: 60px;
+        }
+        .dashboard-section {
+          margin-bottom: 1rem;
+          padding: 0;
+        }
+        .stats-grid {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+        }
+        .dashboard-table {
+          font-size: 0.75rem;
+        }
+        .dashboard-table th,
+        .dashboard-table td {
+          padding: 0.75rem 0.5rem;
+        }
+        .card-content {
+          padding: 0.75rem;
+        }
+        .card-header {
+          padding: 0.75rem;
+        }
+        .dashboard-title {
+          font-size: 1rem;
+        }
+        .dashboard-title i {
+          font-size: 1.25rem;
+          margin-right: 0.5rem;
+        }
+        .stat-number {
+          font-size: 1.75rem;
+        }
+        .activity-item {
+          padding: 0.75rem;
+          gap: 0.75rem;
+        }
+        .activity-icon {
+          min-width: 36px;
+          height: 36px;
+          padding: 0.5rem;
+        }
+        .nav-wrapper .brand-logo {
+          font-size: 1.25rem;
+          padding-left: 1rem;
+        }
+        .brand-logo i {
+          font-size: 1.5rem;
+          margin-right: 0.5rem;
+        }
+      }
+
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        color: var(--text-secondary);
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .spinner {
+        border: 3px solid var(--border-color);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Custom scrollbar for webkit browsers */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--surface-color);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-light);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-wrapper container">
+        <a href="#" class="brand-logo">
+          <i class="material-icons">pets</i>
+          にゃんこエージェント管理パネル
+        </a>
+        <ul class="right hide-on-med-and-down">
+          <li style="color: #fff; padding: 0 20px; display: flex; align-items: center;">
+            <i class="material-icons" style="margin-right: 8px;">access_time</i>
+            <span id="current-time">読み込み中...</span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    
+    <div class="main-container">
+      <div class="container">
+        <div class="row" id="dashboard-columns" style="display: flex; flex-wrap: wrap;">
+          <!-- 上段: ユーザー統計と日次アナリティクスを2列表示 -->
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-users"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
+          </div>
+          
+          <!-- 中段: Discord ログセクション -->
+          <div class="col s12" style="order: 5;">
+            <div class="dashboard-section" id="dashboard-discord-logs"></div>
+          </div>
+          
+          <!-- その他のセクション -->
+          <div class="col s12 m6 l6" style="order: 10;">
+            <div class="dashboard-section" id="dashboard-events"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 11;">
+            <div class="dashboard-section" id="dashboard-podcasts"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 20;">
+            <div class="dashboard-section" id="dashboard-user-matches"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 21;">
+            <div class="dashboard-section" id="dashboard-topics"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 30;">
+            <div class="dashboard-section" id="dashboard-bot-actions"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 31;">
+            <div class="dashboard-section" id="dashboard-guilds"></div>
+          </div>
+          <div class="col s12" style="order: 40;">
+            <div class="dashboard-section" id="dashboard-admin-users"></div>
+          </div>
+          
+          <!-- 最下段: インタラクション統計を1列表示 -->
+          <div class="col s12" style="order: 50;">
+            <div class="dashboard-section" id="dashboard-interactions"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+      // Firebase設定
+      const firebaseConfig = {
+        apiKey: "AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo",
+        authDomain: "nyanco-bot.firebaseapp.com",
+        projectId: "nyanco-bot",
+        storageBucket: "nyanco-bot.firebasestorage.app",
+        messagingSenderId: "242432500390",
+        appId: "1:242432500390:web:73cbabfb788522326e0a67",
+        measurementId: "G-VR49RLP5NX"
+      };
+
+      // Firebase初期化とエラーハンドリング
+      let db = null;
+      let firebaseInitialized = false;
+      
+      try {
+        console.log('Firebase初期化開始...');
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseInitialized = true;
+        console.log('Firebase初期化完了');
+        
+        // Firestoreの接続テスト
+        db.enableNetwork().then(() => {
+          console.log('Firestore接続成功');
+        }).catch((error) => {
+          console.error('Firestore接続エラー:', error);
+        });
+        
+      } catch (error) {
+        console.error('Firebase初期化エラー:', error);
+        firebaseInitialized = false;
+      }
+
+      // AI 分析 API のベース URL
+      const AI_ANALYSIS_API_BASE = `https://asia-northeast1-nyanco-bot.cloudfunctions.net`;
+
+      // AI 分析結果をキャッシュする変数
+      let cachedAIAnalysis = null;
+      let lastAnalysisUpdate = null;
+
+      /**
+       * 接続しているサーバー情報を取得する関数（Firebase Functions API使用）
+       */
+      async function getConnectedGuildsData() {
+        try {
+          console.log('接続サーバー情報をAPIから取得中...');
+          
+          // Firebase Functionsの getConnectedGuilds API を呼び出し
+          const functions = firebase.functions();
+          const getConnectedGuilds = functions.httpsCallable('getConnectedGuilds');
+          
+          const result = await getConnectedGuilds();
+          console.log('接続サーバー情報取得成功:', result.data);
+          
+          return result.data;
+        } catch (error) {
+          console.error('接続サーバー情報取得エラー:', error);
+          
+          // フォールバックとしてFirestoreから直接取得
+          console.log('フォールバック: Firestoreから直接取得...');
+          try {
+            const guildsData = await getCollectionData('guilds');
+            const guilds = Object.values(guildsData || {}).map(guild => ({
+              ...guild,
+              isActive: false // APIからではないので非アクティブとマーク
+            }));
+            
+            return {
+              success: true,
+              guilds: guilds,
+              totalCount: guilds.length,
+              activeCount: 0
+            };
+          } catch (fallbackError) {
+            console.error('フォールバック取得も失敗:', fallbackError);
+            return {
+              success: false,
+              guilds: [],
+              totalCount: 0,
+              activeCount: 0,
+              error: fallbackError.message
+            };
+          }
+        }
+      }
+
+      // ユーザー名解決のためのキャッシュ
+      let usersCache = {};
+      let usersCacheLastUpdate = null;
+
+      /**
+       * ユーザーIDからユーザー名を解決する関数
+       */
+      function resolveUsername(userId, users = null) {
+        if (!userId) return 'Unknown User';
+        
+        // usersが提供されている場合はそれを使用
+        const userSource = users || usersCache;
+        
+        // ユーザーIDでの直接検索
+        if (userSource[userId]) {
+          const user = userSource[userId];
+          return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+        }
+        
+        // users配列の場合の検索
+        if (Array.isArray(userSource)) {
+          const user = userSource.find(u => u.id === userId || u.userId === userId);
+          if (user) {
+            return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+          }
+        }
+        
+        // usersオブジェクト内での検索
+        for (const key in userSource) {
+          const user = userSource[key];
+          if (user && (user.id === userId || user.userId === userId)) {
+            return user.displayName || user.username || `User_${userId.slice(0, 8)}`;
+          }
+        }
+        
+        // 見つからない場合はフォールバック
+        return `User_${userId.slice(0, 8)}`;
+      }
+
+      /**
+       * ユーザー名解決をバッチで行う関数
+       */
+      function resolveUsernames(userIds, users = null) {
+        const userMap = {};
+        if (!Array.isArray(userIds)) return userMap;
+        
+        userIds.forEach(userId => {
+          userMap[userId] = resolveUsername(userId, users);
+        });
+        
+        return userMap;
+      }
+
+      /**
+       * ユーザーキャッシュを更新する関数
+       */
+      function updateUsersCache(users) {
+        if (users) {
+          usersCache = users;
+          usersCacheLastUpdate = new Date();
+          console.log(`ユーザーキャッシュを更新しました (${Object.keys(users).length}ユーザー)`);
+        }
+      }
+
+      /**
+       * AI 分析 API を呼び出してリアルタイム分析結果を取得
+       */
+      async function fetchAIAnalysis() {
+        try {
+          console.log('AI 分析 API を呼び出しています...');
+          
+          const response = await fetch(`${AI_ANALYSIS_API_BASE}/analyzeDiscordLogs`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              // 'Authorization': 'Bearer YOUR_TOKEN' // 必要に応じて認証トークンを追加
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`API エラー: ${response.status} ${response.statusText}`);
+          }
+
+          const result = await response.json();
+          
+          if (result.success) {
+            cachedAIAnalysis = result.data;
+            lastAnalysisUpdate = new Date();
+            console.log('AI 分析結果を取得しました:', {
+              logCount: result.data.logCount,
+              adviceCount: result.data.aiAdvices.length,
+              healthScore: result.data.analysis.communityHealth.overall
+            });
+            return result.data;
+          } else {
+            throw new Error(result.error || 'AI 分析に失敗しました');
+          }
+
+        } catch (error) {
+          console.error('AI 分析 API エラー:', error);
+          
+          // エラーの詳細ログ
+          if (error.response) {
+            console.error('レスポンスエラー:', error.response);
+          }
+          if (error.message) {
+            console.error('エラーメッセージ:', error.message);
+          }
+          
+          // 500エラーの場合は空の分析結果を返す（エラーを隠す）
+          if (error.message && error.message.includes('500')) {
+            console.warn('AI分析APIが利用できません。サンプルデータまたは空のデータを使用します。');
+            return {
+              analysis: {
+                communityHealth: {
+                  overall: 0,
+                  participation: 0,
+                  engagement: 0,
+                  safety: 100
+                }
+              },
+              aiAdvices: [],
+              isDefault: true
+            };
+          }
+          
+          // その他のエラーは再スロー
+          throw error;
+        }
+      }
+
+
+
+      /**
+       * AI 分析結果をダッシュボードに反映
+       */
+      function updateDashboardWithAIAnalysis(analysisData) {
+        const { analysis, aiAdvices } = analysisData;
+        
+        // 既存の Discord ログセクションを更新
+        updateDiscordLogsSection(analysis, aiAdvices, analysisData.isDefault || false);
+      }
+
+      /**
+       * Discord ログセクションの更新（AI分析結果を使用）
+       */
+      function updateDiscordLogsSection(analysis, aiAdvices, isDefaultData = false) {
+        const discordLogsElement = document.getElementById('dashboard-discord-logs');
+        if (!discordLogsElement) return;
+
+        const getAdvicePriorityColor = (priority) => {
+          const colors = {
+            'critical': 'var(--error-color)',
+            'high': 'var(--warning-color)',
+            'medium': 'var(--accent-color)',
+            'low': 'var(--success-color)',
+            'info': 'var(--success-color)'
+          };
+          return colors[priority] || 'var(--text-muted)';
+        };
+
+        const getAdvicePriorityBg = (priority) => {
+          const backgrounds = {
+            'critical': 'rgba(239, 68, 68, 0.1)',
+            'high': 'rgba(245, 158, 11, 0.1)',
+            'medium': 'rgba(6, 182, 212, 0.1)',
+            'low': 'rgba(16, 185, 129, 0.1)',
+            'info': 'rgba(16, 185, 129, 0.1)'
+          };
+          return backgrounds[priority] || 'rgba(100, 116, 139, 0.1)';
+        };
+
+        const getAdvicePriorityLabel = (priority) => {
+          const labels = {
+            'critical': '緊急',
+            'high': '高',
+            'medium': '中',
+            'low': '低',
+            'info': '情報'
+          };
+          return labels[priority] || '不明';
+        };
+
+        discordLogsElement.innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+                              <h3 class="dashboard-title">
+                <i class="material-icons">analytics</i>
+                Discord ログ分析ダッシュボード
+              </h3>
+            </div>
+            <div class="card-content">
+              
+
+              <!-- AI運営アドバイス -->
+              <div style="margin-bottom: 2rem;">
+                <div class="info-label" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                  <span>
+                    <i class="material-icons" style="color: var(--primary-color); margin-right: 0.5rem;">psychology</i>
+                    Vertex AI による運営アドバイス
+                  </span>
+                  ${lastAnalysisUpdate ? `
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">
+                      <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">schedule</i>
+                      ${formatDate(lastAnalysisUpdate)}
+                    </span>
+                  ` : ''}
+                </div>
+                ${aiAdvices.map(advice => `
+                  <div style="margin-bottom: 1rem; padding: 1rem; border-radius: var(--border-radius-sm); border-left: 4px solid ${getAdvicePriorityColor(advice.priority)}; background: ${getAdvicePriorityBg(advice.priority)};">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                      <i class="material-icons" style="color: ${getAdvicePriorityColor(advice.priority)}; font-size: 1.5rem;">${advice.icon}</i>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-primary);">
+                          ${advice.title}
+                          <span style="background: ${getAdvicePriorityColor(advice.priority)}; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.7rem; margin-left: 0.5rem;">
+                            ${getAdvicePriorityLabel(advice.priority)}
+                          </span>
+                        </div>
+                        <div style="color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.5;">
+                          ${advice.message}
+                        </div>
+                        <div style="background: rgba(99, 102, 241, 0.1); padding: 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.2);">
+                          <div style="font-weight: 600; color: var(--primary-color); font-size: 0.875rem; margin-bottom: 0.25rem;">
+                            💡 推奨アクション:
+                          </div>
+                          <div style="color: var(--text-primary); font-size: 0.875rem;">
+                            ${advice.action}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- 投稿数ランキング -->
+              <div style="margin-bottom: 2rem;">
+                <div class="info-label" style="margin-bottom: 1rem;">
+                  <i class="material-icons" style="color: var(--primary-color); margin-right: 0.5rem;">leaderboard</i>
+                  投稿数ランキング (TOP 10)
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                  ${analysis.userPostRanking.slice(0, 10).map(({ username, count, ratio }, index) => `
+                    <div style="padding: 1rem; background: ${index === 0 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : index === 1 ? 'linear-gradient(135deg, #C0C0C0, #A9A9A9)' : index === 2 ? 'linear-gradient(135deg, #CD7F32, #A0522D)' : 'var(--surface-color)'}; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); text-align: center; position: relative;">
+                      <div style="font-size: 1.5rem; font-weight: 800; color: ${index < 3 ? '#fff' : 'var(--text-primary)'}; text-shadow: ${index < 3 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'};">
+                        #${index + 1}
+                      </div>
+                      <div style="font-weight: 700; font-size: 1rem; margin: 0.5rem 0; color: ${index < 3 ? '#fff' : 'var(--text-primary)'};">
+                        ${username}
+                      </div>
+                      <div style="font-size: 1.25rem; font-weight: 600; color: ${index < 3 ? '#fff' : 'var(--accent-color)'};">
+                        ${count} 投稿
+                      </div>
+                      <div style="font-size: 0.8rem; color: ${index < 3 ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)'}; margin-top: 0.25rem;">
+                        ${ratio.toFixed(1)}%
+                      </div>
+                      ${index === 0 ? '<i class="material-icons" style="position: absolute; top: 0.5rem; right: 0.5rem; color: #fff; font-size: 1.5rem;">emoji_events</i>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- チャンネル別アクティビティ -->
+              <div style="margin-bottom: 2rem;">
+                <div class="info-label" style="margin-bottom: 1rem;">
+                  <i class="material-icons" style="color: var(--accent-color); margin-right: 0.5rem;">tag</i>
+                  チャンネル別アクティビティ
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem;">
+                  ${analysis.channelActivity.map(({ channel, count, ratio }) => `
+                    <div style="padding: 0.75rem; background: var(--surface-color); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); text-align: center;">
+                      <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">
+                        #${channel}
+                      </div>
+                      <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-color);">
+                        ${count}
+                      </div>
+                      <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                        ${ratio.toFixed(1)}%
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- リアクション忘れ警告 -->
+              ${analysis.neglectedUsers.length > 0 ? `
+                <div style="margin-bottom: 2rem;">
+                  <div class="info-label" style="margin-bottom: 1rem;">
+                    <i class="material-icons" style="color: var(--warning-color); margin-right: 0.5rem;">notifications_active</i>
+                    リアクション不足のメンバー
+                  </div>
+                  <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--border-radius-sm); padding: 1rem;">
+                    ${analysis.neglectedUsers.map(user => `
+                      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(245, 158, 11, 0.2);">
+                        <div>
+                          <span style="font-weight: 600; color: var(--text-primary);">${user.username}</span>
+                          <span style="color: var(--text-secondary); font-size: 0.85rem; margin-left: 0.5rem;">
+                            ${user.posts}投稿・${user.reactions}リアクション
+                          </span>
+                        </div>
+                        <div style="background: var(--warning-color); color: white; padding: 0.25rem 0.75rem; border-radius: 16px; font-size: 0.8rem; font-weight: 600;">
+                          平均${user.neglectRate.toFixed(2)}/投稿
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- 不適合ワード検知 -->
+              ${analysis.suspiciousContent.length > 0 ? `
+                <div style="margin-bottom: 2rem;">
+                  <div class="info-label" style="margin-bottom: 1rem;">
+                    <i class="material-icons" style="color: var(--error-color); margin-right: 0.5rem;">report_problem</i>
+                    不適切表現の検知 (${analysis.suspiciousContent.length}件)
+                  </div>
+                  <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--border-radius-sm); padding: 1rem; max-height: 300px; overflow-y: auto;">
+                    ${analysis.suspiciousContent.slice(0, 10).map(conflict => `
+                      <div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.05); border-radius: var(--border-radius-sm); border-left: 3px solid ${
+                        conflict.severity === 'high' ? 'var(--error-color)' :
+                        conflict.severity === 'medium' ? 'var(--warning-color)' :
+                        'var(--text-muted)'
+                      };">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                          <div style="font-weight: 600; color: var(--text-primary);">${conflict.username}</div>
+                          <span style="background: ${
+                            conflict.severity === 'high' ? 'var(--error-color)' :
+                            conflict.severity === 'medium' ? 'var(--warning-color)' :
+                            'var(--text-muted)'
+                          }; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.7rem;">
+                            ${conflict.severity === 'high' ? '高リスク' :
+                              conflict.severity === 'medium' ? '中リスク' : '低リスク'}
+                          </span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; line-height: 1.4;">
+                          "${truncateText(conflict.content, 150)}"
+                        </div>
+                        <div>
+                          <span style="color: var(--text-muted); font-size: 0.75rem; margin-right: 0.5rem;">検知ワード:</span>
+                          ${conflict.words.map(word => `<span style="background: var(--error-color); color: white; padding: 0.125rem 0.375rem; border-radius: 6px; font-size: 0.7rem; margin-right: 0.25rem;">${word}</span>`).join('')}
+                        </div>
+                      </div>
+                    `).join('')}
+                    ${analysis.suspiciousContent.length > 10 ? `<div style="text-align: center; color: var(--text-muted); font-size: 0.875rem; padding: 0.5rem;">他${analysis.suspiciousContent.length - 10}件の検知結果があります</div>` : ''}
+                  </div>
+                </div>
+              ` : ''}
+
+              <!-- コミュニティ健康度 -->
+              <div style="margin-bottom: 2rem;">
+                <div class="info-label" style="margin-bottom: 1rem;">
+                  <i class="material-icons" style="color: var(--success-color); margin-right: 0.5rem;">health_and_safety</i>
+                  コミュニティ健康度
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                  <div style="text-align: center; padding: 1rem; background: var(--surface-color); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 2rem; font-weight: 800; color: ${analysis.communityHealth.participation >= 80 ? 'var(--success-color)' : analysis.communityHealth.participation >= 50 ? 'var(--warning-color)' : 'var(--error-color)'};">
+                      ${analysis.communityHealth.participation}%
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">参加度</div>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: var(--surface-color); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 2rem; font-weight: 800; color: ${analysis.communityHealth.engagement >= 80 ? 'var(--success-color)' : analysis.communityHealth.engagement >= 50 ? 'var(--warning-color)' : 'var(--error-color)'};">
+                      ${analysis.communityHealth.engagement}%
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">エンゲージメント</div>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: var(--surface-color); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                    <div style="font-size: 2rem; font-weight: 800; color: ${analysis.communityHealth.safety >= 90 ? 'var(--success-color)' : analysis.communityHealth.safety >= 70 ? 'var(--warning-color)' : 'var(--error-color)'};">
+                      ${analysis.communityHealth.safety}%
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 0.5rem;">安全性</div>
+                  </div>
+                  <div style="text-align: center; padding: 1rem; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); border-radius: var(--border-radius-sm); color: white;">
+                    <div style="font-size: 2rem; font-weight: 800;">
+                      ${analysis.communityHealth.overall}%
+                    </div>
+                    <div style="font-size: 0.875rem; margin-top: 0.5rem;">総合健康度</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 分析統計サマリー -->
+              <div style="margin-top: 1rem; padding: 1rem; background: rgba(99, 102, 241, 0.05); border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.1);">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">
+                  <i class="material-icons" style="vertical-align: middle; margin-right: 0.5rem;">assessment</i>
+                  AI 分析統計サマリー
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; font-size: 0.875rem;">
+                  <div>
+                    <span style="color: var(--text-secondary);">分析対象ユーザー:</span>
+                    <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${analysis.userPostRanking.length}名</span>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">アクティブチャンネル:</span>
+                    <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${analysis.channelActivity.length}個</span>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">不適切表現:</span>
+                    <span style="color: ${analysis.suspiciousContent.length > 0 ? 'var(--error-color)' : 'var(--success-color)'}; font-weight: 600; margin-left: 0.5rem;">${analysis.suspiciousContent.length}件</span>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">リアクション不足:</span>
+                    <span style="color: ${analysis.neglectedUsers.length > 3 ? 'var(--warning-color)' : 'var(--success-color)'}; font-weight: 600; margin-left: 0.5rem;">${analysis.neglectedUsers.length}名</span>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">AI アドバイス:</span>
+                    <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${aiAdvices.length}件</span>
+                  </div>
+                  <div>
+                    <span style="color: var(--text-secondary);">分析実行:</span>
+                    <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${isDefaultData ? 'デモモード' : '完了'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function formatDate(dateValue) {
+        if (!dateValue) return '-';
+        
+        let date;
+        
+        // Firestoreのタイムスタンプオブジェクトの場合
+        if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+          date = dateValue.toDate();
+        }
+        // Firestoreのタイムスタンプオブジェクト（seconds/nanoseconds形式）の場合
+        else if (dateValue && typeof dateValue === 'object' && dateValue.seconds) {
+          date = new Date(dateValue.seconds * 1000 + (dateValue.nanoseconds || 0) / 1000000);
+        }
+        // 文字列または数値の場合
+        else {
+          date = new Date(dateValue);
+        }
+        
+        if (isNaN(date.getTime())) return '-';
+        return date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP', {hour: '2-digit', minute: '2-digit'});
+      }
+
+      function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleDateString('ja-JP') + ' ' + now.toLocaleTimeString('ja-JP');
+        const timeElement = document.getElementById('current-time');
+        if (timeElement) {
+          timeElement.textContent = timeString;
+        }
+      }
+
+      function getEngagementClass(score) {
+        if (!score && score !== 0) return 'score-low';
+        if (score >= 80) return 'score-high';
+        if (score >= 50) return 'score-medium';
+        return 'score-low';
+      }
+
+      function getEventStatusClass(status) {
+        switch(status?.toLowerCase()) {
+          case 'scheduled': return 'status-pending';
+          case 'active': case 'live': return 'status-active';
+          case 'completed': case 'ended': return 'status-completed';
+          case 'cancelled': return 'status-inactive';
+          default: return 'status-inactive';
+        }
+      }
+
+      function getStatusClass(status) {
+        switch(status?.toLowerCase()) {
+          case 'active': case 'completed': case 'success': return 'status-active';
+          case 'pending': case 'in_progress': return 'status-pending';
+          default: return 'status-inactive';
+        }
+      }
+
+      function truncateText(text, maxLength = 50) {
+        if (!text) return '-';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+      }
+
+      function safeGet(obj, path, defaultValue = '-') {
+        try {
+          return path.split('.').reduce((current, key) => current?.[key], obj) ?? defaultValue;
+        } catch {
+          return defaultValue;
+        }
+      }
+
+      // ソート機能
+      let currentSort = { column: 'timestamp', direction: 'desc' };
+      let currentTopicsSort = { column: 'popularity', direction: 'desc' };
+      let currentGuildsSort = { column: 'name', direction: 'asc' };
+      let cachedInteractions = [];
+      let cachedTopics = [];
+      let cachedGuilds = [];
+
+      function sortData(data, column, direction = 'asc', dataType = 'interactions') {
+        return [...data].sort((a, b) => {
+          let aVal, bVal;
+          
+          // インタラクションデータのソート
+          if (dataType === 'interactions') {
+            if (column === 'timestamp') {
+              // タイムスタンプの場合は日付オブジェクトに変換して比較
+              aVal = a.timestamp ? new Date(a.timestamp.seconds ? a.timestamp.seconds * 1000 : a.timestamp) : new Date(0);
+              bVal = b.timestamp ? new Date(b.timestamp.seconds ? b.timestamp.seconds * 1000 : b.timestamp) : new Date(0);
+            } else if (column === 'username') {
+              aVal = (a.username || '').toLowerCase();
+              bVal = (b.username || '').toLowerCase();
+            } else if (column === 'channelName') {
+              aVal = (a.channelName || '').toLowerCase();
+              bVal = (b.channelName || '').toLowerCase();
+            } else if (column === 'content') {
+              aVal = (a.content || '').toLowerCase();
+              bVal = (b.content || '').toLowerCase();
+            } else if (column === 'metadata') {
+              // メタデータの場合はリアクション数で比較
+              aVal = safeGet(a, 'metadata.reactionCount', 0);
+              bVal = safeGet(b, 'metadata.reactionCount', 0);
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          } 
+          // トピックデータのソート
+          else if (dataType === 'topics') {
+            if (column === 'name') {
+              aVal = (a.name || '').toLowerCase();
+              bVal = (b.name || '').toLowerCase();
+            } else if (column === 'popularity') {
+              aVal = a.popularity || 0;
+              bVal = b.popularity || 0;
+            } else if (column === 'trendScore') {
+              aVal = a.trendScore || 0;
+              bVal = b.trendScore || 0;
+            } else if (column === 'keywords') {
+              aVal = (a.keywords || []).length;
+              bVal = (b.keywords || []).length;
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          }
+          // ギルドデータのソート
+          else if (dataType === 'guilds') {
+            if (column === 'name') {
+              aVal = (a.name || '').toLowerCase();
+              bVal = (b.name || '').toLowerCase();
+            } else if (column === 'totalMembers') {
+              aVal = safeGet(a, 'analytics.totalMembers', 0);
+              bVal = safeGet(b, 'analytics.totalMembers', 0);
+            } else if (column === 'activeMembers') {
+              aVal = safeGet(a, 'analytics.activeMembers', 0);
+              bVal = safeGet(b, 'analytics.activeMembers', 0);
+            } else if (column === 'averageEngagement') {
+              aVal = safeGet(a, 'analytics.averageEngagement', 0);
+              bVal = safeGet(b, 'analytics.averageEngagement', 0);
+            } else if (column === 'updatedAt') {
+              aVal = a.updatedAt ? new Date(a.updatedAt.seconds ? a.updatedAt.seconds * 1000 : a.updatedAt) : new Date(0);
+              bVal = b.updatedAt ? new Date(b.updatedAt.seconds ? b.updatedAt.seconds * 1000 : b.updatedAt) : new Date(0);
+            } else {
+              aVal = a[column] || '';
+              bVal = b[column] || '';
+            }
+          }
+          else {
+            aVal = a[column] || '';
+            bVal = b[column] || '';
+          }
+          
+          if (direction === 'asc') {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
+      }
+
+      function handleSort(column, tableId) {
+        // テーブルIDに応じて適切なソート状態を更新
+        if (tableId === 'interactions') {
+          if (currentSort.column === column) {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentSort.column = column;
+            currentSort.direction = column === 'timestamp' ? 'desc' : 'asc'; // 時刻はデフォルトで降順
+          }
+          // インタラクションテーブルを再描画
+          refreshInteractionsTable();
+        } 
+        else if (tableId === 'topics') {
+          if (currentTopicsSort.column === column) {
+            currentTopicsSort.direction = currentTopicsSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentTopicsSort.column = column;
+            currentTopicsSort.direction = column === 'name' ? 'asc' : 'desc'; // 名前以外はデフォルトで降順
+          }
+          // トピックテーブルを再描画
+          refreshTopicsTable();
+        }
+        else if (tableId === 'guilds') {
+          if (currentGuildsSort.column === column) {
+            currentGuildsSort.direction = currentGuildsSort.direction === 'asc' ? 'desc' : 'asc';
+          } else {
+            currentGuildsSort.column = column;
+            currentGuildsSort.direction = column === 'name' ? 'asc' : 'desc'; // 名前はデフォルトで昇順
+          }
+          // ギルドテーブルを再描画
+          refreshGuildsTable();
+        }
+      }
+
+      function getSortIcon(column, tableId = 'interactions') {
+        let currentSortState;
+        
+        if (tableId === 'interactions') {
+          currentSortState = currentSort;
+        } else if (tableId === 'topics') {
+          currentSortState = currentTopicsSort;
+        } else if (tableId === 'guilds') {
+          currentSortState = currentGuildsSort;
+        }
+        
+        if (currentSortState.column !== column) {
+          return '<i class="material-icons sort-icon">unfold_more</i>';
+        }
+        const icon = currentSortState.direction === 'asc' ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+        return `<i class="material-icons sort-icon active">${icon}</i>`;
+      }
+
+      // インタラクションテーブルを再描画する関数
+
+      // インタラクションテーブルを再描画する関数
+      function refreshInteractionsTable() {
+        if (cachedInteractions.length === 0) return;
+        
+        const sortedData = sortData(cachedInteractions, currentSort.column, currentSort.direction, 'interactions');
+        const totalInteractions = sortedData.length;
+        const messageCount = sortedData.filter(i => i.type === 'message').length;
+        const reactionCount = sortedData.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
+        const mentionCount = sortedData.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
+        const attachmentCount = sortedData.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
+        
+        document.getElementById('dashboard-interactions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">chat</i>
+                インタラクション統計
+              </h3>
+            </div>
+            <div class="card-content">
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-number">${totalInteractions}</span>
+                  <span class="stat-label">総インタラクション</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${messageCount}</span>
+                  <span class="stat-label">メッセージ</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${mentionCount}</span>
+                  <span class="stat-label">メンション</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-number">${attachmentCount}</span>
+                  <span class="stat-label">添付ファイル</span>
+                </div>
+              </div>
+              <div style="margin-top: 1rem; overflow-x:auto;">
+                <div style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                  <table class="dashboard-table">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                      <tr>
+                            <th class="sortable-header" onclick="handleSort('username', 'interactions')">
+                              ユーザー${getSortIcon('username', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('channelName', 'interactions')">
+                              チャンネル${getSortIcon('channelName', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('content', 'interactions')">
+                              メッセージ${getSortIcon('content', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('metadata', 'interactions')">
+                              メタデータ${getSortIcon('metadata', 'interactions')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('timestamp', 'interactions')">
+                              時刻${getSortIcon('timestamp', 'interactions')}
+                            </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${sortedData.slice(0, 50).map(i => `
+                        <tr>
+                          <td>
+                            <div style="font-weight: 600;">${i.username || '-'}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.userId || ''}</div>
+                          </td>
+                          <td>
+                            <div style="font-weight: 600;">#${i.channelName || '-'}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.guildName || ''}</div>
+                          </td>
+                          <td>
+                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                              ${truncateText(i.content, 100)}
+                            </div>
+                            ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                          </td>
+                          <td>
+                            <div style="font-size: 0.75rem;">
+                              ${safeGet(i, 'metadata.mentionCount', 0) > 0 ? `<span class="tag">メンション: ${i.metadata.mentionCount}</span>` : ''}
+                              ${safeGet(i, 'metadata.reactionCount', 0) > 0 ? `<span class="tag">リアクション: ${i.metadata.reactionCount}</span>` : ''}
+                              ${safeGet(i, 'metadata.hasAttachments', false) ? `<span class="tag">添付ファイル</span>` : ''}
+                              ${safeGet(i, 'metadata.hasEmbeds', false) ? `<span class="tag">埋め込み</span>` : ''}
+                            </div>
+                          </td>
+                          <td style="font-size: 0.75rem;">
+                            ${formatDate(i.timestamp)}
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+      
+      // トピックテーブルを再描画する関数
+      function refreshTopicsTable() {
+        if (cachedTopics.length === 0) return;
+        
+        const sortedData = sortData(cachedTopics, currentTopicsSort.column, currentTopicsSort.direction, 'topics');
+        
+        document.getElementById('dashboard-topics').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">local_offer</i>
+                トピック一覧
+              </h3>
+            </div>
+            <div class="card-content">
+              ${sortedData.length ? `
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th class="sortable-header" onclick="handleSort('name', 'topics')">
+                            トピック名${getSortIcon('name', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('popularity', 'topics')">
+                            人気度${getSortIcon('popularity', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('trendScore', 'topics')">
+                            トレンド${getSortIcon('trendScore', 'topics')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('keywords', 'topics')">
+                            キーワード${getSortIcon('keywords', 'topics')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sortedData.map(t => `
+                          <tr>
+                            <td style="font-weight: 600;">${t.name || '-'}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.popularity)}">
+                                ${(t.popularity || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.trendScore)}">
+                                ${(t.trendScore || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              ${(t.keywords || []).slice(0, 3).map(keyword => `<span class="tag">${keyword}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                              ` : '<div class="no-data"><i class="material-icons">local_offer</i><div>トピックデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+      }
+      
+      // ギルドテーブルを再描画する関数
+      function refreshGuildsTable() {
+        if (cachedGuilds.length === 0) return;
+        
+        const sortedData = sortData(cachedGuilds, currentGuildsSort.column, currentGuildsSort.direction, 'guilds');
+        
+        document.getElementById('dashboard-guilds').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">dns</i>
+                サーバー情報
+              </h3>
+            </div>
+            <div class="card-content">
+              ${sortedData.length ? `
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th class="sortable-header" onclick="handleSort('name', 'guilds')">
+                            サーバー名${getSortIcon('name', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('totalMembers', 'guilds')">
+                            総メンバー数${getSortIcon('totalMembers', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('activeMembers', 'guilds')">
+                            アクティブ${getSortIcon('activeMembers', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('averageEngagement', 'guilds')">
+                            平均エンゲージメント${getSortIcon('averageEngagement', 'guilds')}
+                          </th>
+                          <th class="sortable-header" onclick="handleSort('updatedAt', 'guilds')">
+                            最終更新${getSortIcon('updatedAt', 'guilds')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${sortedData.map(g => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${g.name || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.id || '-'}</div>
+                            </td>
+                            <td>${safeGet(g, 'analytics.totalMembers', 0)}</td>
+                            <td>${safeGet(g, 'analytics.activeMembers', 0)}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(safeGet(g, 'analytics.averageEngagement', 0))}">
+                                ${safeGet(g, 'analytics.averageEngagement', 0)}
+                              </span>
+                            </td>
+                            <td>${formatDate(g.updatedAt)}</td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                  <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
+                  ${sortedData.map(g => `
+                    <span class="tag">
+                      ${g.name || '-'}: 
+                      <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
+                        ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                      </span>
+                    </span>
+                  `).join('')}
+                </div>
+              ` : '<div class="no-data"><i class="material-icons">dns</i><div>ギルドデータがありません</div></div>'}
+            </div>
+          </div>
+        `;
+      }
+
+      // Firestoreからコレクションデータを取得
+      async function getCollectionData(collectionName) {
+        if (!firebaseInitialized || !db) {
+          console.warn(`Firebase未初期化のため${collectionName}コレクションをスキップ`);
+          return {};
+        }
+        
+        try {
+          console.log(`${collectionName}コレクションを取得中...`);
+          
+          // 接続状態をチェック
+          await db.enableNetwork();
+          
+          const snapshot = await db.collection(collectionName).get();
+          const data = {};
+          
+          snapshot.forEach(doc => {
+            const docData = doc.data();
+            data[doc.id] = {
+              id: doc.id,
+              ...docData
+            };
+          });
+          
+          console.log(`${collectionName}コレクション取得完了: ${Object.keys(data).length}件`);
+          return data;
+        } catch (error) {
+          console.error(`${collectionName}コレクションの取得エラー:`, error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name
+          });
+          
+          return {};
+        }
+      }
+
+      // Analytics用の専用データ取得関数
+      async function getAnalyticsData() {
+        if (!firebaseInitialized || !db) {
+          console.warn('Firebase未初期化のためAnalyticsデータをスキップ');
+          return {};
+        }
+        
+        try {
+          console.log('Analytics_sessionsコレクションを取得中...');
+          
+          // 接続状態をチェック
+          await db.enableNetwork();
+          
+          // 複数の可能なコレクション名を試す
+          const possibleCollections = ['analytics_sessions', 'analyticsSessions', 'daily_analytics'];
+          let analyticsData = {};
+          
+          for (const collectionName of possibleCollections) {
+            try {
+              const snapshot = await db.collection(collectionName).get();
+              if (!snapshot.empty) {
+                console.log(`${collectionName}コレクションからデータを発見: ${snapshot.size}件`);
+                snapshot.forEach(doc => {
+                  const docData = doc.data();
+                  analyticsData[doc.id] = {
+                    id: doc.id,
+                    ...docData
+                  };
+                });
+                break; // データが見つかったらループを抜ける
+              } else {
+                console.log(`${collectionName}コレクションは空です`);
+              }
+            } catch (collectionError) {
+              console.log(`${collectionName}コレクションアクセスエラー:`, collectionError.message);
+            }
+          }
+          
+          // 日付の古い順にソートして最新のものを取得しやすくする
+          const sortedData = Object.entries(analyticsData).sort(([, a], [, b]) => {
+            const dateA = a.date || a.session_date || a.createdAt || '1970-01-01';
+            const dateB = b.date || b.session_date || b.createdAt || '1970-01-01';
+            return new Date(dateB) - new Date(dateA);
+          });
+          
+          const result = Object.fromEntries(sortedData);
+          console.log(`Analytics取得完了: ${Object.keys(result).length}件`);
+          return result;
+          
+        } catch (error) {
+          console.error('Analytics データの取得エラー:', error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name
+          });
+          return {};
+        }
+      }
+
+      async function loadDashboard() {
+        // Firebase設定の検証
+        console.log('Firebase設定確認:', {
+          projectId: firebaseConfig.projectId,
+          authDomain: firebaseConfig.authDomain,
+          initialized: firebaseInitialized,
+          dbInstance: !!db
+        });
+        
+        // Show loading state
+        const sections = ['users', 'guilds', 'interactions', 'podcasts', 'events', 'user-matches', 'topics', 'admin-users', 'bot-actions', 'analytics-sessions', 'discord-logs'];
+        sections.forEach(section => {
+          document.getElementById(`dashboard-${section}`).innerHTML = `
+            <div class="dashboard-card">
+              <div class="loading">
+                <div class="spinner"></div>
+                ${section === 'discord-logs' ? 'AI分析を実行中...' : 'Firestoreからデータを読み込み中...'}
+                <div style="font-size: 0.8rem; margin-top: 0.5rem; color: var(--text-muted);">
+                  Firebase初期化: ${firebaseInitialized ? '✅' : '❌'}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        // AI分析の実行（非同期で実行）
+        fetchAIAnalysis().then(analysisData => {
+          console.log('AI分析完了、ダッシュボードを更新中...');
+          updateDashboardWithAIAnalysis(analysisData);
+        }).catch(error => {
+          console.error('AI分析に失敗しました:', error);
+          // エラー情報を表示（サンプルデータは使用しない）
+          document.getElementById('dashboard-discord-logs').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">analytics</i>
+                  Discord ログ分析ダッシュボード
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="no-data">
+                  <i class="material-icons" style="color: var(--error-color);">error</i>
+                  <div style="font-weight: 600; margin-bottom: 1rem;">分析データ取得エラー</div>
+                  <div style="margin-bottom: 1rem; color: var(--text-secondary);">
+                    Firebase Functionsから実際のDiscordログデータを取得できませんでした
+                  </div>
+                  <div style="font-size: 0.8rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm);">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">エラー詳細:</div>
+                    <div>${error.message || error}</div>
+                    <div style="margin-top: 0.5rem;">Firestoreの'interactions'コレクションにデータがあることを確認してください</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        // Firebase未初期化の場合は早期終了
+        if (!firebaseInitialized || !db) {
+          setTimeout(() => {
+            sections.filter(s => s !== 'discord-logs').forEach(section => {
+              document.getElementById(`dashboard-${section}`).innerHTML = `
+                <div class="dashboard-card">
+                  <div class="no-data">
+                    <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
+                    <div style="font-weight: 600; margin-bottom: 1rem;">Firebase初期化エラー</div>
+                    <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">
+                      ${!firebaseInitialized ? 'Firebase初期化に失敗しました' : 'Firestoreインスタンスが作成されていません'}
+                    </div>
+                    <div style="font-size: 0.8rem; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm); text-align: left;">
+                      <div style="font-weight: 600; margin-bottom: 0.5rem;">確認事項:</div>
+                      <div>• Firebase SDKが正しく読み込まれているか</div>
+                      <div>• プロジェクトIDが正しいか: ${firebaseConfig.projectId}</div>
+                      <div>• ネットワーク接続が正常か</div>
+                      <div>• Firestoreが有効になっているか</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+          }, 1000);
+          return;
+        }
+
+        try {
+          // Firestoreからデータを並列取得（guildsは新しいAPIから取得）
+          const [users, guildsData, interactions, podcasts, events, userMatches, topics, adminUsers, botActions, analyticsSessions] = await Promise.all([
+            getCollectionData('users'),
+            getConnectedGuildsData(), // 新しいAPI関数を使用
+            getCollectionData('interactions'),
+            getCollectionData('podcasts'),
+            getCollectionData('events'),
+            getCollectionData('user_matches'),
+            getCollectionData('topics'),
+            getCollectionData('admin_users'),
+            getCollectionData('bot_actions'),
+            getAnalyticsData(), // 専用関数を使用
+          ]);
+          
+          // guildsデータを既存の形式に変換
+          const guilds = {};
+          if (guildsData && guildsData.guilds) {
+            guildsData.guilds.forEach(guild => {
+              guilds[guild.id] = guild;
+            });
+          }
+
+          // ユーザーキャッシュを更新
+          updateUsersCache(users);
+
+          // ユーザー統計
+          const userList = Object.values(users || {});
+          const totalUsers = userList.length;
+          const activeUsers = userList.filter(u => u.isActive).length;
+          const avgEngagement = userList.length ? (userList.reduce((sum, u) => sum + (u.engagementScore || 0), 0) / userList.length).toFixed(1) : 0;
+          
+          document.getElementById('dashboard-users').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">group</i>
+                  ユーザー統計
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalUsers}</span>
+                    <span class="stat-label">総ユーザー</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${activeUsers}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${avgEngagement}</span>
+                    <span class="stat-label">平均スコア</span>
+                  </div>
+                </div>
+                ${userList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>ユーザー</th>
+                          <th>状態</th>
+                          <th>スコア</th>
+                          <th>関心分野</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${userList.slice(0, 5).map(u => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${u.username || '-'}</div>
+                              <div style="font-size: 0.8rem; color: var(--text-secondary);">${u.displayName || ''}</div>
+                            </td>
+                            <td>
+                              <span class="status-badge ${u.isActive ? 'status-active' : 'status-inactive'}">
+                                ${u.isActive ? 'アクティブ' : '非アクティブ'}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(u.engagementScore || 0)}">
+                                ${u.engagementScore || 0}
+                              </span>
+                            </td>
+                            <td>
+                              ${(u.interests || []).slice(0, 3).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">group</i><div>ユーザーデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // ギルド統計
+          const guildList = Object.values(guilds || {});
+          
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayGuilds = guildList;
+          
+          cachedGuilds = displayGuilds; // キャッシュに保存
+          
+          // 初期表示はサーバー名の昇順でソート
+          const sortedGuilds = displayGuilds.length > 0 ? sortData(displayGuilds, 'name', 'asc', 'guilds') : [];
+          
+          document.getElementById('dashboard-guilds').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">dns</i>
+                  接続サーバー情報 ${guildsData && guildsData.totalCount ? `(${guildsData.totalCount}サーバー)` : ''}
+                </h3>
+                ${guildsData && guildsData.totalCount > 0 ? `
+                  <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                    <span class="status-badge status-active">アクティブ: ${guildsData.activeCount}</span>
+                    <span class="status-badge">総数: ${guildsData.totalCount}</span>
+                  </div>
+                ` : ''}
+              </div>
+              <div class="card-content">
+                ${displayGuilds.length ? `
+                  <div style="overflow-x:auto;">
+                    <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('name', 'guilds')">
+                              サーバー名${getSortIcon('name', 'guilds')}
+                            </th>
+                            <th>ステータス</th>
+                            <th class="sortable-header" onclick="handleSort('memberCount', 'guilds')">
+                              メンバー数${getSortIcon('memberCount', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('channels.total', 'guilds')">
+                              チャンネル数${getSortIcon('channels.total', 'guilds')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('lastUpdated', 'guilds')">
+                              最終更新${getSortIcon('lastUpdated', 'guilds')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${sortedGuilds.map(g => `
+                            <tr>
+                              <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                  ${g.icon ? `<img src="${g.icon}" alt="アイコン" style="width: 24px; height: 24px; border-radius: 50%;">` : 
+                                    `<div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold;">${(g.name || 'S').charAt(0).toUpperCase()}</div>`}
+                                  <div>
+                                    <div style="font-weight: 600;">${g.name || '-'}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">ID: ${g.guildId || g.id || '-'}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <span class="status-badge ${g.isActive ? 'status-active' : 'status-inactive'}">
+                                  <i class="material-icons" style="font-size: 0.875rem; margin-right: 0.25rem;">${g.isActive ? 'wifi' : 'wifi_off'}</i>
+                                  ${g.isActive ? 'オンライン' : 'オフライン'}
+                                </span>
+                              </td>
+                              <td>${g.memberCount || safeGet(g, 'analytics.totalMembers', 0)}</td>
+                              <td>
+                                <div style="font-size: 0.9rem;">
+                                  ${safeGet(g, 'channels.total', 0)}
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    テキスト: ${safeGet(g, 'channels.text', 0)} / 音声: ${safeGet(g, 'channels.voice', 0)}
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div style="font-size: 0.9rem;">${formatDate(g.lastUpdated || g.updatedAt)}</div>
+                                ${g.features && g.features.length > 0 ? `
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                                    ${g.features.slice(0, 2).join(', ')}${g.features.length > 2 ? '...' : ''}
+                                  </div>
+                                ` : ''}
+                              </td>
+                            </tr>
+                          `).join('')}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  ${sortedGuilds.some(g => safeGet(g, 'botSettings.matchingEnabled') !== undefined) ? `
+                    <div style="margin-top: 1rem;">
+                      <div class="info-label" style="margin-bottom: 0.5rem;">マッチング機能ステータス</div>
+                      ${sortedGuilds.filter(g => safeGet(g, 'botSettings.matchingEnabled') !== undefined).map(g => `
+                        <span class="tag">
+                          ${g.name || '-'}: 
+                          <span class="status-badge ${safeGet(g, 'botSettings.matchingEnabled') === true ? 'status-active' : 'status-inactive'}" style="margin-left: 0.5rem;">
+                            ${safeGet(g, 'botSettings.matchingEnabled') === true ? '有効' : '無効'}
+                          </span>
+                        </span>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                ` : '<div class="no-data"><i class="material-icons">dns</i><div>接続されているサーバーがありません</div><div style="font-size: 0.9rem; margin-top: 0.5rem; color: var(--text-secondary);">BotがDiscordサーバーに招待されていない可能性があります</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // Discord ログ詳細セクションは後で処理する（sortedInteractions定義後）
+          // 一時的にプレースホルダーを作成
+          document.getElementById('dashboard-discord-logs').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">history</i>
+                  Discord ログ詳細
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  Discord ログデータを処理中...
+                </div>
+              </div>
+            </div>
+          `;
+
+          // アナリティクス統計
+          const analyticsList = Object.values(analyticsSessions || {});
+          console.log("Analytics data:", analyticsList); // デバッグ用
+          console.log("Analytics sessions raw:", analyticsSessions); // デバッグ用
+          
+          // 日付でソートして最新のデータを取得（複数の日付フィールド名に対応）
+          const latestAnalytics = analyticsList.length > 0 ? 
+            analyticsList.sort((a, b) => {
+              // 複数の可能な日付フィールド名をチェック
+              const dateA = a.date || a.session_date || a.sessionDate || a.createdAt || a.created_at;
+              const dateB = b.date || b.session_date || b.sessionDate || b.createdAt || b.created_at;
+              
+              const dateObjA = dateA ? (dateA.toDate ? dateA.toDate() : new Date(dateA)) : new Date(0);
+              const dateObjB = dateB ? (dateB.toDate ? dateB.toDate() : new Date(dateB)) : new Date(0);
+              
+              return dateObjB - dateObjA;
+            })[0] : null;
+          
+          console.log("Latest analytics:", latestAnalytics); // デバッグ用
+          console.log("Analytics list length:", analyticsList.length); // デバッグ用
+          
+          // 実際のデータがある場合の正規化処理
+          let normalizedAnalytics = null;
+          if (latestAnalytics) {
+            normalizedAnalytics = {
+              date: latestAnalytics.date || latestAnalytics.session_date || latestAnalytics.sessionDate || 
+                    (latestAnalytics.createdAt ? formatDate(latestAnalytics.createdAt) : new Date().toISOString().split('T')[0]),
+              activeUsers: latestAnalytics.activeUsers || latestAnalytics.active_users || latestAnalytics.userCount || 0,
+              messageCount: latestAnalytics.messageCount || latestAnalytics.message_count || latestAnalytics.totalMessages || 0,
+              newMembers: latestAnalytics.newMembers || latestAnalytics.new_members || latestAnalytics.joinedUsers || 0,
+              reengagements: latestAnalytics.reengagements || latestAnalytics.reengagement_count || 0,
+              topTopics: latestAnalytics.topTopics || latestAnalytics.top_topics || latestAnalytics.popularTopics || {},
+              channelActivity: latestAnalytics.channelActivity || latestAnalytics.channel_activity || latestAnalytics.channels || {}
+            };
+            console.log("Normalized analytics:", normalizedAnalytics); // デバッグ用
+          }
+          
+          // 正規化されたデータのみを使用（サンプルデータは使用しない）
+          const displayAnalytics = normalizedAnalytics;
+          
+          document.getElementById('dashboard-analytics-sessions').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">insights</i>
+                  日次アナリティクス
+                </h3>
+              </div>
+              <div class="card-content">
+                ${displayAnalytics ? `
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.activeUsers || 0}</span>
+                      <span class="stat-label">アクティブユーザー</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.messageCount || 0}</span>
+                      <span class="stat-label">メッセージ数</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.newMembers || 0}</span>
+                      <span class="stat-label">新規メンバー</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${displayAnalytics.reengagements || 0}</span>
+                      <span class="stat-label">再エンゲージメント</span>
+                    </div>
+                  </div>
+                  <ul class="info-list">
+                    <li class="info-item">
+                      <span class="info-label">データ日付</span>
+                      <span class="info-value">${displayAnalytics.date || new Date().toISOString().split('T')[0]}</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">データ状態</span>
+                      <span class="info-value">Firestore</span>
+                    </li>
+                    <li class="info-item">
+                      <span class="info-label">ドキュメントID</span>
+                      <span class="info-value">${latestAnalytics?.id || '-'}</span>
+                    </li>
+                  </ul>
+                  <div style="margin-top: 1rem;">
+                    <div class="info-label" style="margin-bottom: 0.5rem;">人気トピック</div>
+                    ${Object.entries(displayAnalytics.topTopics || {}).map(([topic, count]) => 
+                      `<span class="tag">${topic} (${count})</span>`
+                    ).join('')}
+                  </div>
+                  ${displayAnalytics.channelActivity ? `
+                    <div style="margin-top: 1rem;">
+                      <div class="info-label" style="margin-bottom: 0.5rem;">チャンネルアクティビティ</div>
+                      ${Object.entries(displayAnalytics.channelActivity).slice(0, 5).map(([channel, count]) => 
+                        `<span class="tag">#${channel}: ${count}</span>`
+                      ).join('')}
+                    </div>
+                  ` : ''}
+                ` : `
+                  <div class="no-data">
+                    <i class="material-icons">insights</i>
+                    <div>アナリティクスデータがありません</div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                      Firestoreの'analytics_sessions'コレクションにデータを追加してください
+                    </div>
+                  </div>
+                `}
+              </div>
+            </div>
+          `;
+
+          // インタラクション統計
+          const interactionList = Object.values(interactions || {});
+          
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayInteractions = interactionList;
+          
+          // 初期表示は時刻の降順でソート
+          const sortedInteractions = displayInteractions.length > 0 ? sortData(displayInteractions, 'timestamp', 'desc') : [];
+          cachedInteractions = displayInteractions; // キャッシュに保存
+          
+          const totalInteractions = displayInteractions.length;
+          const messageCount = displayInteractions.filter(i => i.type === 'message').length;
+          const reactionCount = displayInteractions.filter(i => safeGet(i, 'metadata.reactionCount', 0) > 0).length;
+          const mentionCount = displayInteractions.filter(i => safeGet(i, 'metadata.mentionCount', 0) > 0).length;
+          const attachmentCount = displayInteractions.filter(i => safeGet(i, 'metadata.hasAttachments', false)).length;
+          
+          document.getElementById('dashboard-interactions').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">chat</i>
+                  インタラクション統計
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalInteractions}</span>
+                    <span class="stat-label">総インタラクション</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${messageCount}</span>
+                    <span class="stat-label">メッセージ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${mentionCount}</span>
+                    <span class="stat-label">メンション</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${attachmentCount}</span>
+                    <span class="stat-label">添付ファイル</span>
+                  </div>
+                </div>
+                ${displayInteractions.length ? `
+                  <div style="margin-top: 1rem; overflow-x:auto;">
+                    <div style="max-height: 500px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('username', 'interactions')">
+                              ユーザー${getSortIcon('username')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('channelName', 'interactions')">
+                              チャンネル${getSortIcon('channelName')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('content', 'interactions')">
+                              メッセージ${getSortIcon('content')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('metadata', 'interactions')">
+                              メタデータ${getSortIcon('metadata')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('timestamp', 'interactions')">
+                              時刻${getSortIcon('timestamp')}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${sortData(displayInteractions, currentSort.column, currentSort.direction, 'interactions').slice(0, 100).map(i => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${i.username || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.userId || ''}</div>
+                            </td>
+                            <td>
+                              <div style="font-weight: 600;">#${i.channelName || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${i.guildName || ''}</div>
+                            </td>
+                            <td>
+                              <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                                ${truncateText(i.content, 100)}
+                              </div>
+                              ${(i.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${i.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                            </td>
+                            <td>
+                              <div style="font-size: 0.75rem;">
+                                ${safeGet(i, 'metadata.mentionCount', 0) > 0 ? `<span class="tag">メンション: ${i.metadata.mentionCount}</span>` : ''}
+                                ${safeGet(i, 'metadata.reactionCount', 0) > 0 ? `<span class="tag">リアクション: ${i.metadata.reactionCount}</span>` : ''}
+                                ${safeGet(i, 'metadata.hasAttachments', false) ? `<span class="tag">添付ファイル</span>` : ''}
+                                ${safeGet(i, 'metadata.hasEmbeds', false) ? `<span class="tag">埋め込み</span>` : ''}
+                              </div>
+                            </td>
+                            <td style="font-size: 0.75rem;">
+                              ${formatDate(i.timestamp)}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">chat</i><div>インタラクションデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // Discord ログ詳細セクション（sortedInteractions定義後）
+          const recentLogs = sortedInteractions.slice(0, 20);
+          const logTypeStats = {};
+          displayInteractions.forEach(log => {
+            const type = log.type || 'unknown';
+            logTypeStats[type] = (logTypeStats[type] || 0) + 1;
+          });
+
+          // ログタイプの日本語名マッピング
+          const logTypeNames = {
+            'message': 'メッセージ投稿',
+            'message_edit': 'メッセージ編集',
+            'message_delete': 'メッセージ削除',
+            'reaction_add': 'リアクション追加',
+            'reaction_remove': 'リアクション削除',
+            'member_join': 'メンバー参加',
+            'member_leave': 'メンバー退出',
+            'scheduled_event_create': 'イベント作成',
+            'scheduled_event_update': 'イベント更新',
+            'scheduled_event_delete': 'イベント削除',
+            'scheduled_event_user_add': 'イベント参加',
+            'scheduled_event_user_remove': 'イベント離脱',
+            'bot_action': 'ボットアクション'
+          };
+
+          // ログレベルに応じたアイコンとスタイル
+          const getLogIcon = (type) => {
+            const icons = {
+              'message': 'chat',
+              'message_edit': 'edit',
+              'message_delete': 'delete',
+              'reaction_add': 'add_reaction',
+              'reaction_remove': 'remove_circle',
+              'member_join': 'person_add',
+              'member_leave': 'person_remove',
+              'scheduled_event_create': 'event',
+              'scheduled_event_update': 'update',
+              'scheduled_event_delete': 'event_busy',
+              'scheduled_event_user_add': 'group_add',
+              'scheduled_event_user_remove': 'group_remove',
+              'bot_action': 'smart_toy'
+            };
+            return icons[type] || 'info';
+          };
+
+          const getLogColor = (type) => {
+            const colors = {
+              'message': 'var(--primary-color)',
+              'message_edit': 'var(--warning-color)',
+              'message_delete': 'var(--error-color)',
+              'reaction_add': 'var(--success-color)',
+              'reaction_remove': '#64748b',
+              'member_join': 'var(--success-color)',
+              'member_leave': 'var(--error-color)',
+              'scheduled_event_create': 'var(--accent-color)',
+              'scheduled_event_update': 'var(--warning-color)',
+              'scheduled_event_delete': 'var(--error-color)',
+              'scheduled_event_user_add': 'var(--primary-color)',
+              'scheduled_event_user_remove': '#64748b',
+              'bot_action': 'var(--secondary-color)'
+            };
+            return colors[type] || 'var(--text-muted)';
+          };
+
+          document.getElementById('dashboard-discord-logs').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">history</i>
+                  Discord ログ詳細
+                </h3>
+              </div>
+              <div class="card-content">
+                
+                <!-- ログタイプ統計 -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                  ${Object.entries(logTypeStats).slice(0, 6).map(([type, count]) => `
+                    <div class="stat-item">
+                      <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <i class="material-icons" style="color: ${getLogColor(type)}; margin-right: 0.5rem; font-size: 1.2rem;">${getLogIcon(type)}</i>
+                        <span class="stat-number" style="font-size: 1.5rem;">${count}</span>
+                      </div>
+                      <span class="stat-label" style="font-size: 0.8rem;">${logTypeNames[type] || type}</span>
+                    </div>
+                  `).join('')}
+                </div>
+
+                <!-- リアルタイムログストリーム -->
+                <div style="margin-bottom: 1rem;">
+                  <div class="info-label" style="margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span>最新ログ (${recentLogs.length}件)</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">
+                      <i class="material-icons" style="font-size: 0.875rem; vertical-align: middle; margin-right: 0.25rem;">update</i>
+                      リアルタイム更新
+                    </span>
+                  </div>
+                  
+                  <div style="max-height: 600px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm);">
+                    ${recentLogs.map(log => `
+                      <div class="activity-item" style="border-bottom: 1px solid var(--border-color); padding: 1rem; margin: 0;">
+                        <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                          <div style="background: linear-gradient(135deg, ${getLogColor(log.type)}, ${getLogColor(log.type)}99); color: #fff; padding: 0.5rem; border-radius: 50%; min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                            <i class="material-icons" style="font-size: 1rem;">${getLogIcon(log.type)}</i>
+                          </div>
+                          
+                          <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                              <span style="font-weight: 700; color: var(--text-primary);">${logTypeNames[log.type] || log.type}</span>
+                              <span style="background: rgba(99, 102, 241, 0.1); color: var(--primary-color); padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                                ${log.type}
+                              </span>
+                              <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: auto;">
+                                ${formatDate(log.timestamp)}
+                              </span>
+                            </div>
+                            
+                            <div style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                              <strong>ユーザー:</strong> ${log.username || resolveUsername(log.userId)} (ID: ${log.userId || '-'})
+                              ${log.guildName ? `<br><strong>サーバー:</strong> ${log.guildName}` : ''}
+                              ${log.channelName ? `<br><strong>チャンネル:</strong> #${log.channelName}` : ''}
+                            </div>
+                            
+                            ${log.content ? `
+                              <div style="background: rgba(99, 102, 241, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--primary-color);">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">メッセージ内容:</div>
+                                <div style="color: var(--text-secondary); line-height: 1.4; word-break: break-word;">
+                                  ${truncateText(log.content, 200)}
+                                </div>
+                              </div>
+                            ` : ''}
+                            
+                            ${log.eventName ? `
+                              <div style="background: rgba(6, 182, 212, 0.05); padding: 0.75rem; border-radius: var(--border-radius-sm); margin-bottom: 0.5rem; border-left: 3px solid var(--accent-color);">
+                                <div style="font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary);">イベント:</div>
+                                <div style="color: var(--text-secondary);">${log.eventName}</div>
+                              </div>
+                            ` : ''}
+                            
+                            <!-- メタデータ表示 -->
+                            ${log.metadata ? `
+                              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                                ${Object.entries(log.metadata).slice(0, 4).map(([key, value]) => {
+                                  if (value === null || value === undefined || value === false) return '';
+                                  const displayValue = typeof value === 'boolean' ? (value ? '✓' : '✗') : 
+                                                     typeof value === 'number' ? value :
+                                                     typeof value === 'string' ? (value.length > 20 ? value.substring(0, 20) + '...' : value) :
+                                                     'オブジェクト';
+                                  return `<span style="background: rgba(100, 116, 139, 0.1); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 6px; font-size: 0.7rem;">${key}: ${displayValue}</span>`;
+                                }).join('')}
+                              </div>
+                            ` : ''}
+                            
+                            <!-- キーワード表示 -->
+                            ${(log.keywords || []).length > 0 ? `
+                              <div style="margin-top: 0.5rem;">
+                                ${log.keywords.slice(0, 5).map(keyword => `<span class="tag" style="font-size: 0.7rem;">${keyword}</span>`).join('')}
+                              </div>
+                            ` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                
+                <!-- ログ統計サマリー -->
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(99, 102, 241, 0.05); border-radius: var(--border-radius-sm); border: 1px solid rgba(99, 102, 241, 0.1);">
+                  <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">ログ統計</div>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; font-size: 0.875rem;">
+                    <div>
+                      <span style="color: var(--text-secondary);">総ログ数:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${totalInteractions}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">ユニークユーザー:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.userId).filter(Boolean)).size}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">アクティブチャンネル:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${new Set(displayInteractions.map(i => i.channelName).filter(Boolean)).size}</span>
+                    </div>
+                    <div>
+                      <span style="color: var(--text-secondary);">最新ログ:</span>
+                      <span style="color: var(--text-primary); font-weight: 600; margin-left: 0.5rem;">${recentLogs.length > 0 ? formatDate(recentLogs[0].timestamp) : '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          // イベント
+          const eventList = Object.values(events || {});
+          const totalEvents = eventList.length;
+          const activeEvents = eventList.filter(e => e.isActive).length;
+          const scheduledEvents = eventList.filter(e => e.status === 'scheduled').length;
+          const voiceEvents = eventList.filter(e => e.entityType === 'voice').length;
+          
+          document.getElementById('dashboard-events').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">event</i>
+                  イベント情報
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${totalEvents}</span>
+                    <span class="stat-label">総イベント</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${activeEvents}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${scheduledEvents}</span>
+                    <span class="stat-label">予定済み</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${voiceEvents}</span>
+                    <span class="stat-label">音声イベント</span>
+                  </div>
+                </div>
+                ${eventList.length ? `
+                  <div style="margin-top: 1rem; overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>イベント名</th>
+                          <th>ステータス</th>
+                          <th>タイプ</th>
+                          <th>開始時刻</th>
+                          <th>参加者</th>
+                          <th>ギルド</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${eventList.map(e => `
+                          <tr>
+                            <td>
+                              <div style="font-weight: 600;">${e.name || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ID: ${e.eventId || ''}
+                              </div>
+                              ${(e.keywords || []).length > 0 ? `<div style="margin-top: 0.25rem;">${e.keywords.slice(0, 2).map(k => `<span class="tag">${k}</span>`).join('')}</div>` : ''}
+                            </td>
+                            <td>
+                              <span class="status-badge ${getStatusClass(e.status)}">
+                                ${e.status || '-'}
+                              </span>
+                              ${e.isActive ? '<div style="font-size: 0.7rem; color: var(--success-color); margin-top: 0.25rem;">✓ アクティブ</div>' : '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">非アクティブ</div>'}
+                            </td>
+                            <td>
+                              <span class="tag">${e.entityType || '-'}</span>
+                              ${e.privacyLevel ? `<div style="font-size: 0.7rem; margin-top: 0.25rem;">${e.privacyLevel}</div>` : ''}
+                            </td>
+                            <td style="font-size: 0.8rem;">
+                              <div><strong>開始:</strong> ${formatDate(e.startTime)}</div>
+                              ${e.endTime ? `<div><strong>終了:</strong> ${formatDate(e.endTime)}</div>` : '<div style="color: var(--text-muted);">終了時刻未設定</div>'}
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(e.userCount || 0)}">
+                                ${e.userCount || 0}人
+                              </span>
+                            </td>
+                            <td>
+                              <div style="font-weight: 600;">${e.guildName || '-'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">${e.guildId || ''}</div>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">event</i><div>イベントデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // ポッドキャスト
+          const podcastList = Object.values(podcasts || {});
+          document.getElementById('dashboard-podcasts').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">mic</i>
+                  ポッドキャスト
+                </h3>
+              </div>
+              <div class="card-content">
+                <div style="margin-bottom: 1rem;">
+                  <button id="create-podcast-btn" style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+                  " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'">
+                    <i class="material-icons" style="font-size: 18px;">add</i>
+                    過去1週間のポッドキャストを作成
+                  </button>
+                </div>
+                ${podcastList.length ? `
+                  <div class="recent-activity">
+                    ${podcastList.slice(0, 3).map(p => `
+                      <div class="activity-item">
+                        <div class="activity-icon">
+                          <i class="material-icons">mic</i>
+                        </div>
+                        <div class="activity-content">
+                          <div class="activity-title">${p.title || '-'}</div>
+                          <div class="activity-description">${truncateText(p.content)}</div>
+                          <div class="activity-time">
+                            ${formatDate(p.publishedAt)} | 閲覧数: ${p.views || 0}
+                          </div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">mic</i><div>ポッドキャストデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // ユーザーマッチング
+          const matchList = Object.values(userMatches || {});
+          
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayMatches = matchList;
+          
+          document.getElementById('dashboard-user-matches').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">people</i>
+                  ユーザーマッチング
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">${displayMatches.length}</span>
+                    <span class="stat-label">総マッチ数</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${displayMatches.filter(m => m.status === 'active').length}</span>
+                    <span class="stat-label">アクティブ</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${displayMatches.filter(m => m.status === 'completed').length}</span>
+                    <span class="stat-label">完了</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${(displayMatches.reduce((sum, m) => sum + (m.matchScore || 0), 0) / displayMatches.length * 100).toFixed(0)}</span>
+                    <span class="stat-label">平均スコア</span>
+                  </div>
+                </div>
+
+                ${displayMatches.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>ユーザー</th>
+                          <th>共通関心</th>
+                          <th>スコア</th>
+                          <th>状態</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${displayMatches.slice(0, 5).map(m => `
+                          <tr>
+                            <td>
+                              <div style="font-size: 0.85rem;">
+                                ${resolveUsername(m.user1Id) || '-'} ↔ ${resolveUsername(m.user2Id) || '-'}
+                              </div>
+                              <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                ID: ${m.user1Id || '-'} ↔ ${m.user2Id || '-'}
+                              </div>
+                            </td>
+                            <td>
+                              ${(m.commonInterests || []).slice(0, 2).map(interest => `<span class="tag">${interest}</span>`).join('')}
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass((m.matchScore || 0) * 100)}">
+                                ${((m.matchScore || 0) * 100).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="status-badge ${getStatusClass(m.status)}">
+                                ${m.status || '-'}
+                              </span>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">people</i><div>マッチングデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // トピック一覧
+          const topicList = Object.values(topics || {});
+          
+          // 実際のデータのみを使用（サンプルデータは使用しない）
+          const displayTopics = topicList;
+          
+          cachedTopics = displayTopics; // キャッシュに保存
+          
+          // 初期表示は人気度の降順でソート
+          const sortedTopics = displayTopics.length > 0 ? sortData(displayTopics, 'popularity', 'desc', 'topics') : [];
+          
+          document.getElementById('dashboard-topics').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">local_offer</i>
+                  トピック一覧
+                </h3>
+              </div>
+              <div class="card-content">
+
+                ${displayTopics.length ? `
+                  <div style="overflow-x:auto;">
+                    <div style="max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--primary-color) var(--surface-color);">
+                      <table class="dashboard-table">
+                        <thead style="position: sticky; top: 0; z-index: 10;">
+                          <tr>
+                            <th class="sortable-header" onclick="handleSort('name', 'topics')">
+                              トピック名${getSortIcon('name', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('popularity', 'topics')">
+                              人気度${getSortIcon('popularity', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('trendScore', 'topics')">
+                              トレンド${getSortIcon('trendScore', 'topics')}
+                            </th>
+                            <th class="sortable-header" onclick="handleSort('keywords', 'topics')">
+                              キーワード${getSortIcon('keywords', 'topics')}
+                            </th>
+                          </tr>
+                        </thead>
+                      <tbody>
+                        ${sortedTopics.map(t => `
+                          <tr>
+                            <td style="font-weight: 600;">${t.name || '-'}</td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.popularity)}">
+                                ${(t.popularity || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              <span class="engagement-score ${getEngagementClass(t.trendScore)}">
+                                ${(t.trendScore || 0).toFixed(0)}
+                              </span>
+                            </td>
+                            <td>
+                              ${(t.keywords || []).slice(0, 3).map(keyword => `<span class="tag">${keyword}</span>`).join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">local_offer</i><div>トピックデータがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+          // ボットアクション（改良版）
+          await loadBotActionsEnhanced();
+
+          // 管理者ユーザー
+          const adminList = Object.values(adminUsers || {});
+          document.getElementById('dashboard-admin-users').innerHTML = `
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">admin_panel_settings</i>
+                  管理者ユーザー
+                </h3>
+              </div>
+              <div class="card-content">
+                ${adminList.length ? `
+                  <div style="overflow-x:auto;">
+                    <table class="dashboard-table">
+                      <thead>
+                        <tr>
+                          <th>Email</th>
+                          <th>ロール</th>
+                          <th>最終ログイン</th>
+                          <th>権限</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${adminList.map(a => `
+                          <tr>
+                            <td style="font-weight: 600;">${a.email}</td>
+                            <td>
+                              <span class="status-badge status-active">${a.role}</span>
+                            </td>
+                            <td>${formatDate(a.lastLogin)}</td>
+                            <td>
+                              ${Object.entries(a.permissions || {})
+                                .filter(([k, v]) => v)
+                                .map(([k]) => `<span class="tag">${k}</span>`)
+                                .join('')}
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                ` : '<div class="no-data"><i class="material-icons">admin_panel_settings</i><div>管理者データがありません</div></div>'}
+              </div>
+            </div>
+          `;
+
+        } catch (error) {
+          console.error('Firestoreからのデータ読み込みに失敗しました:', error);
+          console.error('エラー詳細:', {
+            code: error.code,
+            message: error.message,
+            name: error.name,
+            firebaseInitialized: firebaseInitialized,
+            dbInstance: !!db
+          });
+          
+          // エラーの詳細情報を準備
+          let errorDetails = '';
+          if (!firebaseInitialized) {
+            errorDetails = 'Firebase初期化に失敗しました';
+          } else if (!db) {
+            errorDetails = 'Firestoreインスタンスが作成されていません';
+          } else if (error.code) {
+            switch (error.code) {
+              case 'permission-denied':
+                errorDetails = 'アクセス権限がありません（Firestoreルールを確認してください）';
+                break;
+              case 'unavailable':
+                errorDetails = 'Firestoreサービスが利用できません（ネットワーク接続を確認してください）';
+                break;
+              case 'unauthenticated':
+                errorDetails = '認証が必要です';
+                break;
+              default:
+                errorDetails = `エラーコード: ${error.code} - ${error.message}`;
+            }
+          } else {
+            errorDetails = error.message || '不明なエラーが発生しました';
+          }
+          
+          sections.forEach(section => {
+            document.getElementById(`dashboard-${section}`).innerHTML = `
+              <div class="dashboard-card">
+                <div class="no-data">
+                  <i class="material-icons" style="font-size: 3rem; color: var(--error-color);">error</i>
+                  <div style="font-weight: 600; margin-bottom: 1rem;">Firestoreからのデータ読み込みに失敗しました</div>
+                  <div style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">${errorDetails}</div>
+                  <div style="font-size: 0.8rem; margin-top: 1rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: var(--border-radius-sm); text-align: left;">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">デバッグ情報:</div>
+                    <div>Firebase初期化: ${firebaseInitialized ? '✅' : '❌'}</div>
+                    <div>Firestoreインスタンス: ${db ? '✅' : '❌'}</div>
+                    <div>エラーコード: ${error.code || 'なし'}</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.7rem;">ブラウザのデベロッパーツール（F12）でコンソールを確認してください</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+        }
+      }
+
+      // ポッドキャスト作成関数
+      async function createWeeklyPodcast() {
+        const btn = document.getElementById('create-podcast-btn');
+        const originalText = btn.innerHTML;
+        
+        try {
+          // ボタンを無効化してローディング状態にする
+          btn.disabled = true;
+          btn.innerHTML = `
+            <div class="spinner" style="width: 18px; height: 18px; margin-right: 8px;"></div>
+            作成中...
+          `;
+          btn.style.cursor = 'not-allowed';
+          btn.style.opacity = '0.7';
+          
+          // Cloud Functionを呼び出し
+          console.log('ポッドキャスト作成APIを呼び出し中...');
+          
+          const functions = firebase.functions('asia-northeast1'); // リージョンを指定
+          const createPodcast = functions.httpsCallable('createWeeklyPodcast');
+          
+          const result = await createPodcast();
+          
+          console.log('ポッドキャスト作成結果:', result);
+          
+          if (result.data.success) {
+            // 成功時のメッセージ表示
+            btn.innerHTML = `
+              <i class="material-icons" style="font-size: 18px;">check</i>
+              作成開始しました
+            `;
+            btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            
+            // 3秒後に元の状態に戻す
+            setTimeout(() => {
+              btn.innerHTML = originalText;
+              btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+              btn.disabled = false;
+              btn.style.cursor = 'pointer';
+              btn.style.opacity = '1';
+            }, 3000);
+            
+            // ダッシュボードを再読み込み
+            setTimeout(loadDashboard, 2000);
+            
+          } else {
+            throw new Error(result.data.message || 'ポッドキャスト作成に失敗しました');
+          }
+          
+        } catch (error) {
+          console.error('ポッドキャスト作成エラー:', error);
+          
+          // エラー時のメッセージ表示
+          btn.innerHTML = `
+            <i class="material-icons" style="font-size: 18px;">error</i>
+            作成に失敗しました
+          `;
+          btn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+          
+          // 3秒後に元の状態に戻す
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            btn.disabled = false;
+            btn.style.cursor = 'pointer';
+            btn.style.opacity = '1';
+          }, 3000);
+          
+          // エラーの詳細をコンソールに表示
+          if (error.code) {
+            console.error('Firebase Functions エラーコード:', error.code);
+            console.error('Firebase Functions エラーメッセージ:', error.message);
+          }
+        }
+      }
+
+      /**
+       * Bot Actions強化版データ読み込み関数
+       */
+      async function loadBotActionsEnhanced() {
+        try {
+          console.log('Bot Actions強化版データを読み込み中...');
+          
+          // Firebase FunctionsのBot Actions APIを呼び出し
+          const apiUrl = `${AI_ANALYSIS_API_BASE}/getBotActionsHistory?limit=50`;
+          
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer dummy-token'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const result = await response.json();
+          console.log('Bot Actions API レスポンス:', result);
+          
+          if (result.success && result.data) {
+            renderBotActionsEnhanced(result.data, result.stats);
+          } else {
+            // APIでデータが取得できない場合、Firestoreから直接取得
+            await loadBotActionsFromFirestore();
+          }
+          
+        } catch (error) {
+          console.error('Bot Actions API 呼び出しエラー:', error);
+          // APIエラー時はFirestoreから直接取得
+          await loadBotActionsFromFirestore();
+        }
+      }
+
+      /**
+       * Firestoreから直接Bot Actionsデータを取得
+       */
+      async function loadBotActionsFromFirestore() {
+        try {
+          console.log('Firestoreから直接Bot Actionsデータを取得中...');
+          
+          const botActionsSnapshot = await db.collection('bot_actions')
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .get();
+          
+          const botActionsData = [];
+          botActionsSnapshot.forEach(doc => {
+            botActionsData.push({
+              id: doc.id,
+              ...doc.data(),
+              timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp)
+            });
+          });
+          
+          // ユーザー名を解決（キャッシュを使用）
+          const enrichedData = botActionsData.map(action => ({
+            ...action,
+            username: resolveUsername(action.userId) || 'Unknown'
+          }));
+          
+          // 統計情報を生成
+          const stats = generateBotActionStats(enrichedData);
+          
+          renderBotActionsEnhanced(enrichedData, stats);
+          
+        } catch (error) {
+          console.error('Firestore Bot Actions 取得エラー:', error);
+          renderBotActionsError(error);
+        }
+      }
+
+
+      /**
+       * Bot Action統計情報を生成
+       */
+      function generateBotActionStats(actions) {
+        const stats = {
+          total: actions.length,
+          byActionType: {},
+          byStatus: {},
+          byCharacter: {},
+          recentActivity: actions.slice(0, 10)
+        };
+
+        actions.forEach(action => {
+          // アクション種別統計
+          const actionType = action.actionType || 'unknown';
+          stats.byActionType[actionType] = (stats.byActionType[actionType] || 0) + 1;
+
+          // ステータス統計
+          const status = action.status || 'unknown';
+          stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+
+          // キャラクター統計
+          const character = action.botCharacter || action.payload?.character || 'unknown';
+          stats.byCharacter[character] = (stats.byCharacter[character] || 0) + 1;
+        });
+
+        return stats;
+      }
+
+      /**
+       * Bot Actions強化版表示
+       */
+      function renderBotActionsEnhanced(actions, stats) {
+        const actionTypeIcons = {
+          'topic_recommendation': 'recommend',
+          'reengagement_dm': 'chat',
+          'user_matching': 'people',
+          'help_suggestion': 'help',
+          'admin_command': 'admin_panel_settings',
+          'content_generation': 'auto_awesome',
+          'moderation': 'security'
+        };
+
+        const statusColors = {
+          'completed': 'var(--success-color)',
+          'pending': 'var(--warning-color)',
+          'failed': 'var(--error-color)',
+          'pending_response': 'var(--accent-color)'
+        };
+
+        document.getElementById('dashboard-bot-actions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">smart_toy</i>
+                Botアクション履歴 (${stats.total}件)
+              </h3>
+              <button onclick="loadBotActionsEnhanced()" class="refresh-btn" title="更新">
+                <i class="material-icons">refresh</i>
+              </button>
+            </div>
+            <div class="card-content">
+              ${actions.length ? `
+                <!-- 統計サマリー -->
+                <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                  <div class="stat-item">
+                    <span class="stat-number">${stats.byStatus.completed || 0}</span>
+                    <span class="stat-label">完了</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${stats.byStatus.pending || 0}</span>
+                    <span class="stat-label">保留中</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${Object.keys(stats.byActionType).length}</span>
+                    <span class="stat-label">アクション種別</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">${Object.keys(stats.byCharacter).length}</span>
+                    <span class="stat-label">キャラクター</span>
+                  </div>
+                </div>
+                
+                <!-- アクション種別別統計 -->
+                <div style="margin-bottom: 1.5rem;">
+                  <div class="info-label" style="margin-bottom: 0.5rem;">アクション種別</div>
+                  ${Object.entries(stats.byActionType).map(([type, count]) => 
+                    `<span class="tag">${type}: ${count}</span>`
+                  ).join('')}
+                </div>
+                
+                <!-- 最近のアクション一覧 -->
+                <div style="overflow-x:auto;">
+                  <div style="max-height: 500px; overflow-y: auto;">
+                    <table class="dashboard-table">
+                      <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                          <th>アクション</th>
+                          <th>ユーザー</th>
+                          <th>ステータス</th>
+                          <th>実行日時</th>
+                          <th>詳細</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${actions.slice(0, 20).map(action => `
+                          <tr>
+                            <td>
+                              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="material-icons" style="font-size: 1.2rem; color: var(--primary-color);">
+                                  ${actionTypeIcons[action.actionType] || 'smart_toy'}
+                                </i>
+                                <div>
+                                  <div style="font-weight: 600;">${action.actionType || 'unknown'}</div>
+                                  <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                    ${action.botCharacter || action.payload?.character || 'system'}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <div style="font-weight: 500;">${action.username || 'Unknown'}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ID: ${action.userId?.slice(0, 8) || 'N/A'}...
+                              </div>
+                            </td>
+                            <td>
+                              <span class="status-badge" style="background-color: ${statusColors[action.status] || 'var(--text-muted)'};">
+                                ${action.status || 'unknown'}
+                              </span>
+                            </td>
+                            <td>
+                              <div>${formatDate(action.timestamp)}</div>
+                              <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ${action.timestamp ? new Date(action.timestamp).toLocaleTimeString('ja-JP') : 'N/A'}
+                              </div>
+                            </td>
+                            <td>
+                              <button class="view-details-btn" onclick="showActionDetails('${action.id}')" 
+                                      style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                <i class="material-icons" style="font-size: 1rem;">visibility</i>
+                                詳細
+                              </button>
+                            </td>
+                          </tr>
+                        `).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                ${actions.length > 20 ? `
+                  <div style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">
+                    表示: 20件 / 全${actions.length}件
+                  </div>
+                ` : ''}
+              ` : `
+                <div class="no-data">
+                  <i class="material-icons">smart_toy</i>
+                  <div>Botアクションデータがありません</div>
+                  <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Botが実行したアクションがここに表示されます
+                  </div>
+                </div>
+              `}
+            </div>
+          </div>
+        `;
+        
+        // アクションデータをグローバル変数に保存（詳細表示用）
+        window.botActionsCache = actions;
+      }
+
+      /**
+       * Bot Actionsエラー表示
+       */
+      function renderBotActionsError(error) {
+        document.getElementById('dashboard-bot-actions').innerHTML = `
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3 class="dashboard-title">
+                <i class="material-icons">smart_toy</i>
+                Botアクション履歴
+              </h3>
+            </div>
+            <div class="card-content">
+              <div class="no-data">
+                <i class="material-icons">error</i>
+                <div>データ読み込みエラー</div>
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                  ${error.message || 'データの取得に失敗しました'}
+                </div>
+                <button onclick="loadBotActionsEnhanced()" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+                  再試行
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      /**
+       * アクション詳細を表示
+       */
+      function showActionDetails(actionId) {
+        const action = window.botActionsCache?.find(a => a.id === actionId);
+        if (!action) {
+          alert('アクションの詳細が見つかりません');
+          return;
+        }
+        
+        const details = `
+アクションID: ${action.id}
+アクション種別: ${action.actionType}
+ユーザー: ${action.username} (${action.userId})
+ステータス: ${action.status}
+実行日時: ${new Date(action.timestamp).toLocaleString('ja-JP')}
+Botキャラクター: ${action.botCharacter || 'system'}
+
+ペイロード:
+${JSON.stringify(action.payload || {}, null, 2)}
+
+結果:
+${JSON.stringify(action.result || {}, null, 2)}
+        `;
+        
+        alert(details);
+      }
+
+      // Initialize dashboard
+      document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        
+        // 現在時刻を初期化し、1秒ごとに更新
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+        
+        // ポッドキャスト作成ボタンのイベントリスナーを設定
+        // ボタンがDOM上に存在するまで待機してから設定
+        function addPodcastButtonListener() {
+          const btn = document.getElementById('create-podcast-btn');
+          if (btn) {
+            btn.addEventListener('click', createWeeklyPodcast);
+            console.log('ポッドキャスト作成ボタンのイベントリスナーを設定しました');
+          } else {
+            // ボタンがまだ存在しない場合は少し待ってから再試行
+            setTimeout(addPodcastButtonListener, 500);
+          }
+        }
+        
+        // 初期表示後にボタンリスナーを設定
+        setTimeout(addPodcastButtonListener, 1000);
+      });
+    </script>
+  </body>
+</html>

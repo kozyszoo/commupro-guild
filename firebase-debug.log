@@ -1,0 +1,46 @@
+[debug] [2025-06-14T14:46:28.539Z] ----------------------------------------------------------------------
+[debug] [2025-06-14T14:46:28.541Z] Command:       /opt/homebrew/Cellar/node/23.10.0_1/bin/node /opt/homebrew/bin/firebase serve --only hosting --port 5555
+[debug] [2025-06-14T14:46:28.542Z] CLI Version:   14.2.1
+[debug] [2025-06-14T14:46:28.542Z] Platform:      darwin
+[debug] [2025-06-14T14:46:28.542Z] Node Version:  v23.10.0
+[debug] [2025-06-14T14:46:28.542Z] Time:          Sat Jun 14 2025 23:46:28 GMT+0900 (日本標準時)
+[debug] [2025-06-14T14:46:28.542Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-06-14T14:46:28.767Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-06-14T14:46:28.768Z] > authorizing via signed-in user (k.yamaoka0919@gmail.com)
+[debug] [2025-06-14T14:46:28.768Z] [iam] checking project nyanco-bot for permissions ["firebase.projects.get"]
+[debug] [2025-06-14T14:46:28.768Z] Checked if tokens are valid: false, expires at: 1749913223499
+[debug] [2025-06-14T14:46:28.768Z] Checked if tokens are valid: false, expires at: 1749913223499
+[debug] [2025-06-14T14:46:28.768Z] > refreshing access token with scopes: []
+[debug] [2025-06-14T14:46:28.769Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-06-14T14:46:28.769Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-14T14:46:29.020Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-06-14T14:46:29.020Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-06-14T14:46:29.045Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions [none]
+[debug] [2025-06-14T14:46:29.045Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions x-goog-quota-user=projects/nyanco-bot
+[debug] [2025-06-14T14:46:29.045Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-14T14:46:29.266Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions 200
+[debug] [2025-06-14T14:46:29.267Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2025-06-14T14:46:29.267Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:29.267Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:29.267Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot [none]
+[debug] [2025-06-14T14:46:29.791Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot 200
+[debug] [2025-06-14T14:46:29.791Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/nyanco-bot {"projectNumber":"242432500390","projectId":"nyanco-bot","lifecycleState":"ACTIVE","name":"nyanco-bot","labels":{"firebase":"enabled","firebase-core":"disabled","generative-language":"enabled"},"createTime":"2025-05-19T14:03:31.642907Z"}
+[debug] [2025-06-14T14:46:29.793Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:29.793Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:29.793Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 
+[debug] [2025-06-14T14:46:30.440Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites 200
+[debug] [2025-06-14T14:46:30.441Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/nyanco-bot/sites {"sites":[{"name":"projects/nyanco-bot/sites/nyanco-bot","defaultUrl":"https://nyanco-bot.web.app","appId":"1:242432500390:web:73cbabfb788522326e0a67","type":"DEFAULT_SITE"}]}
+[debug] [2025-06-14T14:46:30.441Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:30.441Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:30.441Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config [none]
+[debug] [2025-06-14T14:46:31.505Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config 200
+[debug] [2025-06-14T14:46:31.507Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot/webApps/1:242432500390:web:73cbabfb788522326e0a67/config {"projectId":"nyanco-bot","appId":"1:242432500390:web:73cbabfb788522326e0a67","storageBucket":"nyanco-bot.firebasestorage.app","apiKey":"AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo","authDomain":"nyanco-bot.firebaseapp.com","messagingSenderId":"242432500390","measurementId":"G-VR49RLP5NX"}
+[debug] [2025-06-14T14:46:31.531Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:31.536Z] Checked if tokens are valid: true, expires at: 1749915988020
+[debug] [2025-06-14T14:46:31.546Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot [none]
+[debug] [2025-06-14T14:46:31.840Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot 200
+[debug] [2025-06-14T14:46:31.840Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/nyanco-bot {"projectId":"nyanco-bot","projectNumber":"242432500390","displayName":"nyanco-bot","name":"projects/nyanco-bot","resources":{"hostingSite":"nyanco-bot"},"state":"ACTIVE","etag":"1_dd0a9583-a8b1-479d-b8fd-50584d5746e2"}
+[info] i  hosting[nyanco-bot]: Serving hosting files from: public {"metadata":{"emulator":{"name":"hosting"},"message":"Serving hosting files from: public"}}
+[info] ✔  hosting[nyanco-bot]: Local server: http://localhost:5555 {"metadata":{"emulator":{"name":"hosting"},"message":"Local server: http://localhost:5555"}}
+[info] i  hosting: ::1 - - [14/Jun/2025:14:50:07 +0000] "GET / HTTP/1.1" 200 158546 "-" "curl/8.7.1" {"metadata":{"emulator":{"name":"hosting"},"message":"::1 - - [14/Jun/2025:14:50:07 +0000] \"GET / HTTP/1.1\" 200 158546 \"-\" \"curl/8.7.1\""}}
