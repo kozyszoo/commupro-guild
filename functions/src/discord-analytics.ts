@@ -25,7 +25,7 @@ const model = 'gemini-1.5-pro';
 interface DiscordLog {
   type: string;
   userId: string;
-  username: string;
+  username?: string; // Optional field for compatibility
   guildId: string;
   guildName: string;
   channelId: string;
@@ -67,22 +67,83 @@ const SUSPICIOUS_WORDS = [
 ];
 
 /**
+ * ユーザーIDからユーザー名を解決する
+ */
+async function resolveUsernames(userIds: string[]): Promise<Record<string, string>> {
+  const userMap: Record<string, string> = {};
+  
+  if (userIds.length === 0) return userMap;
+  
+  try {
+    // Firestoreのusersコレクションからユーザー情報を取得
+    const usersSnapshot = await db.collection('users')
+      .where('userId', 'in', userIds.slice(0, 10)) // Firestoreのin制限 (10個まで)
+      .get();
+    
+    usersSnapshot.forEach(doc => {
+      const userData = doc.data();
+      const userId = userData.userId;
+      const username = userData.displayName || userData.username || `User_${userId.slice(0, 8)}`;
+      userMap[userId] = username;
+    });
+    
+    // 残りのユーザーIDも処理（10個ずつ）
+    for (let i = 10; i < userIds.length; i += 10) {
+      const batch = userIds.slice(i, i + 10);
+      const batchSnapshot = await db.collection('users')
+        .where('userId', 'in', batch)
+        .get();
+      
+      batchSnapshot.forEach(doc => {
+        const userData = doc.data();
+        const userId = userData.userId;
+        const username = userData.displayName || userData.username || `User_${userId.slice(0, 8)}`;
+        userMap[userId] = username;
+      });
+    }
+    
+    // 見つからなかったユーザーIDには fallback 名を設定
+    userIds.forEach(userId => {
+      if (!userMap[userId]) {
+        userMap[userId] = `User_${userId.slice(0, 8)}`;
+      }
+    });
+    
+  } catch (error) {
+    logger.error('ユーザー名解決エラー', { error });
+    // エラー時はfallback名を使用
+    userIds.forEach(userId => {
+      userMap[userId] = `User_${userId.slice(0, 8)}`;
+    });
+  }
+  
+  return userMap;
+}
+
+/**
  * Discord ログを分析して統計データを生成
  */
-function analyzeDiscordLogsData(logs: DiscordLog[]): AnalysisResult {
+async function analyzeDiscordLogsData(logs: DiscordLog[]): Promise<AnalysisResult> {
+  // ユニークなユーザーIDを取得
+  const uniqueUserIds = [...new Set(logs.map(log => log.userId).filter(Boolean))];
+  
+  // ユーザー名を解決
+  const userMap = await resolveUsernames(uniqueUserIds);
   const userStats: Record<string, { posts: number; reactions: number }> = {};
   const channelStats: Record<string, number> = {};
   const suspiciousContent: Array<{ username: string; content: string; severity: 'low' | 'medium' | 'high'; words: string[] }> = [];
 
   // ログデータの分析
   logs.forEach(log => {
+    const username = userMap[log.userId] || log.username || `User_${log.userId?.slice(0, 8)}`;
+    
     // ユーザー統計
-    if (log.type === 'message' && log.username) {
-      if (!userStats[log.username]) {
-        userStats[log.username] = { posts: 0, reactions: 0 };
+    if (log.type === 'message' && log.userId) {
+      if (!userStats[username]) {
+        userStats[username] = { posts: 0, reactions: 0 };
       }
-      userStats[log.username].posts++;
-      userStats[log.username].reactions += log.metadata?.reactionCount || 0;
+      userStats[username].posts++;
+      userStats[username].reactions += log.metadata?.reactionCount || 0;
     }
 
     // チャンネル統計
@@ -99,7 +160,7 @@ function analyzeDiscordLogsData(logs: DiscordLog[]): AnalysisResult {
       if (foundWords.length > 0) {
         const severity = foundWords.length > 2 ? 'high' : foundWords.length > 1 ? 'medium' : 'low';
         suspiciousContent.push({
-          username: log.username,
+          username: username,
           content: log.content,
           severity,
           words: foundWords
@@ -377,8 +438,8 @@ export const analyzeDiscordLogs = onRequest(
 
       logger.info(`${logs.length}件のログを取得しました`);
 
-      // ログの分析
-      const analysis = analyzeDiscordLogsData(logs);
+      // ログの分析（非同期に変更）
+      const analysis = await analyzeDiscordLogsData(logs);
       
       // AI による運営アドバイスの生成
       const aiAdvices = await generateAIAdvice(analysis, logs);
@@ -436,10 +497,16 @@ export const onInteractionAdded = onDocumentCreated(
       }
 
       const data = snapshot.data();
+      
+      // ユーザー名を解決
+      const userMap = await resolveUsernames([data.userId]);
+      const username = userMap[data.userId] || data.username || `User_${data.userId?.slice(0, 8)}`;
+      
       logger.info('新しいインタラクションが追加されました', {
         docId: snapshot.id,
         type: data.type,
-        username: data.username,
+        userId: data.userId,
+        username: username,
         guildName: data.guildName
       });
 
@@ -457,7 +524,7 @@ export const onInteractionAdded = onDocumentCreated(
             type: 'suspicious_content',
             severity,
             userId: data.userId,
-            username: data.username,
+            username: username,
             guildId: data.guildId,
             guildName: data.guildName,
             channelId: data.channelId,
@@ -470,7 +537,8 @@ export const onInteractionAdded = onDocumentCreated(
           });
 
           logger.warn('不適切な表現を検知しました', {
-            username: data.username,
+            userId: data.userId,
+            username: username,
             guildName: data.guildName,
             severity,
             words: foundWords

@@ -471,11 +471,13 @@ class EntertainmentBot(discord.Client):
             return
         
         try:
+            # ユーザー情報を分離して保存
+            await self._ensure_user_exists(message.author)
+            
             # テスト用のログエントリを作成
             test_data = {
                 'type': 'test_log',
                 'userId': str(message.author.id),
-                'username': message.author.display_name,
                 'channelId': str(message.channel.id),
                 'channelName': message.channel.name if hasattr(message.channel, 'name') else 'DM',
                 'guildId': str(message.guild.id) if message.guild else None,
@@ -783,6 +785,41 @@ class EntertainmentBot(discord.Client):
             keywords.append('絵文字')
         
         return list(set(keywords))[:15]  # 重複削除、最大15個
+    
+    async def _ensure_user_exists(self, user):
+        """ユーザー情報がFirestoreに存在することを確認し、なければ作成/更新"""
+        try:
+            user_id = str(user.id)
+            user_doc_ref = self._firestore_client.collection('users').document(user_id)
+            
+            # 現在のユーザーデータを取得
+            user_doc = await asyncio.to_thread(user_doc_ref.get)
+            
+            # ユーザーデータを準備
+            user_data = {
+                'userId': user_id,
+                'username': user.name,
+                'displayName': user.display_name,
+                'discriminator': user.discriminator if hasattr(user, 'discriminator') else None,
+                'avatar': str(user.avatar.url) if user.avatar else None,
+                'isBot': user.bot,
+                'createdAt': user.created_at.isoformat(),
+                'lastSeen': datetime.datetime.now(datetime.timezone.utc),
+                'updatedAt': datetime.datetime.now(datetime.timezone.utc)
+            }
+            
+            # ユーザーが存在しない場合は作成、存在する場合は更新
+            if not user_doc.exists:
+                user_data['firstSeen'] = datetime.datetime.now(datetime.timezone.utc)
+                await asyncio.to_thread(user_doc_ref.set, user_data)
+            else:
+                # 既存のユーザーデータを更新（firstSeenは保持）
+                existing_data = user_doc.to_dict()
+                user_data['firstSeen'] = existing_data.get('firstSeen', datetime.datetime.now(datetime.timezone.utc))
+                await asyncio.to_thread(user_doc_ref.update, user_data)
+            
+        except Exception as e:
+            print(f"⚠️ ユーザー情報保存エラー: {e}")
     
     async def shutdown(self):
         """Bot終了処理"""
