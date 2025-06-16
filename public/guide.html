@@ -111,6 +111,9 @@
             box-shadow: var(--shadow-medium);
             transition: all 0.3s ease;
             border: 1px solid var(--border-color);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
         }
 
         .feature-card:hover {
@@ -145,6 +148,9 @@
             color: var(--text-secondary);
             text-align: center;
             line-height: 1.8;
+            overflow-y: auto;
+            flex: 1;
+            margin-top: 20px;
         }
 
         .steps-section {
@@ -362,6 +368,16 @@
             .section-title {
                 font-size: 2.2rem;
             }
+            
+            .feature-card {
+                height: auto;
+                min-height: 300px;
+            }
+            
+            .demo-card {
+                height: auto;
+                min-height: 250px;
+            }
         }
 
         .highlight {
@@ -381,6 +397,9 @@
             margin-bottom: 30px;
             box-shadow: var(--shadow-medium);
             border: 1px solid var(--border-color);
+            height: 350px;
+            display: flex;
+            flex-direction: column;
         }
 
         .demo-title {
@@ -399,8 +418,10 @@
             border-radius: var(--border-radius-sm);
             font-family: 'Courier New', monospace;
             color: var(--text-secondary);
-            overflow-x: auto;
+            overflow: auto;
             border: 1px solid var(--border-color);
+            flex: 1;
+            margin-top: 15px;
         }
 
         .command {
@@ -455,7 +476,7 @@
                 <div class="col-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="material-icons">analytics</i>
+                            📊
                         </div>
                         <h3 class="feature-title">AI Discord分析</h3>
                         <p class="feature-description">
@@ -467,7 +488,7 @@
                 <div class="col-4">
                     <div class="feature-card">
                         <div class="feature-icon">
-                            <i class="material-icons">summarize</i>
+                            📄
                         </div>
                         <h3 class="feature-title">AI対話形式まとめ</h3>
                         <p class="feature-description">
@@ -541,7 +562,7 @@
                 <div class="col-4">
                     <div class="demo-card">
                         <h3 class="demo-title">
-                            <i class="material-icons">chat</i>
+                            💬
                             Discord コマンド
                         </h3>
                         <div class="demo-content">
@@ -557,7 +578,7 @@
                 <div class="col-4">
                     <div class="demo-card">
                         <h3 class="demo-title">
-                            <i class="material-icons">auto_awesome</i>
+                            ✨
                             AI 分析結果
                         </h3>
                         <div class="demo-content">
@@ -574,7 +595,7 @@
                 <div class="col-4">
                     <div class="demo-card">
                         <h3 class="demo-title">
-                            <i class="material-icons">cloud_upload</i>
+                            ☁️
                             自動配信
                         </h3>
                         <div class="demo-content">
