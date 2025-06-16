@@ -746,6 +746,7 @@
       // Firebase初期化とエラーハンドリング
       let db = null;
       let firebaseInitialized = false;
+      let firestoreNetworkEnabled = false;
       
       try {
         console.log('Firebase初期化開始...');
@@ -754,11 +755,20 @@
         firebaseInitialized = true;
         console.log('Firebase初期化完了');
         
-        // Firestoreの接続テスト
+        // Firestoreの設定を最適化
+        db.settings({
+          cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+          experimentalForceLongPolling: false,
+          experimentalAutoDetectLongPolling: true
+        });
+        
+        // Firestoreの接続を一度だけ有効化
         db.enableNetwork().then(() => {
+          firestoreNetworkEnabled = true;
           console.log('Firestore接続成功');
         }).catch((error) => {
           console.error('Firestore接続エラー:', error);
+          firestoreNetworkEnabled = false;
         });
         
       } catch (error) {
@@ -1688,8 +1698,15 @@
         try {
           console.log(`${collectionName}コレクションを取得中...`);
           
-          // 接続状態をチェック
-          await db.enableNetwork();
+          // ネットワークが有効でない場合のみ有効化
+          if (!firestoreNetworkEnabled) {
+            try {
+              await db.enableNetwork();
+              firestoreNetworkEnabled = true;
+            } catch (networkError) {
+              console.warn('ネットワーク有効化をスキップ:', networkError.message);
+            }
+          }
           
           const snapshot = await db.collection(collectionName).get();
           const data = {};
@@ -1726,8 +1743,15 @@
         try {
           console.log('Analytics_sessionsコレクションを取得中...');
           
-          // 接続状態をチェック
-          await db.enableNetwork();
+          // ネットワークが有効でない場合のみ有効化
+          if (!firestoreNetworkEnabled) {
+            try {
+              await db.enableNetwork();
+              firestoreNetworkEnabled = true;
+            } catch (networkError) {
+              console.warn('ネットワーク有効化をスキップ:', networkError.message);
+            }
+          }
           
           // 複数の可能なコレクション名を試す
           const possibleCollections = ['analytics_sessions', 'analyticsSessions', 'daily_analytics'];
@@ -3007,15 +3031,13 @@
           // タイムスタンプフィールドでのソートを試行、失敗した場合はソートなしで取得
           let botActionsSnapshot;
           try {
-            botActionsSnapshot = await db.collection('bot_actions')
-              .orderBy('timestamp', 'desc')
-              .limit(50)
-              .get();
-          } catch (orderByError) {
-            console.warn('timestamp順でのソートに失敗、ソートなしで取得:', orderByError);
+            // インデックスが存在しない場合に備えて、ソートなしで取得
             botActionsSnapshot = await db.collection('bot_actions')
               .limit(50)
               .get();
+          } catch (error) {
+            console.error('bot_actions取得エラー:', error);
+            throw error;
           }
           
           const botActionsData = [];
