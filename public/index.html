@@ -14,18 +14,103 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
     <style>
+      :root {
+        --primary-color: #6366f1;
+        --primary-light: #8b5cf6;
+        --primary-dark: #4f46e5;
+        --secondary-color: #f59e0b;
+        --accent-color: #06b6d4;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+
+      /* ダークモード（デフォルト） */
+      :root,
+      [data-theme="dark"] {
+        --background-color: #0f172a;
+        --surface-color: #1e293b;
+        --card-background: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #64748b;
+        --border-color: #475569;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ライトモード */
+      [data-theme="light"] {
+        --background-color: #f8fafc;
+        --surface-color: #ffffff;
+        --card-background: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
       * {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
       }
 
       body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: var(--background-color);
         min-height: 100vh;
-        font-family: 'Roboto', sans-serif;
-        padding: 20px;
-        color: #333;
+        font-family: 'Inter', 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text-primary);
+        line-height: 1.6;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      .main-container {
+        background: var(--background-color);
+        min-height: 100vh;
+        margin-top: 64px;
+        padding: 2rem 1rem;
+      }
+
+      nav {
+        background: var(--gradient-primary) !important;
+        box-shadow: var(--shadow-medium);
+        position: fixed;
+        top: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-wrapper .brand-logo {
+        color: #fff !important;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        font-size: 1.25rem;
+        padding-left: 1rem;
+      }
+
+      .brand-logo i {
+        margin-right: 0.75rem;
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+
+      .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
       }
 
       .dashboard-container {
@@ -33,89 +118,170 @@
         margin: 0 auto;
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        grid-gap: 20px;
-        padding: 20px 0;
+        grid-gap: 1.5rem;
+        padding: 1rem;
       }
 
-      .panel {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      .dashboard-section {
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+      }
+
+      .dashboard-card {
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-light);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        height: 100%;
+        min-height: 400px;
+        backdrop-filter: blur(10px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dashboard-card:hover {
+        box-shadow: var(--shadow-large);
+        transform: translateY(-4px);
+        border-color: var(--primary-color);
+      }
+
+      .card-header {
+        background: linear-gradient(135deg, var(--surface-color) 0%, var(--card-background) 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
         position: relative;
         overflow: hidden;
       }
 
-      .panel:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-      }
-
-      .panel::before {
+      .card-header::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--panel-color, #667eea), var(--panel-color-end, #764ba2));
+        height: 3px;
+        background: var(--gradient-primary);
       }
 
-      .panel-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-
-      .panel-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 15px;
-        background: linear-gradient(135deg, var(--panel-color, #667eea), var(--panel-color-end, #764ba2));
-      }
-
-      .panel-icon i {
-        color: white;
-        font-size: 24px;
-      }
-
-      .panel-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
+      .dashboard-title {
+        font-weight: 700;
+        font-size: 1.25rem;
         margin: 0;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+        letter-spacing: 0.025em;
       }
 
-      .panel-subtitle {
-        font-size: 14px;
-        color: #666;
-        margin: 5px 0 0 0;
+      .dashboard-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        padding: 0.5rem;
+        border-radius: 50%;
+        background-color: rgba(99, 102, 241, 0.1);
+        -webkit-text-fill-color: var(--primary-color);
+      }
+
+      .card-content {
+        padding: 1.5rem;
+        background: var(--card-background);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 1.25rem 1rem;
+        background: linear-gradient(135deg, var(--surface-color) 0%, rgba(99, 102, 241, 0.05) 100%);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--gradient-accent);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-item:hover::before {
+        transform: scaleX(1);
+      }
+
+      .stat-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--accent-color);
+      }
+
+      .stat-number {
+        font-size: 2.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        display: block;
+        line-height: 1;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
 
       .metric-value {
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--panel-color, #667eea);
-        margin: 10px 0;
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin: 15px 0;
         display: block;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
 
       .metric-label {
         font-size: 14px;
-        color: #666;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        font-weight: 600;
       }
 
       .progress-bar {
         width: 100%;
         height: 8px;
-        background: #f0f0f0;
+        background: rgba(100, 116, 139, 0.2);
         border-radius: 4px;
         overflow: hidden;
         margin: 15px 0;
@@ -123,7 +289,7 @@
 
       .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, var(--panel-color, #667eea), var(--panel-color-end, #764ba2));
+        background: var(--gradient-primary);
         border-radius: 4px;
         transition: width 0.3s ease;
       }
@@ -134,85 +300,18 @@
         margin: 20px 0;
       }
 
-      .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-        margin: 20px 0;
-      }
-
-      .stat-item {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 10px;
-      }
-
-      .stat-number {
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--panel-color, #667eea);
-        display: block;
-      }
-
-      .stat-label {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-      }
-
-      /* パネル別カラーテーマ */
-      .panel-blue {
-        --panel-color: #3b82f6;
-        --panel-color-end: #1d4ed8;
-      }
-
-      .panel-green {
-        --panel-color: #10b981;
-        --panel-color-end: #047857;
-      }
-
-      .panel-orange {
-        --panel-color: #f59e0b;
-        --panel-color-end: #d97706;
-      }
-
-      .panel-red {
-        --panel-color: #ef4444;
-        --panel-color-end: #dc2626;
-      }
-
-      .panel-purple {
-        --panel-color: #8b5cf6;
-        --panel-color-end: #7c3aed;
-      }
-
-      .panel-cyan {
-        --panel-color: #06b6d4;
-        --panel-color-end: #0891b2;
-      }
-
-      .panel-pink {
-        --panel-color: #ec4899;
-        --panel-color-end: #db2777;
-      }
-
-      .panel-indigo {
-        --panel-color: #6366f1;
-        --panel-color-end: #4f46e5;
-      }
-
       .status-list {
         list-style: none;
         padding: 0;
+        margin: 0;
       }
 
       .status-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
       }
 
       .status-item:last-child {
@@ -226,20 +325,28 @@
         margin-right: 10px;
       }
 
-      .status-online { background: #10b981; }
-      .status-offline { background: #ef4444; }
-      .status-away { background: #f59e0b; }
+      .status-online { background: var(--success-color); }
+      .status-offline { background: var(--error-color); }
+      .status-away { background: var(--warning-color); }
 
       .activity-feed {
-        max-height: 250px;
+        max-height: 300px;
         overflow-y: auto;
       }
 
       .activity-item {
         display: flex;
         align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+      }
+
+      .activity-item:hover {
+        background: rgba(99, 102, 241, 0.05);
+        margin: 0 -1rem;
+        padding: 1rem;
+        border-radius: var(--border-radius-sm);
       }
 
       .activity-item:last-child {
@@ -250,11 +357,12 @@
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: linear-gradient(135deg, var(--panel-color, #667eea), var(--panel-color-end, #764ba2));
+        background: var(--gradient-primary);
         display: flex;
         align-items: center;
         justify-content: center;
         margin-right: 15px;
+        flex-shrink: 0;
       }
 
       .activity-icon i {
@@ -270,11 +378,12 @@
         font-weight: 600;
         font-size: 14px;
         margin-bottom: 2px;
+        color: var(--text-primary);
       }
 
       .activity-time {
         font-size: 12px;
-        color: #666;
+        color: var(--text-muted);
       }
 
       .table-container {
@@ -286,342 +395,385 @@
       .data-table {
         width: 100%;
         border-collapse: collapse;
+        background: var(--card-background);
+        border-radius: var(--border-radius-sm);
+        overflow: hidden;
       }
 
       .data-table th {
-        background: #f8f9fa;
-        padding: 12px 8px;
+        background: var(--gradient-primary);
+        color: #fff;
+        padding: 1rem 0.75rem;
         text-align: left;
-        font-weight: 600;
-        font-size: 12px;
-        color: #666;
+        font-weight: 700;
+        font-size: 0.875rem;
+        border: none;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid #e9ecef;
+        letter-spacing: 0.05em;
       }
 
       .data-table td {
-        padding: 12px 8px;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 14px;
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
       }
 
       .data-table tr:hover {
-        background: #f8f9fa;
+        background: rgba(99, 102, 241, 0.05);
+      }
+
+      .data-table tr:last-child td {
+        border-bottom: none;
       }
 
       .badge {
         display: inline-block;
-        padding: 4px 8px;
+        padding: 0.375rem 0.75rem;
         border-radius: 12px;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.05em;
       }
 
-      .badge-success { background: #d1fae5; color: #065f46; }
-      .badge-warning { background: #fef3c7; color: #92400e; }
-      .badge-error { background: #fee2e2; color: #991b1b; }
-      .badge-info { background: #dbeafe; color: #1e40af; }
+      .badge-success { 
+        background: linear-gradient(135deg, var(--success-color), #059669);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      }
+      .badge-warning { 
+        background: linear-gradient(135deg, var(--warning-color), #d97706);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+      .badge-error { 
+        background: linear-gradient(135deg, var(--error-color), #dc2626);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      }
+      .badge-info { 
+        background: linear-gradient(135deg, var(--accent-color), #0891b2);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+      }
 
       @media (max-width: 768px) {
         .dashboard-container {
           grid-template-columns: 1fr;
-          padding: 10px;
+          padding: 0.5rem;
         }
         
-        body {
-          padding: 10px;
+        .main-container {
+          padding: 1rem 0.5rem;
         }
         
-        .panel {
-          padding: 20px;
+        .dashboard-card {
+          min-height: 300px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="dashboard-container">
-      <!-- Discord サーバー概要 -->
-      <div class="panel panel-blue">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">dns</i>
-          </div>
-          <div>
-            <h3 class="panel-title">サーバー概要</h3>
-            <p class="panel-subtitle">にゃんこエージェント</p>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-number" id="member-count">1,250</span>
-            <span class="stat-label">メンバー数</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="online-count">892</span>
-            <span class="stat-label">オンライン</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="channel-count">45</span>
-            <span class="stat-label">チャンネル数</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="role-count">12</span>
-            <span class="stat-label">ロール数</span>
-          </div>
-        </div>
+    <nav>
+      <div class="nav-wrapper">
+        <a href="#" class="brand-logo">
+          <i class="material-icons">pets</i>
+          Discord にゃんこエージェント
+        </a>
       </div>
+    </nav>
 
-      <!-- メッセージ統計 -->
-      <div class="panel panel-green">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">chat</i>
+    <div class="main-container">
+      <div class="dashboard-container">
+        <!-- Discord サーバー概要 -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">dns</i>
+              サーバー概要
+            </h3>
           </div>
-          <div>
-            <h3 class="panel-title">メッセージ統計</h3>
-            <p class="panel-subtitle">過去24時間</p>
-          </div>
-        </div>
-        <span class="metric-value" id="message-count">3,847</span>
-        <span class="metric-label">総メッセージ数</span>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: 78%;"></div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-number">2,156</span>
-            <span class="stat-label">テキスト</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">1,691</span>
-            <span class="stat-label">リアクション</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ユーザーアクティビティ -->
-      <div class="panel panel-orange">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">trending_up</i>
-          </div>
-          <div>
-            <h3 class="panel-title">ユーザーアクティビティ</h3>
-            <p class="panel-subtitle">今週の動向</p>
-          </div>
-        </div>
-        <span class="metric-value">+24.5%</span>
-        <span class="metric-label">前週比増加率</span>
-        <div class="chart-container">
-          <canvas id="activity-chart"></canvas>
-        </div>
-      </div>
-
-      <!-- モデレーション -->
-      <div class="panel panel-red">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">security</i>
-          </div>
-          <div>
-            <h3 class="panel-title">モデレーション</h3>
-            <p class="panel-subtitle">セキュリティ状況</p>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-number">7</span>
-            <span class="stat-label">警告</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">2</span>
-            <span class="stat-label">タイムアウト</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">0</span>
-            <span class="stat-label">BAN</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">15</span>
-            <span class="stat-label">削除済み</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ボット状態 -->
-      <div class="panel panel-purple">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">smart_toy</i>
-          </div>
-          <div>
-            <h3 class="panel-title">ボット状態</h3>
-            <p class="panel-subtitle">にゃんこエージェント</p>
-          </div>
-        </div>
-        <ul class="status-list">
-          <li class="status-item">
-            <span>
-              <span class="status-dot status-online"></span>
-              メインボット
-            </span>
-            <span class="badge badge-success">稼働中</span>
-          </li>
-          <li class="status-item">
-            <span>
-              <span class="status-dot status-online"></span>
-              音楽ボット
-            </span>
-            <span class="badge badge-success">稼働中</span>
-          </li>
-          <li class="status-item">
-            <span>
-              <span class="status-dot status-away"></span>
-              ログボット
-            </span>
-            <span class="badge badge-warning">メンテ中</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- 最新アクティビティ -->
-      <div class="panel panel-cyan">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">history</i>
-          </div>
-          <div>
-            <h3 class="panel-title">最新アクティビティ</h3>
-            <p class="panel-subtitle">リアルタイム更新</p>
-          </div>
-        </div>
-        <div class="activity-feed">
-          <div class="activity-item">
-            <div class="activity-icon">
-              <i class="material-icons">person_add</i>
-            </div>
-            <div class="activity-content">
-              <div class="activity-title">新メンバーが参加しました</div>
-              <div class="activity-time">2分前</div>
+          <div class="card-content">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-number" id="member-count">1,250</span>
+                <span class="stat-label">メンバー数</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="online-count">892</span>
+                <span class="stat-label">オンライン</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="channel-count">45</span>
+                <span class="stat-label">チャンネル数</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="role-count">12</span>
+                <span class="stat-label">ロール数</span>
+              </div>
             </div>
           </div>
-          <div class="activity-item">
-            <div class="activity-icon">
+        </div>
+
+        <!-- メッセージ統計 -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
               <i class="material-icons">chat</i>
-            </div>
-            <div class="activity-content">
-              <div class="activity-title">一般チャンネルに新しい投稿</div>
-              <div class="activity-time">5分前</div>
-            </div>
+              メッセージ統計
+            </h3>
           </div>
-          <div class="activity-item">
-            <div class="activity-icon">
-              <i class="material-icons">star</i>
+          <div class="card-content">
+            <span class="metric-value" id="message-count">3,847</span>
+            <span class="metric-label">過去24時間の総メッセージ数</span>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 78%;"></div>
             </div>
-            <div class="activity-content">
-              <div class="activity-title">メッセージにリアクションが追加</div>
-              <div class="activity-time">8分前</div>
-            </div>
-          </div>
-          <div class="activity-item">
-            <div class="activity-icon">
-              <i class="material-icons">volume_up</i>
-            </div>
-            <div class="activity-content">
-              <div class="activity-title">ボイスチャンネルに参加</div>
-              <div class="activity-time">12分前</div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-number">2,156</span>
+                <span class="stat-label">テキスト</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">1,691</span>
+                <span class="stat-label">リアクション</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- サーバーパフォーマンス -->
-      <div class="panel panel-pink">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">speed</i>
+        <!-- ユーザーアクティビティ -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">trending_up</i>
+              ユーザーアクティビティ
+            </h3>
           </div>
-          <div>
-            <h3 class="panel-title">パフォーマンス</h3>
-            <p class="panel-subtitle">システム状況</p>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-number">12ms</span>
-            <span class="stat-label">API応答時間</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">99.9%</span>
-            <span class="stat-label">稼働率</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">2.1GB</span>
-            <span class="stat-label">メモリ使用量</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number">15%</span>
-            <span class="stat-label">CPU使用率</span>
+          <div class="card-content">
+            <span class="metric-value">+24.5%</span>
+            <span class="metric-label">前週比増加率</span>
+            <div class="chart-container">
+              <canvas id="activity-chart"></canvas>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- 人気チャンネル -->
-      <div class="panel panel-indigo">
-        <div class="panel-header">
-          <div class="panel-icon">
-            <i class="material-icons">leaderboard</i>
+        <!-- モデレーション -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">security</i>
+              モデレーション
+            </h3>
           </div>
-          <div>
-            <h3 class="panel-title">人気チャンネル</h3>
-            <p class="panel-subtitle">メッセージ数ランキング</p>
+          <div class="card-content">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-number">7</span>
+                <span class="stat-label">警告</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">2</span>
+                <span class="stat-label">タイムアウト</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">0</span>
+                <span class="stat-label">BAN</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">15</span>
+                <span class="stat-label">削除済み</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>チャンネル</th>
-                <th>メッセージ数</th>
-                <th>状況</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td># 一般</td>
-                <td>1,284</td>
-                <td><span class="badge badge-success">活発</span></td>
-              </tr>
-              <tr>
-                <td># 雑談</td>
-                <td>956</td>
-                <td><span class="badge badge-success">活発</span></td>
-              </tr>
-              <tr>
-                <td># ゲーム</td>
-                <td>673</td>
-                <td><span class="badge badge-info">普通</span></td>
-              </tr>
-              <tr>
-                <td># 音楽</td>
-                <td>445</td>
-                <td><span class="badge badge-warning">低調</span></td>
-              </tr>
-              <tr>
-                <td># 開発</td>
-                <td>234</td>
-                <td><span class="badge badge-warning">低調</span></td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- ボット状態 -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">smart_toy</i>
+              ボット状態
+            </h3>
+          </div>
+          <div class="card-content">
+            <ul class="status-list">
+              <li class="status-item">
+                <span style="display: flex; align-items: center;">
+                  <span class="status-dot status-online"></span>
+                  メインボット
+                </span>
+                <span class="badge badge-success">稼働中</span>
+              </li>
+              <li class="status-item">
+                <span style="display: flex; align-items: center;">
+                  <span class="status-dot status-online"></span>
+                  音楽ボット
+                </span>
+                <span class="badge badge-success">稼働中</span>
+              </li>
+              <li class="status-item">
+                <span style="display: flex; align-items: center;">
+                  <span class="status-dot status-away"></span>
+                  ログボット
+                </span>
+                <span class="badge badge-warning">メンテ中</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 最新アクティビティ -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">history</i>
+              最新アクティビティ
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="activity-feed">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="material-icons">person_add</i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">新メンバーが参加しました</div>
+                  <div class="activity-time">2分前</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="material-icons">chat</i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">一般チャンネルに新しい投稿</div>
+                  <div class="activity-time">5分前</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="material-icons">star</i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">メッセージにリアクションが追加</div>
+                  <div class="activity-time">8分前</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="material-icons">volume_up</i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">ボイスチャンネルに参加</div>
+                  <div class="activity-time">12分前</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- サーバーパフォーマンス -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">speed</i>
+              パフォーマンス
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-number">12ms</span>
+                <span class="stat-label">API応答時間</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">99.9%</span>
+                <span class="stat-label">稼働率</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">2.1GB</span>
+                <span class="stat-label">メモリ使用量</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number">15%</span>
+                <span class="stat-label">CPU使用率</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 人気チャンネル -->
+        <div class="dashboard-card">
+          <div class="card-header">
+            <h3 class="dashboard-title">
+              <i class="material-icons">leaderboard</i>
+              人気チャンネル
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>チャンネル</th>
+                    <th>メッセージ数</th>
+                    <th>状況</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td># 一般</td>
+                    <td>1,284</td>
+                    <td><span class="badge badge-success">活発</span></td>
+                  </tr>
+                  <tr>
+                    <td># 雑談</td>
+                    <td>956</td>
+                    <td><span class="badge badge-success">活発</span></td>
+                  </tr>
+                  <tr>
+                    <td># ゲーム</td>
+                    <td>673</td>
+                    <td><span class="badge badge-info">普通</span></td>
+                  </tr>
+                  <tr>
+                    <td># 音楽</td>
+                    <td>445</td>
+                    <td><span class="badge badge-warning">低調</span></td>
+                  </tr>
+                  <tr>
+                    <td># 開発</td>
+                    <td>234</td>
+                    <td><span class="badge badge-warning">低調</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
+      // Firebase設定（プロダクション用）
+      const firebaseConfig = {
+        apiKey: "AIzaSyDNVP0hL_dB7xQ8Q3K9v_pOx3g0cU6L8Ro",
+        authDomain: "nyanco-bot.firebaseapp.com",
+        projectId: "nyanco-bot",
+        storageBucket: "nyanco-bot.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:abcdef123456789"
+      };
+
+      // Firebase初期化
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const functions = firebase.functions();
+
       // チャートの初期化
       const ctx = document.getElementById('activity-chart').getContext('2d');
       new Chart(ctx, {
@@ -631,10 +783,16 @@
           datasets: [{
             label: 'アクティブユーザー数',
             data: [320, 285, 410, 375, 442, 398, 456],
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            borderWidth: 3,
+            pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8
           }]
         },
         options: {
@@ -649,12 +807,20 @@
             y: {
               beginAtZero: true,
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)'
+                color: 'rgba(100, 116, 139, 0.2)',
+                borderColor: 'rgba(100, 116, 139, 0.3)'
+              },
+              ticks: {
+                color: 'rgba(203, 213, 225, 0.8)'
               }
             },
             x: {
               grid: {
-                color: 'rgba(0, 0, 0, 0.1)'
+                color: 'rgba(100, 116, 139, 0.2)',
+                borderColor: 'rgba(100, 116, 139, 0.3)'
+              },
+              ticks: {
+                color: 'rgba(203, 213, 225, 0.8)'
               }
             }
           }
@@ -665,7 +831,7 @@
       setInterval(() => {
         // メンバー数をランダムに更新
         const memberCount = document.getElementById('member-count');
-        const currentCount = parseInt(memberCount.textContent);
+        const currentCount = parseInt(memberCount.textContent.replace(',', ''));
         const newCount = currentCount + Math.floor(Math.random() * 3) - 1;
         if (newCount > 0) {
           memberCount.textContent = newCount.toLocaleString();
@@ -673,9 +839,9 @@
 
         // オンライン数をランダムに更新
         const onlineCount = document.getElementById('online-count');
-        const currentOnline = parseInt(onlineCount.textContent);
+        const currentOnline = parseInt(onlineCount.textContent.replace(',', ''));
         const newOnline = currentOnline + Math.floor(Math.random() * 10) - 5;
-        if (newOnline > 0 && newOnline < newCount) {
+        if (newOnline > 0 && newOnline <= newCount) {
           onlineCount.textContent = newOnline.toLocaleString();
         }
 
@@ -685,6 +851,20 @@
         const newMessages = currentMessages + Math.floor(Math.random() * 5);
         messageCount.textContent = newMessages.toLocaleString();
       }, 5000);
+
+      // ダークモード・ライトモード切り替え機能（今後の拡張用）
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      }
+
+      // ページ読み込み時にテーマを適用
+      document.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      });
     </script>
   </body>
 </html>
