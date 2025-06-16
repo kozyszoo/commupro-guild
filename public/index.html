@@ -673,6 +673,13 @@
             <span id="current-time">読み込み中...</span>
           </li>
           <li>
+            <a href="analytics.html" 
+               style="display: flex; align-items: center; gap: 0.5rem; color: #fff !important; padding: 0 16px;">
+              <i class="material-icons">analytics</i>
+              <span>統計分析</span>
+            </a>
+          </li>
+          <li>
             <a href="#" id="theme-toggle" onclick="toggleTheme()" 
                style="display: flex; align-items: center; gap: 0.5rem; color: #fff !important; padding: 0 16px;">
               <i class="material-icons" id="theme-icon">dark_mode</i>
@@ -890,6 +897,94 @@
           usersCache = users;
           usersCacheLastUpdate = new Date();
           console.log(`ユーザーキャッシュを更新しました (${Object.keys(users).length}ユーザー)`);
+        }
+      }
+
+      /**
+       * 月曜日の日付を取得
+       */
+      function getMondayOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 日曜日の場合は前週の月曜日
+        return new Date(d.setDate(diff));
+      }
+
+      /**
+       * 日付をキー用にフォーマット
+       */
+      function formatDateForKey(date) {
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      /**
+       * アドバイス読み込み状態を更新
+       */
+      function updateAdviceLoadingState(isLoading) {
+        const adviceContent = document.getElementById('advice-content');
+        if (!adviceContent) return;
+
+        if (isLoading) {
+          adviceContent.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--border-color); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; margin-bottom: 1rem;"></div>
+              <div>Vertex AIでアドバイスを生成中...</div>
+              <div style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.7;">初回は時間がかかることがあります</div>
+            </div>
+            <style>
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            </style>
+          `;
+        }
+      }
+
+      /**
+       * 週次アドバイスをFirestoreから取得または新規作成
+       */
+      async function fetchWeeklyAdvice() {
+        try {
+          const now = new Date();
+          const monday = getMondayOfWeek(now);
+          const mondayKey = formatDateForKey(monday);
+          
+          console.log('週次アドバイスを確認中...', mondayKey);
+          
+          // Firestoreから今週のアドバイスを確認
+          const adviceRef = db.collection('weekly_advice').doc(mondayKey);
+          const adviceDoc = await adviceRef.get();
+          
+          if (adviceDoc.exists) {
+            console.log('キャッシュされた週次アドバイスを取得しました');
+            const data = adviceDoc.data();
+            return data.analysisData;
+          } else {
+            console.log('新しい週次アドバイスを作成中...');
+            
+            // 進行中表示を更新
+            updateAdviceLoadingState(true);
+            
+            // AI分析APIを呼び出し
+            const analysisData = await fetchAIAnalysis();
+            
+            // Firestoreに保存
+            const weeklyAdviceData = {
+              mondayKey: mondayKey,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              analysisData: analysisData,
+              isActive: true
+            };
+            
+            await adviceRef.set(weeklyAdviceData);
+            console.log('週次アドバイスをFirestoreに保存しました');
+            
+            return analysisData;
+          }
+        } catch (error) {
+          console.error('週次アドバイス取得エラー:', error);
+          updateAdviceLoadingState(false);
+          throw error;
         }
       }
 
@@ -1868,12 +1963,12 @@
           `;
         });
 
-        // AI分析の実行（非同期で実行）
-        fetchAIAnalysis().then(analysisData => {
-          console.log('AI分析完了、ダッシュボードを更新中...');
+        // 週次アドバイスの実行（非同期で実行）
+        fetchWeeklyAdvice().then(analysisData => {
+          console.log('週次アドバイス取得完了、ダッシュボードを更新中...');
           updateDashboardWithAIAnalysis(analysisData);
         }).catch(error => {
-          console.error('AI分析に失敗しました:', error);
+          console.error('週次アドバイス取得に失敗しました:', error);
           // エラー情報を表示（サンプルデータは使用しない）
           document.getElementById('dashboard-discord-logs').innerHTML = `
             <div class="dashboard-card">

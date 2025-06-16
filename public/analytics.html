@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>統計分析ダッシュボード - Discord にゃんこエージェント</title>
+    <!-- Materialize CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+    <style>
+      :root {
+        --primary-color: #6366f1;
+        --primary-light: #8b5cf6;
+        --primary-dark: #4f46e5;
+        --secondary-color: #f59e0b;
+        --accent-color: #06b6d4;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --error-color: #ef4444;
+        --border-radius: 16px;
+        --border-radius-sm: 8px;
+        --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      }
+
+      /* ダークモード（デフォルト） */
+      :root,
+      [data-theme="dark"] {
+        --background-color: #0f172a;
+        --surface-color: #1e293b;
+        --card-background: #334155;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #64748b;
+        --border-color: #475569;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ライトモード */
+      [data-theme="light"] {
+        --background-color: #f8fafc;
+        --surface-color: #ffffff;
+        --card-background: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --shadow-light: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-medium: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-large: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
+      body {
+        background: var(--background-color);
+        min-height: 100vh;
+        font-family: 'Inter', 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: var(--text-primary);
+        line-height: 1.6;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      .main-container {
+        background: var(--background-color);
+        min-height: 100vh;
+        margin-top: 64px;
+        padding: 2rem 1rem;
+      }
+
+      nav {
+        background: var(--gradient-primary) !important;
+        box-shadow: var(--shadow-medium);
+        position: fixed;
+        top: 0;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+      }
+
+      .nav-wrapper .brand-logo {
+        color: #fff !important;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        font-size: 1.25rem;
+        padding-left: 1rem;
+      }
+
+      .brand-logo i {
+        margin-right: 0.75rem;
+        font-size: 2rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-right: 1rem;
+      }
+
+      .nav-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+
+      .nav-button:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        color: #fff;
+      }
+
+      .analytics-card {
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-light);
+        background: var(--card-background);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .analytics-card:hover {
+        box-shadow: var(--shadow-large);
+        transform: translateY(-4px);
+        border-color: var(--primary-color);
+      }
+
+      .card-header {
+        background: linear-gradient(135deg, var(--surface-color) 0%, var(--card-background) 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--gradient-primary);
+      }
+
+      .card-title {
+        font-weight: 700;
+        font-size: 1.25rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+        letter-spacing: 0.025em;
+      }
+
+      .card-title i {
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        padding: 0.5rem;
+        border-radius: 50%;
+        background-color: rgba(99, 102, 241, 0.1);
+        -webkit-text-fill-color: var(--primary-color);
+      }
+
+      .card-content {
+        padding: 1.5rem;
+        background: var(--card-background);
+      }
+
+      .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 1rem 0;
+      }
+
+      .period-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .period-btn {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .period-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+      }
+
+      .period-btn:hover {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--surface-color);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-muted);
+      }
+
+      .error {
+        text-align: center;
+        padding: 2rem;
+        color: var(--error-color);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="nav-wrapper">
+        <div class="brand-logo">
+          <i class="material-icons">analytics</i>
+          統計分析ダッシュボード
+        </div>
+        <div class="nav-actions">
+          <button id="theme-toggle" class="nav-button" onclick="toggleTheme()">
+            <i class="material-icons" id="theme-icon">dark_mode</i>
+            <span id="theme-text">ライト</span>
+          </button>
+          <a href="index.html" class="nav-button">
+            <i class="material-icons">dashboard</i>
+            メインダッシュボード
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main-container">
+      <div class="container">
+        <!-- コミュニティ健康度の推移 -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="material-icons">health_and_safety</i>
+              コミュニティ健康度の推移
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="period-selector">
+              <button class="period-btn active" onclick="changePeriod('health', '7d')">7日間</button>
+              <button class="period-btn" onclick="changePeriod('health', '30d')">30日間</button>
+              <button class="period-btn" onclick="changePeriod('health', '90d')">90日間</button>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value" id="health-current">-</div>
+                <div class="stat-label">現在の健康度</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="health-avg">-</div>
+                <div class="stat-label">平均健康度</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="health-trend">-</div>
+                <div class="stat-label">トレンド</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="healthChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ユーザーアクティビティの推移 -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="material-icons">people</i>
+              ユーザーアクティビティの推移
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="period-selector">
+              <button class="period-btn active" onclick="changePeriod('activity', '7d')">7日間</button>
+              <button class="period-btn" onclick="changePeriod('activity', '30d')">30日間</button>
+              <button class="period-btn" onclick="changePeriod('activity', '90d')">90日間</button>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value" id="activity-posts">-</div>
+                <div class="stat-label">総投稿数</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="activity-users">-</div>
+                <div class="stat-label">アクティブユーザー</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="activity-reactions">-</div>
+                <div class="stat-label">総リアクション数</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="activityChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bot行動統計 -->
+        <div class="analytics-card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="material-icons">smart_toy</i>
+              Bot行動統計
+            </h3>
+          </div>
+          <div class="card-content">
+            <div class="period-selector">
+              <button class="period-btn active" onclick="changePeriod('bot', '7d')">7日間</button>
+              <button class="period-btn" onclick="changePeriod('bot', '30d')">30日間</button>
+              <button class="period-btn" onclick="changePeriod('bot', '90d')">90日間</button>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value" id="bot-actions">-</div>
+                <div class="stat-label">総行動数</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="bot-success-rate">-</div>
+                <div class="stat-label">成功率</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" id="bot-most-active">-</div>
+                <div class="stat-label">最活発Bot</div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="botChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+      // Firebase設定
+      const firebaseConfig = {
+        apiKey: "AIzaSyD_fqZanQMmtDbzIkQNEhInPoycMbYzizo",
+        authDomain: "nyanco-bot.firebaseapp.com",
+        projectId: "nyanco-bot",
+        storageBucket: "nyanco-bot.firebasestorage.app",
+        messagingSenderId: "242432500390",
+        appId: "1:242432500390:web:73cbabfb788522326e0a67",
+        measurementId: "G-VR49RLP5NX"
+      };
+
+      // Firebase初期化
+      let db = null;
+      let firebaseInitialized = false;
+      let firestoreNetworkEnabled = false;
+
+      try {
+        console.log('Firebase初期化開始...');
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        firebaseInitialized = true;
+        console.log('Firebase初期化完了');
+
+        // Firestoreの設定を最適化
+        db.settings({
+          cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+          experimentalForceLongPolling: false,
+          experimentalAutoDetectLongPolling: true
+        });
+
+        // Firestoreの接続を一度だけ有効化
+        db.enableNetwork().then(() => {
+          firestoreNetworkEnabled = true;
+          console.log('Firestore接続成功');
+        }).catch((error) => {
+          console.error('Firestore接続エラー:', error);
+          firestoreNetworkEnabled = false;
+        });
+
+      } catch (error) {
+        console.error('Firebase初期化エラー:', error);
+        firebaseInitialized = false;
+      }
+
+      // グローバル変数
+      let charts = {};
+      let currentPeriods = {
+        health: '7d',
+        activity: '7d',
+        bot: '7d'
+      };
+
+      /**
+       * テーマ切り替え機能
+       */
+      function toggleTheme() {
+        const body = document.body;
+        const currentTheme = body.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        
+        body.setAttribute('data-theme', newTheme);
+        
+        // テーマアイコンとテキストを更新
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        if (newTheme === 'light') {
+          themeIcon.textContent = 'light_mode';
+          themeText.textContent = 'ダーク';
+        } else {
+          themeIcon.textContent = 'dark_mode';
+          themeText.textContent = 'ライト';
+        }
+        
+        // ローカルストレージに保存
+        localStorage.setItem('theme', newTheme);
+        
+        console.log(`テーマを${newTheme}モードに切り替えました`);
+      }
+
+      /**
+       * 保存されたテーマを読み込み
+       */
+      function loadSavedTheme() {
+        try {
+          const savedTheme = localStorage.getItem('theme') || 'dark';
+          document.body.setAttribute('data-theme', savedTheme);
+          
+          const themeIcon = document.getElementById('theme-icon');
+          const themeText = document.getElementById('theme-text');
+          
+          if (savedTheme === 'light') {
+            themeIcon.textContent = 'light_mode';
+            themeText.textContent = 'ダーク';
+          } else {
+            themeIcon.textContent = 'dark_mode';
+            themeText.textContent = 'ライト';
+          }
+        } catch (error) {
+          console.warn('テーマ設定の読み込みに失敗:', error);
+        }
+      }
+
+      /**
+       * 期間選択を変更
+       */
+      function changePeriod(chartType, period) {
+        // ボタンのアクティブ状態を更新
+        const buttons = document.querySelectorAll(`[onclick*="${chartType}"]`);
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        currentPeriods[chartType] = period;
+        
+        // データを再読み込み
+        switch(chartType) {
+          case 'health':
+            loadHealthData(period);
+            break;
+          case 'activity':
+            loadActivityData(period);
+            break;
+          case 'bot':
+            loadBotData(period);
+            break;
+        }
+      }
+
+      /**
+       * 日付範囲を計算
+       */
+      function getDateRange(period) {
+        const endDate = new Date();
+        const startDate = new Date();
+        
+        switch(period) {
+          case '7d':
+            startDate.setDate(endDate.getDate() - 7);
+            break;
+          case '30d':
+            startDate.setDate(endDate.getDate() - 30);
+            break;
+          case '90d':
+            startDate.setDate(endDate.getDate() - 90);
+            break;
+        }
+        
+        return { startDate, endDate };
+      }
+
+      /**
+       * コミュニティ健康度データを読み込み
+       */
+      async function loadHealthData(period = '7d') {
+        try {
+          console.log(`健康度データを読み込み中... (${period})`);
+          
+          // サンプルデータを生成（実際の実装では Firestore から取得）
+          const { startDate, endDate } = getDateRange(period);
+          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+          
+          const labels = [];
+          const participationData = [];
+          const engagementData = [];
+          const safetyData = [];
+          const overallData = [];
+          
+          for (let i = 0; i < days; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            labels.push(date.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }));
+            
+            // サンプルデータ生成
+            participationData.push(Math.floor(Math.random() * 20) + 70);
+            engagementData.push(Math.floor(Math.random() * 25) + 65);
+            safetyData.push(Math.floor(Math.random() * 10) + 85);
+            overallData.push(Math.floor(Math.random() * 15) + 75);
+          }
+          
+          // 統計値を更新
+          const currentHealth = overallData[overallData.length - 1];
+          const avgHealth = Math.floor(overallData.reduce((a, b) => a + b, 0) / overallData.length);
+          const trend = overallData[overallData.length - 1] - overallData[0];
+          
+          document.getElementById('health-current').textContent = `${currentHealth}%`;
+          document.getElementById('health-avg').textContent = `${avgHealth}%`;
+          document.getElementById('health-trend').textContent = trend > 0 ? `+${trend}%` : `${trend}%`;
+          document.getElementById('health-trend').style.color = trend > 0 ? 'var(--success-color)' : 'var(--error-color)';
+          
+          // グラフを更新
+          updateHealthChart(labels, participationData, engagementData, safetyData, overallData);
+          
+        } catch (error) {
+          console.error('健康度データの読み込みエラー:', error);
+        }
+      }
+
+      /**
+       * ユーザーアクティビティデータを読み込み
+       */
+      async function loadActivityData(period = '7d') {
+        try {
+          console.log(`アクティビティデータを読み込み中... (${period})`);
+          
+          const { startDate, endDate } = getDateRange(period);
+          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+          
+          const labels = [];
+          const postsData = [];
+          const usersData = [];
+          const reactionsData = [];
+          
+          for (let i = 0; i < days; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            labels.push(date.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }));
+            
+            postsData.push(Math.floor(Math.random() * 50) + 20);
+            usersData.push(Math.floor(Math.random() * 15) + 5);
+            reactionsData.push(Math.floor(Math.random() * 80) + 30);
+          }
+          
+          // 統計値を更新
+          const totalPosts = postsData.reduce((a, b) => a + b, 0);
+          const avgUsers = Math.floor(usersData.reduce((a, b) => a + b, 0) / usersData.length);
+          const totalReactions = reactionsData.reduce((a, b) => a + b, 0);
+          
+          document.getElementById('activity-posts').textContent = totalPosts.toLocaleString();
+          document.getElementById('activity-users').textContent = avgUsers;
+          document.getElementById('activity-reactions').textContent = totalReactions.toLocaleString();
+          
+          // グラフを更新
+          updateActivityChart(labels, postsData, usersData, reactionsData);
+          
+        } catch (error) {
+          console.error('アクティビティデータの読み込みエラー:', error);
+        }
+      }
+
+      /**
+       * Botデータを読み込み
+       */
+      async function loadBotData(period = '7d') {
+        try {
+          console.log(`Botデータを読み込み中... (${period})`);
+          
+          const { startDate, endDate } = getDateRange(period);
+          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+          
+          const labels = [];
+          const actionsData = [];
+          const successData = [];
+          const errorData = [];
+          
+          for (let i = 0; i < days; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            labels.push(date.toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }));
+            
+            const totalActions = Math.floor(Math.random() * 30) + 10;
+            const successCount = Math.floor(totalActions * (0.8 + Math.random() * 0.15));
+            const errorCount = totalActions - successCount;
+            
+            actionsData.push(totalActions);
+            successData.push(successCount);
+            errorData.push(errorCount);
+          }
+          
+          // 統計値を更新
+          const totalActions = actionsData.reduce((a, b) => a + b, 0);
+          const totalSuccess = successData.reduce((a, b) => a + b, 0);
+          const successRate = Math.floor((totalSuccess / totalActions) * 100);
+          
+          document.getElementById('bot-actions').textContent = totalActions.toLocaleString();
+          document.getElementById('bot-success-rate').textContent = `${successRate}%`;
+          document.getElementById('bot-most-active').textContent = 'にゃんこBot';
+          
+          // グラフを更新
+          updateBotChart(labels, successData, errorData);
+          
+        } catch (error) {
+          console.error('Botデータの読み込みエラー:', error);
+        }
+      }
+
+      /**
+       * 健康度グラフを更新
+       */
+      function updateHealthChart(labels, participation, engagement, safety, overall) {
+        const ctx = document.getElementById('healthChart').getContext('2d');
+        
+        if (charts.health) {
+          charts.health.destroy();
+        }
+        
+        charts.health = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '総合健康度',
+                data: overall,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+              },
+              {
+                label: '参加度',
+                data: participation,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4
+              },
+              {
+                label: 'エンゲージメント',
+                data: engagement,
+                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4
+              },
+              {
+                label: '安全性',
+                data: safety,
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                  usePointStyle: true
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary'),
+                  callback: function(value) {
+                    return value + '%';
+                  }
+                }
+              },
+              x: {
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              }
+            }
+          }
+        });
+      }
+
+      /**
+       * アクティビティグラフを更新
+       */
+      function updateActivityChart(labels, posts, users, reactions) {
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        
+        if (charts.activity) {
+          charts.activity.destroy();
+        }
+        
+        charts.activity = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '投稿数',
+                data: posts,
+                backgroundColor: '#6366f1',
+                borderColor: '#4f46e5',
+                borderWidth: 1,
+                yAxisID: 'y'
+              },
+              {
+                label: 'アクティブユーザー',
+                data: users,
+                backgroundColor: '#10b981',
+                borderColor: '#059669',
+                borderWidth: 1,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                  usePointStyle: true
+                }
+              }
+            },
+            scales: {
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                grid: {
+                  drawOnChartArea: false,
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              },
+              x: {
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              }
+            }
+          }
+        });
+      }
+
+      /**
+       * Botグラフを更新
+       */
+      function updateBotChart(labels, success, error) {
+        const ctx = document.getElementById('botChart').getContext('2d');
+        
+        if (charts.bot) {
+          charts.bot.destroy();
+        }
+        
+        charts.bot = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '成功',
+                data: success,
+                backgroundColor: '#10b981',
+                borderColor: '#059669',
+                borderWidth: 1
+              },
+              {
+                label: 'エラー',
+                data: error,
+                backgroundColor: '#ef4444',
+                borderColor: '#dc2626',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-primary'),
+                  usePointStyle: true
+                }
+              }
+            },
+            scales: {
+              y: {
+                stacked: true,
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              },
+              x: {
+                stacked: true,
+                grid: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--border-color')
+                },
+                ticks: {
+                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // 初期化
+      document.addEventListener('DOMContentLoaded', function() {
+        loadSavedTheme();
+        
+        // 初期データを読み込み
+        loadHealthData();
+        loadActivityData();
+        loadBotData();
+      });
+    </script>
+  </body>
+</html>
