@@ -21,6 +21,7 @@ from .discord_analytics import DiscordAnalytics
 from .content_creator import ContentCreator
 from .scheduler import SchedulerManager
 from .podcast import PodcastGenerator
+from .daily_analytics import DailyAnalytics
 
 # .envファイルから環境変数を読み込み
 load_dotenv()
@@ -37,6 +38,7 @@ class EntertainmentBot(discord.Client):
         
         # コア機能の初期化
         self.analytics = DiscordAnalytics(firestore_client)
+        self.daily_analytics = DailyAnalytics(self, firestore_client)
         self.content_creator = ContentCreator(firestore_client, self)
         self.scheduler_manager = SchedulerManager(firestore_client, self)
         self.podcast_generator = PodcastGenerator()
@@ -160,7 +162,7 @@ class EntertainmentBot(discord.Client):
         
         try:
             # 管理者権限が必要なコマンド
-            admin_commands = ['scheduler', 'summary', 'analytics', 'podcast', 'advice']
+            admin_commands = ['scheduler', 'summary', 'analytics', 'podcast', 'advice', 'daily_analytics']
             if command in admin_commands and message.author.id not in self.admin_user_ids:
                 await message.reply("❌ このコマンドは管理者専用です")
                 return
@@ -196,6 +198,9 @@ class EntertainmentBot(discord.Client):
             
             elif command == 'advice':
                 await self._cmd_generate_advice(message)
+            
+            elif command == 'daily_analytics':
+                await self._cmd_daily_analytics(message)
             
             else:
                 await message.reply(f"❓ 不明なコマンド: {command}")
@@ -233,6 +238,7 @@ class EntertainmentBot(discord.Client):
 `!podcast [days]` - ポッドキャスト生成
 `!advice` - 週次運営アドバイス生成
 `!botactions [--limit=N] [--type=TYPE]` - Botアクション履歴表示
+`!daily_analytics` - 日次アナリティクス生成
                 """,
                 inline=False
             )
@@ -1087,6 +1093,59 @@ class EntertainmentBot(discord.Client):
         except Exception as e:
             await message.reply(f"❌ Botアクション履歴取得エラー: {e}")
             print(f"❌ Botアクション履歴コマンドエラー: {e}")
+    
+    async def _cmd_daily_analytics(self, message):
+        """日次アナリティクス生成コマンド"""
+        if message.author.id not in self.admin_user_ids:
+            await message.reply("❌ このコマンドは管理者専用です")
+            return
+        
+        await message.reply("📊 日次アナリティクスを生成中...")
+        
+        try:
+            result = await self.daily_analytics.run_daily_analytics()
+            
+            if result['success']:
+                embed = discord.Embed(
+                    title="📊 日次アナリティクス生成完了",
+                    description=f"日付: {result['date']}",
+                    color=0x0099ff
+                )
+                
+                summary = result['summary']
+                embed.add_field(
+                    name="📈 今日の統計",
+                    value=f"""
+アクティブユーザー: {summary['activeUsers']}名
+メッセージ数: {summary['messageCount']}件
+新規メンバー: {summary['newMembers']}名
+再エンゲージメント: {summary['reengagements']}件
+                    """,
+                    inline=False
+                )
+                
+                if summary['topChannels']:
+                    embed.add_field(
+                        name="📺 アクティブチャンネル",
+                        value=" • ".join(summary['topChannels']),
+                        inline=False
+                    )
+                
+                embed.add_field(
+                    name="💾 保存状況",
+                    value=f"Firestore ID: `{result['analytics_id']}`",
+                    inline=False
+                )
+                
+                embed.set_footer(text="データはindex.htmlのダッシュボードで確認できます")
+                
+                await message.reply(embed=embed)
+            else:
+                await message.reply("❌ 日次アナリティクスの生成に失敗しました")
+        
+        except Exception as e:
+            await message.reply(f"❌ エラー: {e}")
+            print(f"❌ 日次アナリティクスコマンドエラー: {e}")
     
     async def shutdown(self):
         """Bot終了処理"""
