@@ -502,273 +502,182 @@
     </nav>
 
     <div class="main-container">
-      <div class="dashboard-container">
-        <!-- Discord サーバー概要 -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">dns</i>
-              サーバー概要
-            </h3>
+      <div class="container">
+        <!-- 上段: Discord ログ分析（左大）+ ユーザー統計（右小） -->
+        <div class="row">
+          <div class="col s12 m8 l9">
+            <div class="dashboard-section" id="dashboard-discord-logs"></div>
           </div>
-          <div class="card-content">
-            <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-number" id="member-count">1,250</span>
-                <span class="stat-label">メンバー数</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number" id="online-count">892</span>
-                <span class="stat-label">オンライン</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number" id="channel-count">45</span>
-                <span class="stat-label">チャンネル数</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number" id="role-count">12</span>
-                <span class="stat-label">ロール数</span>
-              </div>
-            </div>
+          <div class="col s12 m4 l3">
+            <div class="dashboard-section" id="dashboard-users"></div>
           </div>
         </div>
 
-        <!-- メッセージ統計 -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">chat</i>
-              メッセージ統計
-            </h3>
+        <!-- 中段: ポッドキャスト管理（左）+ Bot Actions（右） -->
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-podcasts"></div>
           </div>
-          <div class="card-content">
-            <span class="metric-value" id="message-count">3,847</span>
-            <span class="metric-label">過去24時間の総メッセージ数</span>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 78%;"></div>
-            </div>
-            <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-number">2,156</span>
-                <span class="stat-label">テキスト</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">1,691</span>
-                <span class="stat-label">リアクション</span>
-              </div>
-            </div>
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-bot-actions"></div>
           </div>
         </div>
 
-        <!-- ユーザーアクティビティ -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">trending_up</i>
-              ユーザーアクティビティ
-            </h3>
-          </div>
-          <div class="card-content">
-            <span class="metric-value">+24.5%</span>
-            <span class="metric-label">前週比増加率</span>
-            <div class="chart-container">
-              <canvas id="activity-chart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- モデレーション -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">security</i>
-              モデレーション
-            </h3>
-          </div>
-          <div class="card-content">
-            <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-number">7</span>
-                <span class="stat-label">警告</span>
+        <!-- 下段: 小さなパネル群 -->
+        <div class="row">
+          <div class="col s12 m6 l3">
+            <!-- サーバー概要 -->
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">dns</i>
+                  サーバー概要
+                </h3>
               </div>
-              <div class="stat-item">
-                <span class="stat-number">2</span>
-                <span class="stat-label">タイムアウト</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">0</span>
-                <span class="stat-label">BAN</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">15</span>
-                <span class="stat-label">削除済み</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ボット状態 -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">smart_toy</i>
-              ボット状態
-            </h3>
-          </div>
-          <div class="card-content">
-            <ul class="status-list">
-              <li class="status-item">
-                <span style="display: flex; align-items: center;">
-                  <span class="status-dot status-online"></span>
-                  メインボット
-                </span>
-                <span class="badge badge-success">稼働中</span>
-              </li>
-              <li class="status-item">
-                <span style="display: flex; align-items: center;">
-                  <span class="status-dot status-online"></span>
-                  音楽ボット
-                </span>
-                <span class="badge badge-success">稼働中</span>
-              </li>
-              <li class="status-item">
-                <span style="display: flex; align-items: center;">
-                  <span class="status-dot status-away"></span>
-                  ログボット
-                </span>
-                <span class="badge badge-warning">メンテ中</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- 最新アクティビティ -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">history</i>
-              最新アクティビティ
-            </h3>
-          </div>
-          <div class="card-content">
-            <div class="activity-feed">
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="material-icons">person_add</i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">新メンバーが参加しました</div>
-                  <div class="activity-time">2分前</div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number" id="member-count">1,250</span>
+                    <span class="stat-label">メンバー数</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number" id="online-count">892</span>
+                    <span class="stat-label">オンライン</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number" id="channel-count">45</span>
+                    <span class="stat-label">チャンネル数</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number" id="role-count">12</span>
+                    <span class="stat-label">ロール数</span>
+                  </div>
                 </div>
               </div>
-              <div class="activity-item">
-                <div class="activity-icon">
+            </div>
+          </div>
+
+          <div class="col s12 m6 l3">
+            <!-- メッセージ統計 -->
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
                   <i class="material-icons">chat</i>
+                  メッセージ統計
+                </h3>
+              </div>
+              <div class="card-content">
+                <span class="metric-value" id="message-count">3,847</span>
+                <span class="metric-label">過去24時間の総メッセージ数</span>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 78%;"></div>
                 </div>
-                <div class="activity-content">
-                  <div class="activity-title">一般チャンネルに新しい投稿</div>
-                  <div class="activity-time">5分前</div>
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">2,156</span>
+                    <span class="stat-label">テキスト</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">1,691</span>
+                    <span class="stat-label">リアクション</span>
+                  </div>
                 </div>
               </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="material-icons">star</i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">メッセージにリアクションが追加</div>
-                  <div class="activity-time">8分前</div>
+            </div>
+          </div>
+
+          <div class="col s12 m6 l3">
+            <!-- モデレーション -->
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">security</i>
+                  モデレーション
+                </h3>
+              </div>
+              <div class="card-content">
+                <div class="stats-grid">
+                  <div class="stat-item">
+                    <span class="stat-number">7</span>
+                    <span class="stat-label">警告</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">2</span>
+                    <span class="stat-label">タイムアウト</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">0</span>
+                    <span class="stat-label">BAN</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-number">15</span>
+                    <span class="stat-label">削除済み</span>
+                  </div>
                 </div>
               </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="material-icons">volume_up</i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">ボイスチャンネルに参加</div>
-                  <div class="activity-time">12分前</div>
-                </div>
+            </div>
+          </div>
+
+          <div class="col s12 m6 l3">
+            <!-- ボット状態 -->
+            <div class="dashboard-card">
+              <div class="card-header">
+                <h3 class="dashboard-title">
+                  <i class="material-icons">smart_toy</i>
+                  ボット状態
+                </h3>
+              </div>
+              <div class="card-content">
+                <ul class="status-list">
+                  <li class="status-item">
+                    <span style="display: flex; align-items: center;">
+                      <span class="status-dot status-online"></span>
+                      メインボット
+                    </span>
+                    <span class="badge badge-success">稼働中</span>
+                  </li>
+                  <li class="status-item">
+                    <span style="display: flex; align-items: center;">
+                      <span class="status-dot status-online"></span>
+                      音楽ボット
+                    </span>
+                    <span class="badge badge-success">稼働中</span>
+                  </li>
+                  <li class="status-item">
+                    <span style="display: flex; align-items: center;">
+                      <span class="status-dot status-away"></span>
+                      ログボット
+                    </span>
+                    <span class="badge badge-warning">メンテ中</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- サーバーパフォーマンス -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">speed</i>
-              パフォーマンス
-            </h3>
+        <!-- 追加行: その他のダッシュボードセクション -->
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
           </div>
-          <div class="card-content">
-            <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-number">12ms</span>
-                <span class="stat-label">API応答時間</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">99.9%</span>
-                <span class="stat-label">稼働率</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">2.1GB</span>
-                <span class="stat-label">メモリ使用量</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">15%</span>
-                <span class="stat-label">CPU使用率</span>
-              </div>
-            </div>
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-guilds"></div>
           </div>
         </div>
 
-        <!-- 人気チャンネル -->
-        <div class="dashboard-card">
-          <div class="card-header">
-            <h3 class="dashboard-title">
-              <i class="material-icons">leaderboard</i>
-              人気チャンネル
-            </h3>
+        <div class="row">
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-user-matches"></div>
           </div>
-          <div class="card-content">
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>チャンネル</th>
-                    <th>メッセージ数</th>
-                    <th>状況</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td># 一般</td>
-                    <td>1,284</td>
-                    <td><span class="badge badge-success">活発</span></td>
-                  </tr>
-                  <tr>
-                    <td># 雑談</td>
-                    <td>956</td>
-                    <td><span class="badge badge-success">活発</span></td>
-                  </tr>
-                  <tr>
-                    <td># ゲーム</td>
-                    <td>673</td>
-                    <td><span class="badge badge-info">普通</span></td>
-                  </tr>
-                  <tr>
-                    <td># 音楽</td>
-                    <td>445</td>
-                    <td><span class="badge badge-warning">低調</span></td>
-                  </tr>
-                  <tr>
-                    <td># 開発</td>
-                    <td>234</td>
-                    <td><span class="badge badge-warning">低調</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="col s12 m6">
+            <div class="dashboard-section" id="dashboard-topics"></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col s12">
+            <div class="dashboard-section" id="dashboard-interactions"></div>
           </div>
         </div>
       </div>
