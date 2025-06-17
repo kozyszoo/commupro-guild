@@ -44,6 +44,7 @@ artifactregistry.repositories.uploadArtifacts
 artifactregistry.repositories.downloadArtifacts
 artifactregistry.repositories.get
 artifactregistry.repositories.list
+artifactregistry.repositories.create
 
 # Cloud Build
 cloudbuild.builds.create
@@ -117,6 +118,20 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 2. サービスアカウントキーのJSON形式が正しいか確認
 3. プロジェクトIDが正しく設定されているか確認
 
+## Artifact Registry セットアップ
+
+### リポジトリ作成
+```bash
+# Docker用Artifact Registryリポジトリを作成
+gcloud artifacts repositories create docker-repo \
+    --repository-format=docker \
+    --location=asia-northeast1 \
+    --description="Docker images for Discord bots"
+
+# リポジトリの確認
+gcloud artifacts repositories list --location=asia-northeast1
+```
+
 ### 権限確認コマンド
 ```bash
 # 現在の権限を確認
@@ -124,6 +139,10 @@ gcloud projects get-iam-policy $PROJECT_ID \
     --flatten="bindings[].members" \
     --format="table(bindings.role)" \
     --filter="bindings.members:${SERVICE_ACCOUNT_EMAIL}"
+
+# Artifact Registryリポジトリの確認
+gcloud artifacts repositories describe docker-repo \
+    --location=asia-northeast1
 ```
 
 ## 最小権限設定例（推奨）

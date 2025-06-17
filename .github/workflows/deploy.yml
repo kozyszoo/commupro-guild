@@ -86,7 +86,6 @@ jobs:
         
     - name: Configure Docker to use gcloud as credential helper  
       run: |
-        gcloud auth configure-docker gcr.io --quiet
         gcloud auth configure-docker asia-northeast1-docker.pkg.dev --quiet
       
     - name: Set up Docker Buildx
@@ -99,8 +98,8 @@ jobs:
         file: ./bot/config/docker/Dockerfile
         push: true
         tags: |
-          gcr.io/${{ env.GCP_PROJECT_ID }}/discord-nyanco-agent-miya:latest
-          gcr.io/${{ env.GCP_PROJECT_ID }}/discord-nyanco-agent-miya:${{ github.sha }}
+          asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/docker-repo/discord-nyanco-agent-miya:latest
+          asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/docker-repo/discord-nyanco-agent-miya:${{ github.sha }}
         build-args: |
           BOT_CHARACTER=miya
         cache-from: type=gha
@@ -113,8 +112,8 @@ jobs:
         file: ./bot/config/docker/Dockerfile
         push: true
         tags: |
-          gcr.io/${{ env.GCP_PROJECT_ID }}/discord-nyanco-agent-eve:latest
-          gcr.io/${{ env.GCP_PROJECT_ID }}/discord-nyanco-agent-eve:${{ github.sha }}
+          asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/docker-repo/discord-nyanco-agent-eve:latest
+          asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/docker-repo/discord-nyanco-agent-eve:${{ github.sha }}
         build-args: |
           BOT_CHARACTER=eve
         cache-from: type=gha
@@ -146,7 +145,7 @@ jobs:
     - name: Deploy to Cloud Run
       run: |
         gcloud run deploy discord-nyanco-agent-${{ matrix.bot }} \
-          --image gcr.io/${{ env.GCP_PROJECT_ID }}/discord-nyanco-agent-${{ matrix.bot }}:${{ github.sha }} \
+          --image asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/docker-repo/discord-nyanco-agent-${{ matrix.bot }}:${{ github.sha }} \
           --platform managed \
           --region ${{ env.GCP_REGION }} \
           --allow-unauthenticated \
