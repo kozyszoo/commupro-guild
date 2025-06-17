@@ -719,6 +719,7 @@
       // Firebase初期化とエラーハンドリング
       let db = null;
       let firebaseInitialized = false;
+      let dashboardInitialized = false;
       
       try {
         console.log('Firebase初期化開始...');
@@ -731,6 +732,17 @@
           merge: true
         };
         db.settings(settings);
+        
+        // Target IDエラーを防ぐために一定間隔でキャッシュをクリア
+        if (typeof window.firestoreClearTimer === 'undefined') {
+          window.firestoreClearTimer = setInterval(() => {
+            try {
+              db.clearPersistence().catch(() => {}); // エラーは無視
+            } catch (e) {
+              // clearPersistence が使えない場合は無視
+            }
+          }, 30000); // 30秒ごと
+        }
         
         firebaseInitialized = true;
         console.log('Firebase初期化完了');
@@ -986,7 +998,19 @@
           
           // Firestoreから今週のアドバイスを確認
           const adviceRef = db.collection('weekly_advice').doc(mondayKey);
-          const adviceDoc = await adviceRef.get();
+          let adviceDoc;
+          
+          try {
+            // Target IDエラーを防ぐためにタイムアウト付きで取得
+            const docPromise = adviceRef.get();
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Firestore timeout')), 10000)
+            );
+            adviceDoc = await Promise.race([docPromise, timeoutPromise]);
+          } catch (firestoreError) {
+            console.warn('Firestore取得でエラー、AI分析を直接実行します:', firestoreError);
+            return await fetchAIAnalysis();
+          }
           
           if (adviceDoc.exists) {
             console.log('キャッシュされた週次アドバイスを取得しました');
@@ -1872,6 +1896,13 @@
       }
 
       async function loadDashboard() {
+        // 重複実行を防ぐ
+        if (dashboardInitialized) {
+          console.log('ダッシュボードは既に初期化済みです');
+          return;
+        }
+        dashboardInitialized = true;
+        
         // Firebase設定の検証
         console.log('Firebase設定確認:', {
           projectId: firebaseConfig.projectId,
@@ -3027,8 +3058,11 @@
               btn.style.opacity = '1';
             }, 3000);
             
-            // ダッシュボードを再読み込み
-            setTimeout(loadDashboard, 2000);
+            // ダッシュボードを再読み込み（重複防止のためフラグをリセット）
+            setTimeout(() => {
+              dashboardInitialized = false;
+              loadDashboard();
+            }, 2000);
             
           } else {
             throw new Error(result.data.message || 'ポッドキャスト作成に失敗しました');
