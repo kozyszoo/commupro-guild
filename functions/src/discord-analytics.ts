@@ -400,6 +400,17 @@ export const analyzeDiscordLogs = onRequest(
     timeoutSeconds: 300
   },
   async (request, response) => {
+    // CORSヘッダーを明示的に設定
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // プリフライトリクエスト（OPTIONS）の処理
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+    
     try {
       logger.info('Discord ログ分析 API が呼び出されました');
 
@@ -601,6 +612,17 @@ export const getAnalysisHistory = onRequest(
     region: 'asia-northeast1'
   },
   async (request, response) => {
+    // CORSヘッダーを明示的に設定
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // プリフライトリクエスト（OPTIONS）の処理
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+    
     try {
       const limit = parseInt(request.query.limit as string) || 10;
       const guildId = request.query.guildId as string;
@@ -644,6 +666,17 @@ export const getBotActionsHistory = onRequest(
     region: 'asia-northeast1'
   },
   async (request, response) => {
+    // CORSヘッダーを明示的に設定
+    response.set('Access-Control-Allow-Origin', '*');
+    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    
+    // プリフライトリクエスト（OPTIONS）の処理
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+    
     try {
       logger.info('Botアクション履歴 API が呼び出されました');
 
