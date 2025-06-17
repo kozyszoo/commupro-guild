@@ -3068,7 +3068,15 @@
         try {
           console.log('Bot Actions強化版データを読み込み中...');
           
-          // Firebase FunctionsのBot Actions APIを呼び出し
+          // CORSエラーを避けるため、Firestoreから直接取得を優先
+          if (firebaseInitialized && db) {
+            await loadBotActionsFromFirestore();
+            return;
+          }
+          
+          // Firestore初期化されていない場合のみAPI呼び出しを試行
+          console.log('Firestore未初期化のため、API経由で取得を試行...');
+          
           const apiUrl = `${AI_ANALYSIS_API_BASE}/getBotActionsHistory?limit=50`;
           
           const response = await fetch(apiUrl, {
@@ -3089,14 +3097,14 @@
           if (result.success && result.data) {
             renderBotActionsEnhanced(result.data, result.stats);
           } else {
-            // APIでデータが取得できない場合、Firestoreから直接取得
-            await loadBotActionsFromFirestore();
+            console.log('API結果が無効、サンプルデータを表示');
+            renderBotActionsEnhanced([], {});
           }
           
         } catch (error) {
-          console.error('Bot Actions API 呼び出しエラー:', error);
-          // APIエラー時はFirestoreから直接取得
-          await loadBotActionsFromFirestore();
+          console.error('Bot Actions データ読み込みエラー:', error);
+          // すべて失敗した場合はサンプルデータまたは空データで表示
+          renderBotActionsEnhanced([], {});
         }
       }
 
