@@ -726,26 +726,22 @@
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         
-        // Firestoreの設定を最適化
+        // Target IDエラーを防ぐため、オフライン機能を完全に無効化
         const settings = {
-          cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+          cacheSizeBytes: 0, // キャッシュを無効化
           merge: true
         };
         db.settings(settings);
         
-        // Target IDエラーを防ぐために一定間隔でキャッシュをクリア
-        if (typeof window.firestoreClearTimer === 'undefined') {
-          window.firestoreClearTimer = setInterval(() => {
-            try {
-              db.clearPersistence().catch(() => {}); // エラーは無視
-            } catch (e) {
-              // clearPersistence が使えない場合は無視
-            }
-          }, 30000); // 30秒ごと
-        }
+        // オフライン機能を無効化
+        db.disableNetwork().then(() => {
+          return db.enableNetwork();
+        }).catch(networkError => {
+          console.warn('ネットワーク制御でエラー:', networkError);
+        });
         
         firebaseInitialized = true;
-        console.log('Firebase初期化完了');
+        console.log('Firebase初期化完了（オフライン機能無効化済み）');
         
         // Firestoreの接続テストを削除（不安定な場合があるため）
         
@@ -1797,27 +1793,40 @@
         `;
       }
 
-      // Firestoreからコレクションデータを取得
-      async function getCollectionData(collectionName) {
+      // Firestoreからコレクションデータを取得（Target IDエラー対策）
+      async function getCollectionData(collectionName, retryCount = 0) {
         if (!firebaseInitialized || !db) {
           console.warn(`Firebase未初期化のため${collectionName}コレクションをスキップ`);
           return {};
         }
         
         try {
-          console.log(`${collectionName}コレクションを取得中...`);
+          console.log(`${collectionName}コレクションを取得中... (試行: ${retryCount + 1})`);
           
-          // 接続状態をチェック
-          await db.enableNetwork();
+          // Target ID競合を防ぐために短時間待機
+          if (retryCount > 0) {
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 1000 + 500));
+          }
           
-          const snapshot = await db.collection(collectionName).get();
+          // 毎回新しいFirestoreインスタンスからクエリを作成
+          const timestamp = Date.now() + Math.random();
+          const query = db.collection(collectionName);
+          
+          // タイムアウト付きで取得
+          const queryPromise = query.get();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout')), 15000)
+          );
+          
+          const snapshot = await Promise.race([queryPromise, timeoutPromise]);
           const data = {};
           
           snapshot.forEach(doc => {
             const docData = doc.data();
             data[doc.id] = {
               id: doc.id,
-              ...docData
+              ...docData,
+              _timestamp: timestamp // ユニーク性のため
             };
           });
           
@@ -1825,6 +1834,13 @@
           return data;
         } catch (error) {
           console.error(`${collectionName}コレクションの取得エラー:`, error);
+          
+          // Target IDエラーの場合はリトライ
+          if (error.code === 'already-exists' && retryCount < 3) {
+            console.log(`${collectionName}をリトライします (${retryCount + 1}/3)`);
+            return await getCollectionData(collectionName, retryCount + 1);
+          }
+          
           console.error('エラー詳細:', {
             code: error.code,
             message: error.message,
