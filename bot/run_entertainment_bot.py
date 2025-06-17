@@ -11,6 +11,8 @@ import asyncio
 import os
 import sys
 import signal
+import threading
+import time
 from dotenv import load_dotenv
 
 # プロジェクトのsrcディレクトリをPythonパスに追加
@@ -18,6 +20,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
 from core.entertainment_bot import create_entertainment_bot
 from utils.firestore import initialize_firebase
+from utils.health_server import start_health_server, update_bot_status
 
 # 環境変数読み込み
 load_dotenv()
@@ -29,6 +32,35 @@ class EntertainmentBotRunner:
         self.bot = None
         self.db = None
         self.running = False
+        self.health_server_started = False
+    
+    def start_health_server_thread(self):
+        """ヘルスチェックサーバーを別スレッドで開始"""
+        if self.health_server_started:
+            return
+        
+        # Cloud Run環境の検出
+        is_cloud_run = os.getenv('K_SERVICE') is not None or os.getenv('PORT') is not None
+        
+        if is_cloud_run or os.getenv('START_HEALTH_SERVER', 'true').lower() == 'true':
+            try:
+                print("🏥 ヘルスチェックサーバーを開始中...")
+                print(f"   ポート: {os.getenv('PORT', '8080')}")
+                
+                # 別スレッドでヘルスサーバーを起動
+                health_thread = threading.Thread(target=start_health_server, daemon=True)
+                health_thread.start()
+                
+                # 少し待ってからボット状態を更新
+                time.sleep(2)
+                update_bot_status(False)  # 初期状態は未起動
+                
+                self.health_server_started = True
+                print("✅ ヘルスチェックサーバーが起動しました")
+                
+            except Exception as e:
+                print(f"⚠️ ヘルスチェックサーバーの起動に失敗: {e}")
+                print("   ボットは継続して動作しますが、Cloud Run のヘルスチェックが利用できません")
     
     async def initialize(self):
         """Bot初期化"""
@@ -66,11 +98,18 @@ class EntertainmentBotRunner:
             print("🚀 Discord エンタメコンテンツ制作Bot を開始...")
             self.running = True
             
+            # ヘルスチェックサーバーにボット起動を通知
+            if self.health_server_started:
+                update_bot_status(True)
+            
             await self.bot.start(discord_token)
             
         except Exception as e:
             print(f"❌ Bot開始エラー: {e}")
             self.running = False
+            # ヘルスチェックサーバーにエラー状態を通知
+            if self.health_server_started:
+                update_bot_status(False)
             return False
     
     async def stop(self):
@@ -79,6 +118,9 @@ class EntertainmentBotRunner:
             print("🛑 Bot停止中...")
             await self.bot.shutdown()
             self.running = False
+            # ヘルスチェックサーバーにBot停止を通知
+            if self.health_server_started:
+                update_bot_status(False)
             print("✅ Bot停止完了")
     
     def setup_signal_handlers(self):
@@ -99,12 +141,25 @@ async def main():
     runner = EntertainmentBotRunner()
     
     try:
+        # ヘルスチェックサーバーを最初に起動（Cloud Run対応）
+        runner.start_health_server_thread()
+        
         # シグナルハンドラー設定
         runner.setup_signal_handlers()
         
         # 初期化
         if not await runner.initialize():
             print("❌ 初期化に失敗しました")
+            # Cloud Run環境では、ヘルスサーバーを動作させ続ける
+            is_cloud_run = os.getenv('K_SERVICE') is not None or os.getenv('PORT') is not None
+            if is_cloud_run and runner.health_server_started:
+                print("☁️ Cloud Run環境のため、ヘルスサーバーを維持します")
+                try:
+                    # 無限ループでヘルスサーバーを維持
+                    while True:
+                        await asyncio.sleep(60)
+                except KeyboardInterrupt:
+                    pass
             return
         
         # 環境設定の表示
