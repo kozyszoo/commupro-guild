@@ -659,184 +659,45 @@
     <div class="main-container">
       <div class="container">
         <div class="row" id="dashboard-columns" style="display: flex; flex-wrap: wrap;">
-          <!-- 1行目: Discord ログ分析（全幅大パネル） -->
-          <div class="col s12">
+          <!-- 上段: ユーザー統計と日次アナリティクスを2列表示 -->
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-users"></div>
+          </div>
+          <div class="col s12 m6 l6">
+            <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
+          </div>
+          
+          <!-- 中段: Discord ログセクション -->
+          <div class="col s12" style="order: 5;">
             <div class="dashboard-section" id="dashboard-discord-logs"></div>
           </div>
           
-          <!-- 2行目: ユーザー統計（左大）+ 右側2つの小パネル -->
-          <div class="col s12 m8 l8">
-            <div class="dashboard-section" id="dashboard-users"></div>
+          <!-- その他のセクション -->
+          <div class="col s12 m6 l6" style="order: 10;">
+            <div class="dashboard-section" id="dashboard-events"></div>
           </div>
-          <div class="col s12 m4 l4">
-            <div style="display: flex; flex-direction: column; height: 100%;">
-              <div style="flex: 1; margin-bottom: 1rem;">
-                <div class="dashboard-section" id="dashboard-analytics-sessions"></div>
-              </div>
-              <div style="flex: 1;">
-                <div class="dashboard-section" id="dashboard-events"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 3行目: 4つの同サイズパネル -->
-          <div class="col s12 m6 l3">
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3 class="dashboard-title">
-                  <i class="material-icons">dns</i>
-                  サーバー概要
-                </h3>
-              </div>
-              <div class="card-content">
-                <div class="stats-grid">
-                  <div class="stat-item">
-                    <span class="stat-number" id="member-count">1,250</span>
-                    <span class="stat-label">メンバー数</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number" id="online-count">892</span>
-                    <span class="stat-label">オンライン</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number" id="channel-count">45</span>
-                    <span class="stat-label">チャンネル数</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number" id="role-count">12</span>
-                    <span class="stat-label">ロール数</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col s12 m6 l3">
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3 class="dashboard-title">
-                  <i class="material-icons">chat</i>
-                  メッセージ統計
-                </h3>
-              </div>
-              <div class="card-content">
-                <span class="metric-value" id="message-count">3,847</span>
-                <span class="metric-label">過去24時間の総メッセージ数</span>
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: 78%;"></div>
-                </div>
-                <div class="stats-grid">
-                  <div class="stat-item">
-                    <span class="stat-number">2,156</span>
-                    <span class="stat-label">テキスト</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">1,691</span>
-                    <span class="stat-label">リアクション</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col s12 m6 l3">
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3 class="dashboard-title">
-                  <i class="material-icons">security</i>
-                  モデレーション
-                </h3>
-              </div>
-              <div class="card-content">
-                <div class="stats-grid">
-                  <div class="stat-item">
-                    <span class="stat-number">7</span>
-                    <span class="stat-label">警告</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">2</span>
-                    <span class="stat-label">タイムアウト</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">0</span>
-                    <span class="stat-label">BAN</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-number">15</span>
-                    <span class="stat-label">削除済み</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col s12 m6 l3">
-            <div class="dashboard-card">
-              <div class="card-header">
-                <h3 class="dashboard-title">
-                  <i class="material-icons">smart_toy</i>
-                  ボット状態
-                </h3>
-              </div>
-              <div class="card-content">
-                <ul class="status-list">
-                  <li class="status-item">
-                    <span style="display: flex; align-items: center;">
-                      <span class="status-dot status-online"></span>
-                      メインボット
-                    </span>
-                    <span class="badge badge-success">稼働中</span>
-                  </li>
-                  <li class="status-item">
-                    <span style="display: flex; align-items: center;">
-                      <span class="status-dot status-online"></span>
-                      音楽ボット
-                    </span>
-                    <span class="badge badge-success">稼働中</span>
-                  </li>
-                  <li class="status-item">
-                    <span style="display: flex; align-items: center;">
-                      <span class="status-dot status-away"></span>
-                      ログボット
-                    </span>
-                    <span class="badge badge-warning">メンテ中</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4行目: ポッドキャスト管理（左大）+ 右側2つの小パネル -->
-          <div class="col s12 m8 l8">
+          <div class="col s12 m6 l6" style="order: 11;">
             <div class="dashboard-section" id="dashboard-podcasts"></div>
           </div>
-          <div class="col s12 m4 l4">
-            <div style="display: flex; flex-direction: column; height: 100%;">
-              <div style="flex: 1; margin-bottom: 1rem;">
-                <div class="dashboard-section" id="dashboard-user-matches"></div>
-              </div>
-              <div style="flex: 1;">
-                <div class="dashboard-section" id="dashboard-topics"></div>
-              </div>
-            </div>
+          <div class="col s12 m6 l6" style="order: 20;">
+            <div class="dashboard-section" id="dashboard-user-matches"></div>
           </div>
-
-          <!-- 5行目: Bot Actions（左）+ Guilds（右） -->
-          <div class="col s12 m6">
+          <div class="col s12 m6 l6" style="order: 21;">
+            <div class="dashboard-section" id="dashboard-topics"></div>
+          </div>
+          <div class="col s12 m6 l6" style="order: 30;">
             <div class="dashboard-section" id="dashboard-bot-actions"></div>
           </div>
-          <div class="col s12 m6">
+          <div class="col s12 m6 l6" style="order: 31;">
             <div class="dashboard-section" id="dashboard-guilds"></div>
           </div>
-
-          <!-- 6行目: インタラクション統計（全幅） -->
-          <div class="col s12">
-            <div class="dashboard-section" id="dashboard-interactions"></div>
-          </div>
-
-          <!-- 7行目: 管理ユーザー（全幅） -->
-          <div class="col s12">
+          <div class="col s12" style="order: 40;">
             <div class="dashboard-section" id="dashboard-admin-users"></div>
+          </div>
+          
+          <!-- 最下段: インタラクション統計を1列表示 -->
+          <div class="col s12" style="order: 50;">
+            <div class="dashboard-section" id="dashboard-interactions"></div>
           </div>
         </div>
       </div>
@@ -1359,7 +1220,7 @@
         let date;
         
         // Firestoreのタイムスタンプオブジェクトの場合
-        if (dateValue && typeof dateValue === 'object' && dateValue.toDate) {
+        if (dateValue && typeof dateValue === 'object' && dateValue.toDate && typeof dateValue.toDate === 'function') {
           date = dateValue.toDate();
         }
         // Firestoreのタイムスタンプオブジェクト（seconds/nanoseconds形式）の場合
@@ -2222,8 +2083,16 @@
               const dateA = a.date || a.session_date || a.sessionDate || a.createdAt || a.created_at;
               const dateB = b.date || b.session_date || b.sessionDate || b.createdAt || b.created_at;
               
-              const dateObjA = dateA ? (dateA.toDate ? dateA.toDate() : new Date(dateA)) : new Date(0);
-              const dateObjB = dateB ? (dateB.toDate ? dateB.toDate() : new Date(dateB)) : new Date(0);
+              const dateObjA = dateA ? (
+                dateA.toDate && typeof dateA.toDate === 'function' ? dateA.toDate() : 
+                dateA.seconds ? new Date(dateA.seconds * 1000) : 
+                new Date(dateA)
+              ) : new Date(0);
+              const dateObjB = dateB ? (
+                dateB.toDate && typeof dateB.toDate === 'function' ? dateB.toDate() : 
+                dateB.seconds ? new Date(dateB.seconds * 1000) : 
+                new Date(dateB)
+              ) : new Date(0);
               
               return dateObjB - dateObjA;
             })[0] : null;
@@ -3138,10 +3007,27 @@
           
           const botActionsData = [];
           botActionsSnapshot.forEach(doc => {
+            const data = doc.data();
+            let timestamp;
+            
+            // タイムスタンプの処理を安全に行う
+            if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+              timestamp = data.timestamp.toDate();
+            } else if (data.timestamp && data.timestamp.seconds) {
+              // Firestore Timestampオブジェクトの場合
+              timestamp = new Date(data.timestamp.seconds * 1000);
+            } else if (data.timestamp) {
+              // 文字列またはミリ秒の場合
+              timestamp = new Date(data.timestamp);
+            } else {
+              // タイムスタンプがない場合は現在時刻
+              timestamp = new Date();
+            }
+            
             botActionsData.push({
               id: doc.id,
-              ...doc.data(),
-              timestamp: doc.data().timestamp?.toDate() || new Date(doc.data().timestamp)
+              ...data,
+              timestamp: timestamp
             });
           });
           
