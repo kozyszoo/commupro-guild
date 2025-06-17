@@ -13,15 +13,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 
-# 依存関係を最小限に設定
+# 依存関係をインストール
 COPY requirements.txt .
-RUN pip install --no-cache-dir flask
+RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションファイルをコピー
-COPY simple_health_server.py .
+COPY bot/run_entertainment_bot.py .
+COPY bot/src/ ./src/
 
 # 環境変数の設定
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 ENV PORT=8080
 EXPOSE 8080
 
@@ -31,4 +33,4 @@ RUN useradd --create-home --shell /bin/bash app \
 USER app
 
 # アプリケーションを起動
-CMD ["python3", "simple_health_server.py"]
+CMD ["python3", "run_entertainment_bot.py"]

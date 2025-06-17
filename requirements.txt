@@ -1,0 +1,46 @@
+# Discord にゃんこエージェント ボット - 依存関係
+# Discord.py - Discord API ライブラリ
+discord.py==2.3.2
+
+# Firebase Admin SDK - Firestore データベース接続
+firebase-admin==6.2.0
+
+# 環境変数管理
+python-dotenv==1.0.0
+
+# 非同期処理サポート
+asyncio-mqtt==0.16.1
+
+# HTTP サーバー（ヘルスチェック用）
+flask==3.0.0
+
+# ログ管理
+structlog==23.2.0
+
+# 日付・時刻処理
+python-dateutil==2.8.2
+
+# JSON処理の強化
+ujson==5.8.0
+
+# メモリ効率の改善
+psutil==5.9.6
+
+# Text-to-Speech（音声合成）
+# gTTS==2.4.0  # 旧バージョン（基本機能のみ）
+google-cloud-texttospeech==2.16.3  # Google Cloud TTS（高品質音声、speakingRate対応）
+
+# 音声ファイル処理
+pydub==0.25.1
+
+# Vertex AI API（Gemini モデル使用）
+google-cloud-aiplatform>=1.43.0
+vertexai>=1.43.0
+
+# スケジューラー
+schedule==1.2.0
+
+# Google Drive API
+google-api-python-client==2.108.0
+google-auth-httplib2==0.1.1
+google-auth-oauthlib==1.1.0
