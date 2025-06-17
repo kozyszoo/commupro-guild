@@ -21,8 +21,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # アプリケーションファイルをコピー
-COPY run_bot.py .
 COPY run_entertainment_bot.py .
+COPY health_server.py .
 COPY src/ ./src/
 
 # 環境変数の設定（デフォルト値）
@@ -38,5 +38,5 @@ RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app
 USER app
 
-# アプリケーションを起動
-CMD ["python3", "run_bot.py"]
+# アプリケーションを起動（存在するファイルを実行）
+CMD ["python3", "run_entertainment_bot.py"]

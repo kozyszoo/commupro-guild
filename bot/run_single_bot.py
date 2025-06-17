@@ -111,9 +111,12 @@ class SingleBotManager:
     
     def __init__(self, character_id: str):
         self.character_id = character_id
-        # MultiBotManagerから必要な部分をインポート
-        from multi_bot_manager import MultiBotManager
-        self.multi_manager = MultiBotManager()
+        # MultiBotManagerから必要な部分をインポート（ファイルが存在しないため無効化）
+        # from multi_bot_manager import MultiBotManager
+        # self.multi_manager = MultiBotManager()
+        print("❌ エラー: multi_bot_manager.py が存在しないため、このスクリプトは使用できません")
+        print("   代わりに run_entertainment_bot.py を使用してください")
+        raise ImportError("multi_bot_manager.py が存在しません")
         
         if character_id not in self.multi_manager.characters:
             raise ValueError(f"Unknown character: {character_id}")
