@@ -10,9 +10,9 @@
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     <style>
       :root {
         --primary-color: #6366f1;
@@ -724,19 +724,23 @@
         console.log('Firebase初期化開始...');
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
+        
+        // Firestoreの設定を最適化
+        const settings = {
+          cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+          merge: true
+        };
+        db.settings(settings);
+        
         firebaseInitialized = true;
         console.log('Firebase初期化完了');
         
-        // Firestoreの接続テスト
-        db.enableNetwork().then(() => {
-          console.log('Firestore接続成功');
-        }).catch((error) => {
-          console.error('Firestore接続エラー:', error);
-        });
+        // Firestoreの接続テストを削除（不安定な場合があるため）
         
       } catch (error) {
         console.error('Firebase初期化エラー:', error);
         firebaseInitialized = false;
+        db = null;
       }
 
       // AI 分析 API のベース URL
@@ -923,7 +927,110 @@
         }
       }
 
+      /**
+       * 月曜日の日付を取得
+       */
+      function getMondayOfWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // 日曜日の場合は前週の月曜日
+        return new Date(d.setDate(diff));
+      }
 
+      /**
+       * 日付をキー用にフォーマット
+       */
+      function formatDateForKey(date) {
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      /**
+       * アドバイス読み込み状態を更新
+       */
+      function updateAdviceLoadingState(isLoading) {
+        const adviceContent = document.getElementById('advice-content');
+        if (!adviceContent) return;
+
+        if (isLoading) {
+          adviceContent.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--border-color); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite; margin-bottom: 1rem;"></div>
+              <div>Vertex AIでアドバイスを生成中...</div>
+              <div style="font-size: 0.875rem; margin-top: 0.5rem; opacity: 0.7;">初回は時間がかかることがあります</div>
+            </div>
+            <style>
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            </style>
+          `;
+        }
+      }
+
+      /**
+       * 週次アドバイスをFirestoreから取得または新規作成
+       */
+      async function fetchWeeklyAdvice() {
+        try {
+          // Firestore初期化チェック
+          if (!firebaseInitialized || !db) {
+            console.warn('Firestore が初期化されていません。直接AI分析を実行します。');
+            return await fetchAIAnalysis();
+          }
+
+          const now = new Date();
+          const monday = getMondayOfWeek(now);
+          const mondayKey = formatDateForKey(monday);
+          
+          console.log('週次アドバイスを確認中...', mondayKey);
+          
+          // Firestoreから今週のアドバイスを確認
+          const adviceRef = db.collection('weekly_advice').doc(mondayKey);
+          const adviceDoc = await adviceRef.get();
+          
+          if (adviceDoc.exists) {
+            console.log('キャッシュされた週次アドバイスを取得しました');
+            const data = adviceDoc.data();
+            return data.analysisData;
+          } else {
+            console.log('新しい週次アドバイスを作成中...');
+            
+            // 進行中表示を更新
+            updateAdviceLoadingState(true);
+            
+            // AI分析APIを呼び出し
+            const analysisData = await fetchAIAnalysis();
+            
+            // Firestoreに保存（エラーが発生してもAI分析結果は返す）
+            try {
+              const weeklyAdviceData = {
+                mondayKey: mondayKey,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                analysisData: analysisData,
+                isActive: true
+              };
+              
+              await adviceRef.set(weeklyAdviceData);
+              console.log('週次アドバイスをFirestoreに保存しました');
+            } catch (saveError) {
+              console.warn('Firestoreへの保存に失敗しましたが、AI分析結果は返します:', saveError);
+            }
+            
+            return analysisData;
+          }
+        } catch (error) {
+          console.error('週次アドバイス取得エラー:', error);
+          updateAdviceLoadingState(false);
+          
+          // Firestoreエラーの場合は直接AI分析を実行
+          if (error.code && error.code.includes('firestore')) {
+            console.warn('Firestoreエラーのため直接AI分析を実行します');
+            return await fetchAIAnalysis();
+          }
+          
+          throw error;
+        }
+      }
 
       /**
        * AI 分析結果をダッシュボードに反映
@@ -1789,12 +1896,12 @@
           `;
         });
 
-        // AI分析の実行（非同期で実行）
-        fetchAIAnalysis().then(analysisData => {
-          console.log('AI分析完了、ダッシュボードを更新中...');
+        // 週次アドバイスの実行（非同期で実行）
+        fetchWeeklyAdvice().then(analysisData => {
+          console.log('週次アドバイス取得完了、ダッシュボードを更新中...');
           updateDashboardWithAIAnalysis(analysisData);
         }).catch(error => {
-          console.error('AI分析に失敗しました:', error);
+          console.error('週次アドバイス取得に失敗しました:', error);
           // エラー情報を表示（サンプルデータは使用しない）
           document.getElementById('dashboard-discord-logs').innerHTML = `
             <div class="dashboard-card">
