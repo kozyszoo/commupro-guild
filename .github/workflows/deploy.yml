@@ -84,6 +84,31 @@ jobs:
       with:
         project_id: ${{ env.GCP_PROJECT_ID }}
         
+    - name: Setup Artifact Registry repository
+      run: |
+        # Artifact Registryリポジトリの存在確認と作成
+        if ! gcloud artifacts repositories describe docker-repo --location=asia-northeast1 &>/dev/null; then
+          echo "Creating Artifact Registry repository..."
+          gcloud artifacts repositories create docker-repo \
+            --repository-format=docker \
+            --location=asia-northeast1 \
+            --description="Docker images for Discord bots" \
+            --async
+          
+          # 作成完了を待機
+          echo "Waiting for repository creation..."
+          sleep 10
+          
+          # 作成確認
+          if ! gcloud artifacts repositories describe docker-repo --location=asia-northeast1 &>/dev/null; then
+            echo "Failed to create repository, continuing anyway..."
+          else
+            echo "Repository created successfully"
+          fi
+        else
+          echo "Repository already exists"
+        fi
+        
     - name: Configure Docker to use gcloud as credential helper  
       run: |
         gcloud auth configure-docker asia-northeast1-docker.pkg.dev --quiet
