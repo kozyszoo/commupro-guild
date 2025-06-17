@@ -4,12 +4,29 @@
 
 GitHub ActionsでDockerイメージをGCRにプッシュするためのサービスアカウント権限：
 
-### 基本権限
+### 基本権限（推奨）
 ```
 roles/storage.admin
 roles/cloudbuild.builds.builder
 roles/container.developer
 roles/artifactregistry.writer
+roles/iam.serviceAccountTokenCreator
+```
+
+### 最小権限セット（セキュリティ重視）
+```
+# Container Registry push用
+roles/storage.objectAdmin
+roles/container.developer
+
+# サービスアカウント認証用  
+iam.serviceAccounts.getAccessToken
+iam.serviceAccountKeys.create
+iam.serviceAccountKeys.get
+
+# Cloud Run デプロイ用
+roles/run.admin
+roles/iam.serviceAccountUser
 ```
 
 ### 個別権限（最小権限原則）
@@ -64,6 +81,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
     --role="roles/artifactregistry.writer"
 
+# サービスアカウント認証権限（重要）
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+    --role="roles/iam.serviceAccountTokenCreator"
+
 # Cloud Runデプロイ権限
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
@@ -76,10 +98,24 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 ## トラブルシューティング
 
-### "Permission denied" エラーの場合
+### "Permission 'iam.serviceAccounts.getAccessToken' denied" エラー
+```bash
+# 解決策：サービスアカウント認証権限を追加
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+    --role="roles/iam.serviceAccountTokenCreator"
+```
+
+### "Permission denied" エラーの一般的な対処法
 1. サービスアカウントキーが正しく設定されているか確認
 2. 上記の権限が全て付与されているか確認
 3. Artifact Registryが有効化されているか確認
+4. サービスアカウントが存在し、アクティブであることを確認
+
+### GitHub Actions認証エラーの対処
+1. `GCP_SERVICE_ACCOUNT_KEY` secretが正しくbase64エンコードされているか確認
+2. サービスアカウントキーのJSON形式が正しいか確認
+3. プロジェクトIDが正しく設定されているか確認
 
 ### 権限確認コマンド
 ```bash
