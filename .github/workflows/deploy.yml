@@ -201,23 +201,31 @@ jobs:
         curl -f https://${{ secrets.FIREBASE_PROJECT_ID }}.firebaseapp.com/health || \
         echo "Firebase hosting health check failed"
         
+    - name: Authenticate to Google Cloud for Health Check
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+        
+    - name: Set up Cloud SDK for Health Check
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ env.GCP_PROJECT_ID }}
+        
     - name: Check Miya Bot Cloud Run
       run: |
         MIYA_URL=$(gcloud run services describe discord-nyanco-agent-miya \
+          --project=${{ env.GCP_PROJECT_ID }} \
           --region=${{ env.GCP_REGION }} \
           --format="value(status.url)")
         curl -f $MIYA_URL/health || echo "Miya bot health check failed"
-      env:
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
         
     - name: Check Eve Bot Cloud Run
       run: |
         EVE_URL=$(gcloud run services describe discord-nyanco-agent-eve \
+          --project=${{ env.GCP_PROJECT_ID }} \
           --region=${{ env.GCP_REGION }} \
           --format="value(status.url)")
         curl -f $EVE_URL/health || echo "Eve bot health check failed"
-      env:
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
   # Slack通知
   notify-deployment:
