@@ -89,6 +89,24 @@ gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
     --role="roles/iam.serviceAccountTokenCreator" \
     --condition=None 2>/dev/null || true
 
+# Cloud Run Admin権限
+gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/run.admin" \
+    --condition=None 2>/dev/null || true
+
+# Service Account User権限（actAs権限のため）
+gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/iam.serviceAccountUser" \
+    --condition=None 2>/dev/null || true
+
+# Compute Service Account User権限（デフォルトCompute Engine SAを使用するため）
+gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="roles/compute.serviceAgent" \
+    --condition=None 2>/dev/null || true
+
 print_success "権限の付与が完了しました"
 
 # リポジトリ情報の表示

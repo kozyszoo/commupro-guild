@@ -11,6 +11,9 @@ roles/cloudbuild.builds.builder
 roles/container.developer
 roles/artifactregistry.writer
 roles/iam.serviceAccountTokenCreator
+roles/run.admin
+roles/iam.serviceAccountUser
+roles/compute.serviceAgent
 ```
 
 ### 最小権限セット（セキュリティ重視）
@@ -95,6 +98,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
     --role="roles/iam.serviceAccountUser"
+
+# Compute Engine Service Account権限（Cloud Runのデフォルトサービスアカウント使用のため）
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+    --role="roles/compute.serviceAgent"
 ```
 
 ## トラブルシューティング
@@ -105,6 +113,18 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
     --role="roles/iam.serviceAccountTokenCreator"
+```
+
+### "Permission 'iam.serviceaccounts.actAs' denied" エラー
+```bash
+# 解決策：Service Account User権限とCompute Service Agent権限を追加
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+    --role="roles/iam.serviceAccountUser"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
+    --role="roles/compute.serviceAgent"
 ```
 
 ### "Permission denied" エラーの一般的な対処法
