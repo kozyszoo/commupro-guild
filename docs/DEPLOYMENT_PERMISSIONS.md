@@ -4,7 +4,7 @@
 
 GitHub ActionsでDockerイメージをGCRにプッシュするためのサービスアカウント権限：
 
-### 基本権限（推奨）
+### GitHub Actionsサービスアカウント権限（推奨）
 ```
 roles/storage.admin
 roles/cloudbuild.builds.builder
@@ -14,6 +14,11 @@ roles/iam.serviceAccountTokenCreator
 roles/run.admin
 roles/iam.serviceAccountUser
 roles/compute.serviceAgent
+```
+
+### Cloud Run用Compute Engine サービスアカウント権限
+```
+roles/secretmanager.secretAccessor
 ```
 
 ### 最小権限セット（セキュリティ重視）
@@ -103,6 +108,14 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
     --role="roles/compute.serviceAgent"
+
+# Cloud Run用Compute Engine サービスアカウントにSecret Manager権限を付与
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${COMPUTE_SA}" \
+    --role="roles/secretmanager.secretAccessor"
 ```
 
 ## トラブルシューティング
@@ -125,6 +138,17 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SERVICE_ACCOUNT_EMAIL}" \
     --role="roles/compute.serviceAgent"
+```
+
+### Cloud RunでSecret Manager権限エラーが発生する場合
+```bash
+# 解決策：Compute Engine サービスアカウントにSecret Manager権限を追加
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
+COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:${COMPUTE_SA}" \
+    --role="roles/secretmanager.secretAccessor"
 ```
 
 ### "Permission denied" エラーの一般的な対処法

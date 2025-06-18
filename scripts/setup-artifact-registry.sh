@@ -107,7 +107,31 @@ gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
     --role="roles/compute.serviceAgent" \
     --condition=None 2>/dev/null || true
 
-print_success "権限の付与が完了しました"
+print_success "GitHub Actionsサービスアカウントの権限付与が完了しました"
+
+# Cloud Run用のデフォルトCompute Engine サービスアカウントの権限設定
+COMPUTE_SA="${GCP_PROJECT_ID//-/}@developer.gserviceaccount.com"
+if [[ "$GCP_PROJECT_ID" =~ ^[0-9]+$ ]]; then
+    # プロジェクトIDが数値の場合
+    COMPUTE_SA="${GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"
+else
+    # プロジェクトIDが文字列の場合、数値部分を抽出
+    PROJECT_NUMBER=$(gcloud projects describe "$GCP_PROJECT_ID" --format="value(projectNumber)" 2>/dev/null || echo "")
+    if [ -n "$PROJECT_NUMBER" ]; then
+        COMPUTE_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+    fi
+fi
+
+print_info "Cloud Run用Compute Engine サービスアカウント: $COMPUTE_SA"
+
+# Secret Manager Secret Accessor権限をCompute Engine SAに付与
+print_info "Secret Manager権限をCompute Engine サービスアカウントに付与中..."
+gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
+    --member="serviceAccount:${COMPUTE_SA}" \
+    --role="roles/secretmanager.secretAccessor" \
+    --condition=None 2>/dev/null || true
+
+print_success "全ての権限の付与が完了しました"
 
 # リポジトリ情報の表示
 print_info "リポジトリ情報:"
