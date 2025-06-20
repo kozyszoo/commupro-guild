@@ -726,9 +726,9 @@
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
         
-        // Target IDエラーを防ぐため、オフライン機能を完全に無効化
+        // Target IDエラーを防ぐため、キャッシュサイズを最小値に設定
         const settings = {
-          cacheSizeBytes: 0, // キャッシュを無効化
+          cacheSizeBytes: 1048576, // 1MB (最小値)
           merge: true
         };
         db.settings(settings);
