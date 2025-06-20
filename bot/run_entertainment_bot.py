@@ -91,11 +91,32 @@ class EntertainmentBotRunner:
             return False
         
         try:
-            discord_token = os.getenv('DISCORD_BOT_TOKEN')
-            if not discord_token:
-                raise Exception("DISCORD_BOT_TOKENが設定されていません")
+            # BOT_CHARACTERに基づいてトークンを取得
+            bot_character = os.getenv('BOT_CHARACTER', 'miya').lower()
+            discord_token_var = f'DISCORD_BOT_TOKEN_{bot_character.upper()}'
+            discord_token = os.getenv(discord_token_var)
             
-            print("🚀 Discord エンタメコンテンツ制作Bot を開始...")
+            if not discord_token:
+                print(f"❌ エラー: {discord_token_var}が設定されていません")
+                print(f"   BOT_CHARACTER: {bot_character}")
+                print(f"   探しているトークン変数: {discord_token_var}")
+                
+                # Cloud Run環境ではヘルスサーバーを維持
+                is_cloud_run = os.getenv('K_SERVICE') is not None or os.getenv('PORT') is not None
+                if is_cloud_run and self.health_server_started:
+                    print("⚠️ 環境設定エラーですが、Cloud Run環境のためヘルスサーバーを維持します")
+                    try:
+                        while True:
+                            await asyncio.sleep(60)
+                    except KeyboardInterrupt:
+                        pass
+                    return False
+                else:
+                    raise Exception(f"{discord_token_var}が設定されていません")
+            
+            print(f"🚀 Discord エンタメコンテンツ制作Bot ({bot_character}) を開始...")
+            print(f"   使用トークン変数: {discord_token_var}")
+            print(f"   トークン取得: {'✅' if discord_token else '❌'}")
             self.running = True
             
             # ヘルスチェックサーバーにボット起動を通知
