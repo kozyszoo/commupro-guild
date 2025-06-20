@@ -88,14 +88,20 @@ class EntertainmentBot(discord.Client):
         if message.author == self.user:
             return
         
-        # メンション処理（コマンドより優先）
+        # メンション処理（最優先）
         if self.user in message.mentions:
             await self._handle_mention(message)
             return
         
-        # コマンド処理
-        if message.content.startswith(self.command_prefix):
+        # 管理者コマンド処理（管理者のみ）
+        if message.content.startswith(self.command_prefix) and message.author.id in self.admin_user_ids:
             await self._handle_command(message)
+            return
+        
+        # 自然な会話（メンションなしでも特定の条件で応答）
+        if await self._should_respond_naturally(message):
+            await self._handle_natural_conversation(message)
+            return
         
         # メッセージログ記録（既存機能との連携）
         await self._log_message_activity(message)
@@ -215,7 +221,7 @@ class EntertainmentBot(discord.Client):
             await message.reply(f"❌ コマンド実行エラー: {e}")
     
     async def _handle_mention(self, message):
-        """メンション処理"""
+        """自然な会話でのメンション処理"""
         try:
             # メンションを除いたメッセージ内容を取得
             content = message.content
@@ -223,120 +229,203 @@ class EntertainmentBot(discord.Client):
                 content = content.replace(f'<@{mention.id}>', '').replace(f'<@!{mention.id}>', '')
             content = content.strip()
             
-            # 空のメンションの場合はヘルプを表示
+            # 空のメンションの場合
             if not content:
-                await self._mention_help(message)
+                greetings = [
+                    "はい、何でしょうか？😊",
+                    "こんにちは！何かお話ししましょうか？",
+                    "お疲れさまです！どうされましたか？",
+                    "何かお手伝いできることはありますか？"
+                ]
+                import random
+                await message.reply(random.choice(greetings))
                 return
             
-            # 簡単な挨拶応答
-            if any(greeting in content.lower() for greeting in ['こんにちは', 'hello', 'hi', 'おはよう', 'こんばんは']):
-                await message.reply("こんにちは！何かお手伝いできることはありますか？\n`!help` でコマンド一覧を確認できます。")
-                return
-            
-            # 質問っぽい内容に対する応答
-            if any(question in content for question in ['？', '?', 'どう', 'なに', 'なん', 'help', 'ヘルプ']):
-                await self._mention_help(message)
-                return
-            
-            # AI分析を使った応答（管理者のみ）
-            if message.author.id in self.admin_user_ids and len(content) > 10:
-                await self._ai_mention_response(message, content)
-                return
-            
-            # 一般的な応答
-            await message.reply("メンションありがとうございます！\n`!help` でコマンド一覧を確認できます。")
+            # AI応答を使った自然な会話
+            await self._natural_conversation_response(message, content)
             
             # メンション処理をログに記録
             await self._log_bot_action(
-                'mention_response',
+                'conversation',
                 str(message.author.id),
                 str(message.guild.id) if message.guild else None,
-                {'content': content[:100], 'response_type': 'mention'},
+                {'content': content[:100], 'response_type': 'natural_conversation'},
                 status='completed'
             )
             
         except Exception as e:
             print(f"❌ メンション処理エラー: {e}")
-            await message.reply("申し訳ございません。処理中にエラーが発生しました。")
+            error_responses = [
+                "ごめんなさい、ちょっと混乱してしまいました💦",
+                "申し訳ございません、うまく理解できませんでした",
+                "エラーが発生してしまいました。もう一度お話しいただけますか？"
+            ]
+            import random
+            await message.reply(random.choice(error_responses))
     
-    async def _mention_help(self, message):
-        """メンション時のヘルプ表示"""
-        help_embed = discord.Embed(
-            title="👋 メンションありがとうございます！",
-            description="エンタメコンテンツ制作Botです",
-            color=0x00ff88
-        )
-        
-        help_embed.add_field(
-            name="🎯 主な機能",
-            value="""
-• Discord活動の自動分析
-• 週次エンタメコンテンツ生成
-• ポッドキャスト自動作成
-• コミュニティ運営アドバイス
-            """,
-            inline=False
-        )
-        
-        help_embed.add_field(
-            name="📖 使い方",
-            value=f"`{self.command_prefix}help` - 詳細なコマンド一覧\n`{self.command_prefix}status` - Bot状態確認",
-            inline=False
-        )
-        
-        if message.author.id in self.admin_user_ids:
-            help_embed.add_field(
-                name="🔧 管理者向け",
-                value="メンションで質問すると、AI分析による詳細な回答を得られます",
-                inline=False
-            )
-        
-        help_embed.set_footer(text="何か質問があればメンションしてください！")
-        
-        await message.reply(embed=help_embed)
-    
-    async def _ai_mention_response(self, message, content):
-        """AI分析を使ったメンション応答（管理者のみ）"""
+    async def _natural_conversation_response(self, message, content):
+        """自然な会話応答"""
         try:
-            await message.reply("🤔 AI分析で回答を生成中...")
+            # 応答生成中のメッセージ
+            thinking_messages = [
+                "考え中です...🤔",
+                "ちょっと待ってくださいね💭",
+                "なるほど...✨"
+            ]
+            import random
+            thinking_msg = await message.reply(random.choice(thinking_messages))
             
             # 過去7日間のアクティビティデータを取得
             activities = await self.analytics.collect_weekly_activities(days=7)
             
-            # Vertex AIを使って応答を生成
+            # Vertex AIを使って自然な会話応答を生成
             import vertexai
             from vertexai.generative_models import GenerativeModel
             
+            # ユーザーの名前を取得
+            user_name = message.author.display_name or message.author.name
+            
             prompt = f"""
-あなたはDiscordサーバーの運営支援AIです。以下の質問に対して、サーバーのアクティビティデータを参考に回答してください。
+あなたは親しみやすいDiscordのコミュニティBotです。ユーザー「{user_name}」さんとの自然な会話を心がけてください。
 
-質問: {content}
+ユーザーからのメッセージ: {content}
 
-サーバー状況:
+現在のサーバー状況:
 - 総メッセージ数: {activities['summary_stats']['total_messages']}
 - アクティブユーザー数: {activities['summary_stats']['active_users_count']}
 - アクティブチャンネル数: {activities['summary_stats']['active_channels_count']}
 - 人気キーワード: {activities['summary_stats']['popular_keywords'][:5] if activities['summary_stats']['popular_keywords'] else 'なし'}
 
-回答は200文字以内で、親しみやすい口調で日本語で回答してください。
+以下のガイドラインで応答してください:
+1. 自然で親しみやすい口調
+2. 絵文字を適度に使用
+3. ユーザーの質問や話題に共感的に応答
+4. 必要に応じてサーバー情報を参考にする
+5. 150文字程度で簡潔に
+6. コマンドの説明は避け、普通の会話として応答
+
+ユーザーの名前を時々使って親近感を演出してください。
             """
             
             model = GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(prompt)
             ai_response = response.text
             
-            embed = discord.Embed(
-                title="🤖 AI回答",
-                description=ai_response,
-                color=0x7289da
-            )
-            embed.set_footer(text="Vertex AI (Gemini) による回答")
+            # 考え中メッセージを削除
+            await thinking_msg.delete()
             
-            await message.reply(embed=embed)
+            # 自然な応答を送信
+            await message.reply(ai_response)
             
         except Exception as e:
-            print(f"❌ AI応答生成エラー: {e}")
-            await message.reply("申し訳ございません。AI応答の生成中にエラーが発生しました。")
+            print(f"❌ 会話応答生成エラー: {e}")
+            # エラー時はシンプルな応答
+            fallback_responses = [
+                f"{message.author.display_name}さん、ちょっと考えがまとまりませんでした💦 もう一度お話しいただけますか？",
+                "すみません、うまくお答えできませんでした😅",
+                "申し訳ございません、今は少し調子が悪いみたいです🤖"
+            ]
+            import random
+            await message.reply(random.choice(fallback_responses))
+    
+    async def _should_respond_naturally(self, message):
+        """自然な会話に応答するかの判定"""
+        content = message.content.lower()
+        
+        # Bot名が含まれている場合
+        bot_names = ['ミヤ', 'miya', 'エヴ', 'eve', 'bot', 'ボット']
+        if any(name in content for name in bot_names):
+            return True
+        
+        # 挨拶や感謝の言葉
+        greetings = ['おはよう', 'こんにちは', 'こんばんは', 'お疲れ', 'ありがとう', 'thanks', 'hello', 'hi']
+        if any(greeting in content for greeting in greetings):
+            # 10%の確率で応答（スパム防止）
+            import random
+            return random.random() < 0.1
+        
+        # 質問形式
+        if '？' in content or '?' in content:
+            # 20%の確率で応答
+            import random
+            return random.random() < 0.2
+        
+        # 感情表現
+        emotions = ['楽しい', '嬉しい', '悲しい', '困った', '大変', 'やばい', 'すごい', '面白い']
+        if any(emotion in content for emotion in emotions):
+            # 15%の確率で応答
+            import random
+            return random.random() < 0.15
+        
+        return False
+    
+    async def _handle_natural_conversation(self, message):
+        """自然な会話処理（メンションなし）"""
+        try:
+            # よりカジュアルな応答
+            thinking_messages = [
+                "🤔",
+                "💭",
+                "✨"
+            ]
+            import random
+            thinking_msg = await message.reply(random.choice(thinking_messages))
+            
+            # 簡略化されたプロンプト
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
+            
+            user_name = message.author.display_name or message.author.name
+            content = message.content
+            
+            prompt = f"""
+あなたは親しみやすいDiscordコミュニティの住人です。ユーザー「{user_name}」さんの以下のメッセージに、自然で簡潔に応答してください。
+
+メッセージ: {content}
+
+ガイドライン:
+1. 自然で親しみやすい口調
+2. 絵文字を1-2個使用
+3. 50-80文字程度で簡潔に
+4. 共感や相槌を中心に
+5. 普通の人として応答（Bot感を出さない）
+
+例:
+- 「そうですね😊」
+- 「わかります！」
+- 「いいですね✨」
+            """
+            
+            model = GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            ai_response = response.text
+            
+            # 考え中メッセージを削除
+            await thinking_msg.delete()
+            
+            # 短めの自然な応答
+            await message.reply(ai_response)
+            
+            # ログ記録
+            await self._log_bot_action(
+                'natural_conversation',
+                str(message.author.id),
+                str(message.guild.id) if message.guild else None,
+                {'content': content[:50], 'response_type': 'casual'},
+                status='completed'
+            )
+            
+        except Exception as e:
+            print(f"❌ 自然会話応答エラー: {e}")
+            # エラー時は控えめな応答
+            casual_responses = [
+                "😊",
+                "なるほど！",
+                "そうですね✨",
+                "いいですね！"
+            ]
+            import random
+            await message.reply(random.choice(casual_responses))
     
     async def _cmd_help(self, message):
         """ヘルプコマンド"""
