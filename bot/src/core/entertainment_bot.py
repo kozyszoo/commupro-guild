@@ -88,6 +88,11 @@ class EntertainmentBot(discord.Client):
         if message.author == self.user:
             return
         
+        # メンション処理（コマンドより優先）
+        if self.user in message.mentions:
+            await self._handle_mention(message)
+            return
+        
         # コマンド処理
         if message.content.startswith(self.command_prefix):
             await self._handle_command(message)
@@ -208,6 +213,130 @@ class EntertainmentBot(discord.Client):
         except Exception as e:
             print(f"❌ コマンド処理エラー: {e}")
             await message.reply(f"❌ コマンド実行エラー: {e}")
+    
+    async def _handle_mention(self, message):
+        """メンション処理"""
+        try:
+            # メンションを除いたメッセージ内容を取得
+            content = message.content
+            for mention in message.mentions:
+                content = content.replace(f'<@{mention.id}>', '').replace(f'<@!{mention.id}>', '')
+            content = content.strip()
+            
+            # 空のメンションの場合はヘルプを表示
+            if not content:
+                await self._mention_help(message)
+                return
+            
+            # 簡単な挨拶応答
+            if any(greeting in content.lower() for greeting in ['こんにちは', 'hello', 'hi', 'おはよう', 'こんばんは']):
+                await message.reply("こんにちは！何かお手伝いできることはありますか？\n`!help` でコマンド一覧を確認できます。")
+                return
+            
+            # 質問っぽい内容に対する応答
+            if any(question in content for question in ['？', '?', 'どう', 'なに', 'なん', 'help', 'ヘルプ']):
+                await self._mention_help(message)
+                return
+            
+            # AI分析を使った応答（管理者のみ）
+            if message.author.id in self.admin_user_ids and len(content) > 10:
+                await self._ai_mention_response(message, content)
+                return
+            
+            # 一般的な応答
+            await message.reply("メンションありがとうございます！\n`!help` でコマンド一覧を確認できます。")
+            
+            # メンション処理をログに記録
+            await self._log_bot_action(
+                'mention_response',
+                str(message.author.id),
+                str(message.guild.id) if message.guild else None,
+                {'content': content[:100], 'response_type': 'mention'},
+                status='completed'
+            )
+            
+        except Exception as e:
+            print(f"❌ メンション処理エラー: {e}")
+            await message.reply("申し訳ございません。処理中にエラーが発生しました。")
+    
+    async def _mention_help(self, message):
+        """メンション時のヘルプ表示"""
+        help_embed = discord.Embed(
+            title="👋 メンションありがとうございます！",
+            description="エンタメコンテンツ制作Botです",
+            color=0x00ff88
+        )
+        
+        help_embed.add_field(
+            name="🎯 主な機能",
+            value="""
+• Discord活動の自動分析
+• 週次エンタメコンテンツ生成
+• ポッドキャスト自動作成
+• コミュニティ運営アドバイス
+            """,
+            inline=False
+        )
+        
+        help_embed.add_field(
+            name="📖 使い方",
+            value=f"`{self.command_prefix}help` - 詳細なコマンド一覧\n`{self.command_prefix}status` - Bot状態確認",
+            inline=False
+        )
+        
+        if message.author.id in self.admin_user_ids:
+            help_embed.add_field(
+                name="🔧 管理者向け",
+                value="メンションで質問すると、AI分析による詳細な回答を得られます",
+                inline=False
+            )
+        
+        help_embed.set_footer(text="何か質問があればメンションしてください！")
+        
+        await message.reply(embed=help_embed)
+    
+    async def _ai_mention_response(self, message, content):
+        """AI分析を使ったメンション応答（管理者のみ）"""
+        try:
+            await message.reply("🤔 AI分析で回答を生成中...")
+            
+            # 過去7日間のアクティビティデータを取得
+            activities = await self.analytics.collect_weekly_activities(days=7)
+            
+            # Vertex AIを使って応答を生成
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
+            
+            prompt = f"""
+あなたはDiscordサーバーの運営支援AIです。以下の質問に対して、サーバーのアクティビティデータを参考に回答してください。
+
+質問: {content}
+
+サーバー状況:
+- 総メッセージ数: {activities['summary_stats']['total_messages']}
+- アクティブユーザー数: {activities['summary_stats']['active_users_count']}
+- アクティブチャンネル数: {activities['summary_stats']['active_channels_count']}
+- 人気キーワード: {activities['summary_stats']['popular_keywords'][:5] if activities['summary_stats']['popular_keywords'] else 'なし'}
+
+回答は200文字以内で、親しみやすい口調で日本語で回答してください。
+            """
+            
+            model = GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(prompt)
+            ai_response = response.text
+            
+            embed = discord.Embed(
+                title="🤖 AI回答",
+                description=ai_response,
+                color=0x7289da
+            )
+            embed.set_footer(text="Vertex AI (Gemini) による回答")
+            
+            await message.reply(embed=embed)
+            
+        except Exception as e:
+            print(f"❌ AI応答生成エラー: {e}")
+            await message.reply("申し訳ございません。AI応答の生成中にエラーが発生しました。")
     
     async def _cmd_help(self, message):
         """ヘルプコマンド"""
