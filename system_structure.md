@@ -1,4 +1,4 @@
-# システム構造図
+# Discord にゃんこエージェント システム構造図
 
 ## 全体アーキテクチャ
 
@@ -6,357 +6,493 @@
 graph TB
     subgraph "Discord インターフェース"
         A[Discord ユーザー]
-        B[Discord サーバー]
+        B[Discord サーバー/Guild]
+        B1[チャンネル]
+        B2[ボイスチャンネル]
     end
     
-    subgraph "ボット層"
-        C[みやにゃん Bot<br/>Port 8081]
-        D[イヴにゃん Bot<br/>Port 8082]
-        E[マルチボット管理]
-        F[チュートリアルシステム]
-        G[ポッドキャスト生成]
+    subgraph "Bot層 (Python)"
+        C[Miya Bot<br/>キャラクター: みや]
+        D[Eve Bot<br/>キャラクター: イヴ]
+        E[共通コア機能]
+        F[インタラクション処理]
+        G[週次ポッドキャスト生成]
     end
     
-    subgraph "AI 処理"
-        H[Google Gemini AI]
-        I[Text-to-Speech]
-        J[キャラクター性格]
+    subgraph "AI処理 (Google Cloud)"
+        H[Google Vertex AI<br/>Gemini 1.5 Pro]
+        I[コンテンツ生成]
+        J[感情分析]
+        K[トレンド分析]
     end
     
     subgraph "Firebase バックエンド"
-        K[Firestore データベース]
-        L[Firebase Functions]
-        M[Firebase Hosting]
-        N[認証システム]
+        L[Firestore Database]
+        M[Firebase Functions<br/>TypeScript]
+        N[Firebase Hosting]
+        O[Firebase Authentication]
+        P[Secret Manager]
     end
     
     subgraph "Web ダッシュボード"
-        O[管理インターフェース]
-        P[分析ダッシュボード]
-        Q[リアルタイムチャート]
+        Q[統計分析画面]
+        R[リアルタイムチャート]
+        S[管理インターフェース]
+        T[ガイドページ]
     end
     
-    subgraph "インフラストラクチャ"
-        R[Docker Compose]
-        S[nginx ロードバランサー]
-        T[Google Cloud Run]
-        U[ヘルス監視]
+    subgraph "Cloud インフラ"
+        U[Google Cloud Run]
+        V[Docker コンテナ]
+        W[Artifact Registry]
+        X[GitHub Actions CI/CD]
+        Y[Secret Manager]
     end
 
     A --> B
-    B --> C
-    B --> D
+    B --> B1
+    B --> B2
+    B1 --> C
+    B1 --> D
     C --> E
     D --> E
     E --> F
-    E --> G
+    F --> G
     E --> H
     H --> I
-    I --> J
-    C --> K
-    D --> K
-    K --> L
+    H --> J
+    H --> K
+    C --> L
+    D --> L
     L --> M
-    M --> O
+    M --> N
+    N --> Q
+    Q --> R
+    Q --> S
+    N --> T
+    U --> V
+    V --> C
+    V --> D
+    W --> V
+    X --> W
+    P --> Y
     O --> P
-    P --> Q
-    R --> S
-    S --> C
-    S --> D
-    R --> T
-    T --> U
 ```
 
 ## データフロー図
 
 ```mermaid
-flowchart LR
-    subgraph "ユーザーインタラクション"
-        A1[Discord メッセージ]
+flowchart TD
+    subgraph "Discord ユーザーアクティビティ"
+        A1[メッセージ投稿]
         A2[リアクション]
-        A3[イベント参加]
+        A3[ボイスチャンネル参加]
+        A4[スレッド作成]
     end
     
-    subgraph "ボット処理"
-        B1[イベント捕捉]
-        B2[AI レスポンス生成]
-        B3[キャラクター性格]
-        B4[コンテキスト分析]
+    subgraph "Bot イベント処理"
+        B1[Discord.py イベントハンドラー]
+        B2[インタラクション記録]
+        B3[リアルタイム分析]
+        B4[AIキャラクター応答]
     end
     
-    subgraph "データ保存"
-        C1[(ユーザーコレクション)]
-        C2[(インタラクションコレクション)]
-        C3[(トピックコレクション)]
-        C4[(分析コレクション)]
-        C5[(ポッドキャストコレクション)]
+    subgraph "Firestore データ保存"
+        C1[(users)]
+        C2[(interactions)]
+        C3[(discord_analysis)]
+        C4[(weekly_advice)]
+        C5[(bot_actions)]
+        C6[(moderation_alerts)]
     end
     
-    subgraph "出力生成"
-        D1[リアルタイムレスポンス]
-        D2[ダッシュボード更新]
-        D3[分析レポート]
-        D4[ポッドキャストコンテンツ]
+    subgraph "Firebase Functions 処理"
+        D1[analyzeDiscordLogs]
+        D2[onInteractionAdded]
+        D3[generateWeeklyAdvice]
+        D4[createWeeklyPodcast]
+    end
+    
+    subgraph "AI分析 & 生成"
+        E1[Vertex AI Gemini]
+        E2[感情分析]
+        E3[不適切表現検知]
+        E4[週次サマリー生成]
+        E5[運営アドバイス生成]
+    end
+    
+    subgraph "Web出力"
+        F1[リアルタイムダッシュボード]
+        F2[統計チャート]
+        F3[健康度スコア]
+        F4[AIアドバイス表示]
     end
 
     A1 --> B1
     A2 --> B1
     A3 --> B1
+    A4 --> B1
+    
     B1 --> B2
     B2 --> B3
     B3 --> B4
-    B4 --> C1
-    B4 --> C2
-    B4 --> C3
-    B4 --> C4
+    
+    B2 --> C1
+    B2 --> C2
     B4 --> C5
-    C1 --> D1
+    
     C2 --> D2
-    C3 --> D3
-    C5 --> D4
+    D2 --> E3
+    E3 --> C6
+    
+    D1 --> E1
+    E1 --> E2
+    E1 --> E4
+    E1 --> E5
+    
+    E4 --> C3
+    E5 --> C4
+    
+    D4 --> E4
+    
+    C1 --> F1
+    C2 --> F1
+    C3 --> F2
+    C4 --> F4
+    F1 --> F3
 ```
 
-## データベース構造
+## Firestore データベース構造
 
 ```mermaid
 erDiagram
     users {
-        string user_id PK
+        string id PK
+        string guildId
         string username
-        number engagement_score
+        string displayName
+        timestamp joinedAt
+        boolean isActive
+        timestamp lastActivity
         array interests
-        timestamp last_active
-        boolean tutorial_completed
+        array channels
+        number engagementScore
+        object reengagementHistory
+        string timezone
+        object preferences
     }
     
     interactions {
-        string interaction_id PK
-        string user_id FK
-        string guild_id FK
+        string id PK
+        string userId FK
+        string guildId FK
+        string guildName
+        string channelId
+        string channelName
         string type
         string content
-        timestamp created_at
+        timestamp timestamp
         object metadata
+        array keywords
     }
     
     guilds {
-        string guild_id PK
+        string id PK
         string name
-        object settings
+        string ownerId
+        object botSettings
+        string welcomeChannelId
+        string podcastChannelId
+        timestamp createdAt
+        timestamp updatedAt
         object analytics
-        timestamp created_at
     }
     
-    topics {
-        string topic_id PK
-        string name
-        number popularity_score
-        number trend_score
-        timestamp last_updated
+    discord_analysis {
+        string id PK
+        object analysis
+        array aiAdvices
+        number logCount
+        timestamp analysisDate
+        array guildIds
+        array channels
     }
     
-    podcasts {
-        string podcast_id PK
+    weekly_advice {
+        string id PK
+        string type
+        string priority
         string title
-        string transcript
-        string audio_url
-        timestamp created_at
-        object metadata
-    }
-    
-    events {
-        string event_id PK
-        string guild_id FK
-        string name
-        timestamp start_time
-        array participants
-    }
-    
-    user_matches {
-        string match_id PK
-        string user1_id FK
-        string user2_id FK
-        number compatibility_score
-        timestamp created_at
-    }
-    
-    analytics_sessions {
-        string session_id PK
-        string guild_id FK
-        date session_date
-        object metrics
-        timestamp created_at
+        string message
+        string action
+        string icon
+        timestamp timestamp
+        boolean isActive
+        timestamp createdAt
     }
     
     bot_actions {
-        string action_id PK
-        string bot_character
-        string action_type
-        string target_user FK
-        timestamp executed_at
+        string id PK
+        string guildId FK
+        string userId FK
+        string actionType
+        string botCharacter
+        string status
+        object payload
+        object result
+        timestamp timestamp
     }
     
-    admin_users {
-        string admin_id PK
-        string user_id FK
-        array permissions
-        timestamp granted_at
+    moderation_alerts {
+        string id PK
+        string type
+        string severity
+        string userId FK
+        string username
+        string guildId FK
+        string guildName
+        string channelId
+        string channelName
+        string content
+        array suspiciousWords
+        timestamp timestamp
+        string status
+        boolean autoDetected
+    }
+    
+    podcast_jobs {
+        string id PK
+        string status
+        string requestedBy
+        timestamp requestedAt
+        string type
+        object parameters
+    }
+    
+    user_advice_settings {
+        string userId PK
+        boolean isVisible
+        timestamp updatedAt
+        string lastHiddenAdviceId
     }
 
     users ||--o{ interactions : creates
-    users ||--o{ user_matches : participates
     users ||--o{ bot_actions : receives
+    users ||--|| user_advice_settings : has
     guilds ||--o{ interactions : contains
-    guilds ||--o{ events : hosts
-    guilds ||--o{ analytics_sessions : generates
-    events ||--o{ interactions : triggers
-    admin_users ||--|| users : manages
+    guilds ||--o{ discord_analysis : generates
+    guilds ||--o{ bot_actions : contains
+    users ||--o{ moderation_alerts : triggers
+    guilds ||--o{ moderation_alerts : monitors
 ```
 
 ## 技術スタック構成
 
 ```mermaid
 graph TD
-    subgraph "フロントエンド層"
-        A[HTML/CSS/JavaScript]
-        B[Chart.js]
-        C[Materialize CSS]
-        D[Firebase SDK]
+    subgraph "フロントエンド技術"
+        A[HTML5 + CSS3]
+        B[Vanilla JavaScript]
+        C[Chart.js リアルタイムチャート]
+        D[Materialize CSS フレームワーク]
+        E[Firebase Web SDK v10]
+        F[ダーク/ライトモード対応]
     end
     
-    subgraph "バックエンド層"
-        E[Python 3.10]
-        F[Discord.py 2.3.2]
-        G[TypeScript/Node.js]
-        H[Firebase Functions]
+    subgraph "Discord Bot技術"
+        G[Python 3.10+]
+        H[Discord.py 2.3.2]
+        I[asyncio 非同期処理]
+        J[APScheduler スケジューラー]
+        K[マルチキャラクター管理]
     end
     
-    subgraph "AI サービス"
-        I[Google Gemini AI]
-        J[Google Text-to-Speech]
-        K[キャラクター AI ロジック]
+    subgraph "Firebase/Google Cloud"
+        L[Firebase Functions v2]
+        M[TypeScript 5.0+]
+        N[Google Cloud Vertex AI]
+        O[Gemini 1.5 Pro]
+        P[Firebase Firestore]
+        Q[Firebase Authentication]
+        R[Secret Manager]
     end
     
-    subgraph "データベース層"
-        L[Firebase Firestore]
-        M[Firebase Authentication]
-        N[Firebase Storage]
+    subgraph "AI & 分析"
+        S[感情分析]
+        T[トレンド検出]
+        U[不適切表現検知]
+        V[コミュニティ健康度算出]
+        W[ユーザーマッチング]
     end
     
-    subgraph "インフラストラクチャ層"
-        O[Docker & Docker Compose]
-        P[nginx ロードバランサー]
-        Q[Google Cloud Run]
-        R[Firebase Hosting]
+    subgraph "デプロイメント & CI/CD"
+        X[Docker コンテナ]
+        Y[Google Cloud Run]
+        Z[Artifact Registry]
+        AA[GitHub Actions]
+        BB[Firebase Hosting]
+        CC[ヘルスチェック]
     end
 
     A --> E
-    B --> F
-    C --> G
-    D --> H
-    E --> I
-    F --> J
-    G --> K
-    H --> L
-    I --> M
-    J --> N
-    K --> O
-    L --> P
-    M --> Q
-    N --> R
+    B --> C
+    C --> D
+    E --> L
+    
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    
+    L --> M
+    M --> N
+    N --> O
+    O --> S
+    
+    P --> Q
+    Q --> R
+    
+    S --> T
+    T --> U
+    U --> V
+    V --> W
+    
+    G --> X
+    X --> Y
+    Y --> Z
+    Z --> AA
+    L --> BB
+    Y --> CC
 ```
 
-## デプロイメント構成
+## デプロイメント構成 & CI/CD
 
 ```mermaid
 graph TB
     subgraph "開発環境"
-        A[ローカル Docker Compose]
-        A1[miya-bot:8081]
-        A2[eve-bot:8082]
-        A3[nginx ロードバランサー]
-        A4[ヘルス監視]
+        A[ローカル開発]
+        A1[Discord Bot Local]
+        A2[Firebase Emulator]
+        A3[Hot Reload]
     end
     
-    subgraph "本番環境"
-        B[Google Cloud Run]
-        B1[マルチインスタンススケーリング]
-        B2[自動ヘルスチェック]
-        B3[負荷分散]
+    subgraph "GitHub Actions CI/CD"
+        B[GitHub Repository]
+        B1[PR プレビューデプロイ]
+        B2[Firebase Hosting プレビュー]
+        B3[メインブランチ自動デプロイ]
+        B4[Docker イメージビルド]
+    end
+    
+    subgraph "Google Cloud 本番環境"
+        C[Cloud Run Services]
+        C1[discord-nyanco-agent-miya]
+        C2[discord-nyanco-agent-eve]
+        C3[Artifact Registry]
+        C4[自動スケーリング]
+        C5[ヘルスチェック]
     end
     
     subgraph "Firebase サービス"
-        C[Firestore データベース]
-        C1[リアルタイム同期]
-        C2[セキュリティルール]
-        C3[バックアップ・復旧]
+        D[Firebase Functions]
+        D1[analyzeDiscordLogs]
+        D2[getConnectedGuilds]
+        D3[createWeeklyPodcast]
+        E[Firebase Hosting]
+        E1[メインダッシュボード]
+        E2[統計分析ページ]
+        E3[ガイドページ]
+        F[Firestore Database]
+        F1[リアルタイム同期]
+        F2[セキュリティルール]
     end
     
-    subgraph "Web ホスティング"
-        D[Firebase Hosting]
-        D1[静的アセット]
-        D2[CDN 配信]
-        D3[SSL/TLS]
+    subgraph "セキュリティ & 設定"
+        G[Secret Manager]
+        G1[Discord Bot Tokens]
+        G2[Firebase Service Account]
+        G3[GCP Credentials]
     end
 
-    A --> A1
-    A --> A2
-    A1 --> A3
-    A2 --> A3
-    A3 --> A4
-    
+    A --> B
     B --> B1
     B1 --> B2
-    B2 --> B3
+    B --> B3
+    B3 --> B4
     
-    A1 --> C
-    A2 --> C
-    B1 --> C
-    C --> C1
-    C1 --> C2
-    C2 --> C3
+    B4 --> C3
+    C3 --> C1
+    C3 --> C2
+    C1 --> C4
+    C2 --> C4
+    C4 --> C5
     
+    B3 --> D
     D --> D1
-    D1 --> D2
-    D2 --> D3
+    D --> D2
+    D --> D3
+    
+    B3 --> E
+    E --> E1
+    E --> E2
+    E --> E3
+    
+    C1 --> F
+    C2 --> F
+    D --> F
+    F --> F1
+    F --> F2
+    
+    C1 --> G
+    C2 --> G
+    D --> G
+    G --> G1
+    G --> G2
+    G --> G3
 ```
 
 ## キャラクター管理システム
 
 ```mermaid
 stateDiagram-v2
-    [*] --> 初期化
-    初期化 --> キャラクター選択
+    [*] --> ボット起動
+    ボット起動 --> キャラクター初期化
     
-    state キャラクター選択 {
-        [*] --> みやにゃん
-        [*] --> イヴにゃん
+    state キャラクター初期化 {
+        [*] --> Miyaボット
+        [*] --> Eveボット
         
-        state みやにゃん {
-            [*] --> チュートリアルモード
-            チュートリアルモード --> サポートモード
-            サポートモード --> コミュニティエンゲージメント
+        state Miyaボット {
+            [*] --> ウェルカムメッセージ
+            ウェルカムメッセージ --> ユーザーサポート
+            ユーザーサポート --> コミュニティエンゲージメント
+            コミュニティエンゲージメント --> ユーザーマッチング
         }
         
-        state イヴにゃん {
-            [*] --> 分析モード
-            分析モード --> データレポート
-            データレポート --> トレンド分析
+        state Eveボット {
+            [*] --> データ分析
+            データ分析 --> レポート生成
+            レポート生成 --> トレンド検出
+            トレンド検出 --> 週次ポッドキャスト
         }
     }
     
-    キャラクター選択 --> AI処理
+    キャラクター初期化 --> AI処理システム
     
-    state AI処理 {
-        [*] --> コンテキスト分析
-        コンテキスト分析 --> 性格適用
-        性格適用 --> レスポンス生成
-        レスポンス生成 --> 音声合成
+    state AI処理システム {
+        [*] --> コンテキスト解析
+        コンテキスト解析 --> キャラクター性格適用
+        キャラクター性格適用 --> Vertex_AI_Gemini
+        Vertex_AI_Gemini --> レスポンス生成
+        レスポンス生成 --> 感情分析
+        感情分析 --> 不適切表現検知
     }
     
-    AI処理 --> データ保存
-    データ保存 --> ユーザーフィードバック
-    ユーザーフィードバック --> キャラクター選択
+    AI処理システム --> Firestore保存
+    Firestore保存 --> リアルタイム分析
+    リアルタイム分析 --> ダッシュボード更新
+    ダッシュボード更新 --> ユーザーフィードバック
+    ユーザーフィードバック --> キャラクター初期化
 ```
 
 ## 主要機能フロー
