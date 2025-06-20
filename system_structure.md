@@ -520,3 +520,74 @@ sequenceDiagram
     TTS->>DB: ポッドキャストファイル保存
     DB->>Web: ポッドキャストリスト更新
 ```
+
+## プロジェクトディレクトリ構造
+
+```
+commupro-guild/
+│
+├── 📱 bot/                     # Discord Botコード (Python)
+│   ├── src/
+│   │   ├── core/             # コア機能
+│   │   ├── characters/       # キャラクター定義
+│   │   ├── utils/            # ユーティリティ
+│   │   └── main.py           # エントリポイント
+│   ├── config/
+│   │   └── docker/           # Docker設定
+│   └── requirements.txt
+│
+├── 🔥 functions/              # Firebase Functions (TypeScript)
+│   ├── src/
+│   │   ├── index.ts          # メイン関数
+│   │   └── discord-analytics.ts # Discord分析機能
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── 🌐 public/                # Webフロントエンド
+│   ├── index.html          # メインダッシュボード
+│   ├── analytics.html      # 統計分析ページ
+│   └── guide.html          # ガイドページ
+│
+├── ⚙️ .github/workflows/     # CI/CDパイプライン
+│   ├── deploy.yml          # 本番デプロイ
+│   ├── ci.yml              # テスト & ビルド
+│   └── pr-preview.yml      # PRプレビュー
+│
+├── 📄 設定ファイル
+│   ├── firebase.json       # Firebase設定
+│   ├── .firebaserc         # プロジェクトID
+│   ├── firestore.rules     # Firestoreセキュリティルール
+│   └── firestore.indexes.json # Firestoreインデックス
+│
+└── 📈 ドキュメント
+    ├── system_structure.md # システム構造図
+    ├── data_structure.md   # データ構造詳細
+    └── README.md           # プロジェクト概要
+```
+
+## 主要機能一覧
+
+### Discord Bot 機能
+- **マルチキャラクター管理**: Miya & Eve ボットの同時運用
+- **AIキャラクター応答**: Vertex AI Geminiで性格を反映した応答
+- **リアルタイムインタラクション記録**: 全ユーザーアクティビティのFirestore保存
+- **週次ポッドキャスト生成**: AIによる3キャラクター対話コンテンツ
+
+### Firebase Functions
+- **analyzeDiscordLogs**: コミュニティ分析 & AIアドバイス生成
+- **onInteractionAdded**: リアルタイム不適切表現検知
+- **getConnectedGuilds**: 接続サーバー情報取得
+- **createWeeklyPodcast**: 週次ポッドキャスト作成ジョブ
+- **matchSimilarUsers**: ユーザーマッチング機能
+
+### Webダッシュボード
+- **リアルタイム統計**: Chart.jsで動的チャート表示
+- **コミュニティ健康度**: 参加度・エンゲージメント・安全性スコア
+- **AIアドバイス表示**: 運営改善提案の表示
+- **ダーク/ライトモード**: ユーザーフレンドリーUI
+
+### AI分析機能
+- **感情分析**: メッセージのポジティブ/ネガティブ判定
+- **トレンド検出**: 話題のトピック分析
+- **不適切表現検知**: リアルタイムモデレーションアラート
+- **ユーザーマッチング**: 共通興味ベースのユーザー紹介

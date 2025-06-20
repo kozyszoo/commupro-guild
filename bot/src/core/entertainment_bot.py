@@ -47,6 +47,10 @@ class EntertainmentBot(discord.Client):
         self.command_prefix = os.getenv('BOT_COMMAND_PREFIX', '!')
         self.admin_user_ids = self._load_admin_users()
         
+        # 無限対話防止: 最後の自然会話応答時刻を記録
+        self.last_natural_response = {}  # {channel_id: timestamp}
+        self.natural_response_cooldown = 300  # 5分間のクールダウン
+        
         print("🎬 エンタメコンテンツ制作Bot初期化完了")
     
     def _get_firestore_client(self):
@@ -86,6 +90,10 @@ class EntertainmentBot(discord.Client):
         """メッセージ受信時の処理"""
         # Bot自身のメッセージは無視
         if message.author == self.user:
+            return
+        
+        # 他のBotのメッセージも無視（無限対話防止）
+        if message.author.bot:
             return
         
         # メンション処理（最優先）
@@ -330,12 +338,26 @@ class EntertainmentBot(discord.Client):
     
     async def _should_respond_naturally(self, message):
         """自然な会話に応答するかの判定"""
+        import time
+        
+        # チャンネル別クールダウンチェック
+        channel_id = str(message.channel.id)
+        current_time = time.time()
+        
+        # 最後の応答から5分以内は自然会話しない（無限対話防止）
+        if channel_id in self.last_natural_response:
+            time_since_last = current_time - self.last_natural_response[channel_id]
+            if time_since_last < self.natural_response_cooldown:
+                return False
+        
         content = message.content.lower()
         
-        # Bot名が含まれている場合
+        # Bot名が含まれている場合（頻度を制限）
         bot_names = ['ミヤ', 'miya', 'エヴ', 'eve', 'bot', 'ボット']
         if any(name in content for name in bot_names):
-            return True
+            # Bot名言及の場合は50%の確率に制限
+            import random
+            return random.random() < 0.5
         
         # 挨拶や感謝の言葉
         greetings = ['おはよう', 'こんにちは', 'こんばんは', 'お疲れ', 'ありがとう', 'thanks', 'hello', 'hi']
@@ -362,6 +384,12 @@ class EntertainmentBot(discord.Client):
     async def _handle_natural_conversation(self, message):
         """自然な会話処理（メンションなし）"""
         try:
+            import time
+            
+            # クールダウン時刻を更新
+            channel_id = str(message.channel.id)
+            self.last_natural_response[channel_id] = time.time()
+            
             # よりカジュアルな応答
             thinking_messages = [
                 "🤔",

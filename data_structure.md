@@ -1,4 +1,17 @@
-# Discord にゃんこエージェント データテーブル詳細説明
+# Discord にゃんこエージェント データ構造詳細
+
+## 概要
+
+DiscordにゃんこエージェントはFirestoreをメインデータベースとして使用し、以下の主要コレクションで構成されています：
+
+- **users**: ユーザー情報とエンゲージメントデータ
+- **interactions**: 全ユーザーインタラクションログ
+- **discord_analysis**: Discord分析結果とAIアドバイス
+- **weekly_advice**: 週次アドバイス情報
+- **bot_actions**: ボットアクション履歴
+- **moderation_alerts**: リアルタイムモデレーションアラート
+
+このドキュメントでは、各コレクションの詳細なフィールド構造、データ型、および使用目的について説明します。
 
 ## 1. Users Collection
 
@@ -27,19 +40,36 @@ Discordサーバーの各ユーザーの情報を管理するメインテーブ�
 
 ```typescript
 // reengagementHistory の構造
-{
-  totalAttempts: number,        // 総試行回数
-  successfulReengagements: number, // 成功回数
-  lastAttempt: string | null,   // 最終試行日時
-  lastSuccess: string | null    // 最終成功日時
+interface ReengagementHistory {
+  totalAttempts: number;        // 総試行回数
+  successfulReengagements: number; // 成功回数
+  lastAttempt: string | null;   // 最終試行日時 (ISO 8601)
+  lastSuccess: string | null;   // 最終成功日時 (ISO 8601)
 }
 
 // preferences の構造
-{
-  podcastNotifications: boolean,  // ポッドキャスト通知
-  matchingNotifications: boolean, // マッチング通知
-  dmNotifications: boolean,       // DM通知
-  language: string               // 言語設定
+interface UserPreferences {
+  podcastNotifications: boolean;  // ポッドキャスト通知
+  matchingNotifications: boolean; // マッチング通知
+  dmNotifications: boolean;       // DM通知
+  language: string;               // 言語設定 ('ja', 'en')
+}
+
+// TypeScriptインターフェース
+interface User {
+  id: string;
+  guildId: string;
+  username: string;
+  displayName?: string;
+  joinedAt: string;
+  isActive: boolean;
+  lastActivity: string;
+  interests: string[];
+  channels: string[];
+  engagementScore: number;
+  reengagementHistory: ReengagementHistory;
+  timezone: string;
+  preferences: UserPreferences;
 }
 ```
 
