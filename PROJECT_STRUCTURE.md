@@ -13,6 +13,8 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 ├── CLAUDE.md                    # Claude AI用のプロジェクト固有の指示とガイドライン
 ├── README.md                    # プロジェクトの概要とセットアップ手順
 ├── bot/                         # Pythonベースのメインボット実装
+│   ├── _run_bot.py              # ボット起動ヘルパースクリプト
+│   ├── agent_bot.py             # エージェントBot実装
 │   ├── config/                  # 設定ファイル群
 │   │   ├── docker/              # Docker関連の設定
 │   │   │   ├── Dockerfile       # 開発環境用Dockerfile
@@ -32,24 +34,27 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 │   │   ├── UPLOAD.md            # データアップロード手順
 │   │   └── VERTEX_AI_MIGRATION.md # Vertex AI移行ガイド
 │   ├── env_example.txt          # 環境変数のサンプル
-│   ├── nyanco-bot-firebase-adminsdk-fbsvc-d65403c7ca.json # Firebase認証情報
 │   ├── pytest.ini               # pytest設定
 │   ├── requirements.txt         # Python依存関係
-│   ├── run_bot.py               # 従来のマルチボット起動スクリプト（レガシー）
 │   ├── run_entertainment_bot.py # エンタメBot専用起動スクリプト（推奨）
 │   ├── run_single_bot.py        # 単一ボット起動スクリプト
+│   ├── simple_health_server.py  # シンプルヘルスチェックサーバー
 │   ├── src/                     # ソースコード
 │   │   ├── core/                # コア機能
 │   │   │   ├── content_creator.py # コンテンツ制作のワークフロー管理
+│   │   │   ├── daily_analytics.py # 日次分析機能
 │   │   │   ├── discord_analytics.py # Discord活動の分析機能
 │   │   │   ├── entertainment_bot.py # エンタメBot本体（全機能統合）
 │   │   │   ├── podcast.py       # AIキャラクター対話とTTS機能
 │   │   │   └── scheduler.py     # スケジュール管理とジョブ実行
 │   │   ├── scripts/             # ユーティリティスクリプト
 │   │   │   ├── clear_data.py    # データクリアスクリプト
+│   │   │   ├── data/            # スクリプト用データディレクトリ
+│   │   │   │   └── analytics_sessions.json # 分析セッションデータ
 │   │   │   ├── deploy.py        # デプロイスクリプト
 │   │   │   ├── deploy_gcp.py    # GCPデプロイスクリプト
 │   │   │   ├── deploy_separate.py # 個別デプロイスクリプト
+│   │   │   ├── migrate_user_data.py # ユーザーデータ移行スクリプト
 │   │   │   ├── start_bots.py    # ボット起動スクリプト
 │   │   │   └── upload_data.py   # データアップロードスクリプト
 │   │   └── utils/               # ユーティリティ
@@ -86,9 +91,11 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 ├── docs/                        # プロジェクトドキュメント
 │   ├── CI_CD_SETUP.md           # CI/CDセットアップガイド
 │   ├── DATA_STRUCTURE.md        # データ構造詳細
+│   ├── DEPLOYMENT_PERMISSIONS.md # デプロイ権限ガイド
 │   └── FIREBASE_CONFIG.md       # Firebase設定ガイド
-├── firebase-debug.log           # Firebaseデバッグログ
 ├── firebase.json                # Firebase設定ファイル
+├── firestore.indexes.json       # Firestoreインデックス設定
+├── firestore.rules              # Firestoreセキュリティルール
 ├── functions/                   # Firebase Cloud Functions
 │   ├── lib/                     # ビルド出力
 │   │   ├── discord-analytics.js # Discord分析機能
@@ -101,10 +108,13 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 │   │   ├── discord-analytics.ts # Discord分析実装
 │   │   └── index.ts             # Functionsメイン
 │   └── tsconfig.json            # TypeScript設定
+├── mock.png                     # モック画像ファイル
+├── node_modules/                # Node.js依存関係
 ├── package-lock.json            # プロジェクト依存関係ロック
 ├── package.json                 # プロジェクト依存関係とスクリプト
 ├── public/                      # 公開ディレクトリ
 │   ├── 404.html                 # 404エラーページ
+│   ├── analytics.html           # 分析ダッシュボード
 │   ├── data/                    # データディレクトリ
 │   │   └── tmp/                 # 一時データ（テスト用）
 │   │       ├── admin_users.json # 管理者ユーザーデータ
@@ -117,7 +127,13 @@ Discord エンタテインメントコンテンツ制作アプリケーション
 │   │       ├── topics.json      # トピックデータ
 │   │       ├── user_matches.json # ユーザーマッチングデータ
 │   │       └── users.json       # ユーザーデータ
-│   └── index.html               # Webインターフェースのエントリーポイント
+│   ├── guide.html               # ガイドページ
+│   ├── index.html               # Webインターフェースのエントリーポイント
+│   └── index_backup.html        # バックアップページ
+├── requirements.txt             # プロジェクトルートのPython依存関係
+├── scripts/                     # プロジェクトルートのスクリプト
+│   └── setup-artifact-registry.sh # Artifact Registry セットアップスクリプト
+├── simple_health_server.py      # プロジェクトルートのヘルスサーバー
 ├── src/                         # TypeScriptソースコード（メイン）
 │   ├── config/                  # 設定モジュール
 │   │   └── firebase.ts          # Firebase初期化
