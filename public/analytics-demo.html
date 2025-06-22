@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アナリティクスデモ - Community Pro Guild</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1a1a1a;
+            margin-bottom: 30px;
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .metric {
+            font-size: 32px;
+            font-weight: bold;
+            color: #5865F2;
+            margin: 10px 0;
+        }
+        .sub-metric {
+            font-size: 14px;
+            color: #666;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .topic-list {
+            list-style: none;
+            padding: 0;
+        }
+        .topic-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .topic-item:last-child {
+            border-bottom: none;
+        }
+        .topic-name {
+            font-weight: 500;
+        }
+        .topic-count {
+            color: #5865F2;
+            font-weight: bold;
+        }
+        .channel-activity {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .channel-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .channel-name {
+            min-width: 120px;
+            font-size: 14px;
+        }
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: #f0f2f5;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            background: #5865F2;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .bar-value {
+            min-width: 30px;
+            text-align: right;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .date-selector {
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 日次アナリティクス - Community Pro Guild</h1>
+        
+        <div class="date-selector">
+            <label for="dateSelect">日付を選択: </label>
+            <select id="dateSelect" onchange="updateAnalytics()">
+                <option value="2024-12-22">2024年12月22日</option>
+                <option value="2024-12-21">2024年12月21日</option>
+                <option value="2024-12-20">2024年12月20日</option>
+            </select>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="card">
+                <h3>アクティブユーザー数</h3>
+                <div class="metric" id="activeUsers">34</div>
+                <div class="sub-metric">前日比: <span id="userChange">-10.5%</span></div>
+            </div>
+            
+            <div class="card">
+                <h3>総メッセージ数</h3>
+                <div class="metric" id="messageCount">127</div>
+                <div class="sub-metric">前日比: <span id="messageChange">-10.6%</span></div>
+            </div>
+            
+            <div class="card">
+                <h3>新規メンバー</h3>
+                <div class="metric" id="newMembers">2</div>
+                <div class="sub-metric">今月合計: 15人</div>
+            </div>
+            
+            <div class="card">
+                <h3>再エンゲージメント</h3>
+                <div class="metric" id="reengagements">1</div>
+                <div class="sub-metric">成功率: 75%</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>🔥 トップトピック</h3>
+            <ul class="topic-list" id="topicsList">
+                <li class="topic-item">
+                    <span class="topic-name">React</span>
+                    <span class="topic-count">28</span>
+                </li>
+                <li class="topic-item">
+                    <span class="topic-name">JavaScript</span>
+                    <span class="topic-count">23</span>
+                </li>
+                <li class="topic-item">
+                    <span class="topic-name">デザイン</span>
+                    <span class="topic-count">15</span>
+                </li>
+                <li class="topic-item">
+                    <span class="topic-name">AI</span>
+                    <span class="topic-count">12</span>
+                </li>
+                <li class="topic-item">
+                    <span class="topic-name">ゲーム開発</span>
+                    <span class="topic-count">8</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="chart-container">
+            <h3>📢 チャンネル別アクティビティ</h3>
+            <div class="channel-activity" id="channelActivity">
+                <div class="channel-bar">
+                    <span class="channel-name">#general</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 80%"></div>
+                    </div>
+                    <span class="bar-value">45</span>
+                </div>
+                <div class="channel-bar">
+                    <span class="channel-name">#tech-talk</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 67%"></div>
+                    </div>
+                    <span class="bar-value">38</span>
+                </div>
+                <div class="channel-bar">
+                    <span class="channel-name">#design</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 39%"></div>
+                    </div>
+                    <span class="bar-value">22</span>
+                </div>
+                <div class="channel-bar">
+                    <span class="channel-name">#random</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 27%"></div>
+                    </div>
+                    <span class="bar-value">15</span>
+                </div>
+                <div class="channel-bar">
+                    <span class="channel-name">#game-dev</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: 12%"></div>
+                    </div>
+                    <span class="bar-value">7</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock analytics data
+        const analyticsData = {
+            "2024-12-22": {
+                activeUsers: 34,
+                messageCount: 127,
+                newMembers: 2,
+                reengagements: 1,
+                userChange: "-10.5%",
+                messageChange: "-10.6%",
+                topTopics: [
+                    { name: "React", count: 28 },
+                    { name: "JavaScript", count: 23 },
+                    { name: "デザイン", count: 15 },
+                    { name: "AI", count: 12 },
+                    { name: "ゲーム開発", count: 8 }
+                ],
+                channelActivity: {
+                    "general": 45,
+                    "tech-talk": 38,
+                    "design": 22,
+                    "random": 15,
+                    "game-dev": 7
+                }
+            },
+            "2024-12-21": {
+                activeUsers: 38,
+                messageCount: 142,
+                newMembers: 0,
+                reengagements: 1,
+                userChange: "-15.6%",
+                messageChange: "-20.2%",
+                topTopics: [
+                    { name: "DevOps", count: 32 },
+                    { name: "Kubernetes", count: 25 },
+                    { name: "Node.js", count: 21 },
+                    { name: "バックエンド", count: 18 },
+                    { name: "GraphQL", count: 14 }
+                ],
+                channelActivity: {
+                    "general": 48,
+                    "devops": 38,
+                    "backend-dev": 32,
+                    "tech-talk": 24,
+                    "random": 0
+                }
+            },
+            "2024-12-20": {
+                activeUsers: 45,
+                messageCount: 178,
+                newMembers: 2,
+                reengagements: 3,
+                userChange: "+40.6%",
+                messageChange: "+25.4%",
+                topTopics: [
+                    { name: "React", count: 42 },
+                    { name: "TypeScript", count: 31 },
+                    { name: "フロントエンド", count: 28 },
+                    { name: "JavaScript", count: 25 },
+                    { name: "CSS", count: 19 }
+                ],
+                channelActivity: {
+                    "general": 58,
+                    "frontend-dev": 45,
+                    "tech-talk": 42,
+                    "typescript-advanced": 23,
+                    "css-tips": 10
+                }
+            }
+        };
+
+        function updateAnalytics() {
+            const selectedDate = document.getElementById('dateSelect').value;
+            const data = analyticsData[selectedDate];
+            
+            // Update metrics
+            document.getElementById('activeUsers').textContent = data.activeUsers;
+            document.getElementById('messageCount').textContent = data.messageCount;
+            document.getElementById('newMembers').textContent = data.newMembers;
+            document.getElementById('reengagements').textContent = data.reengagements;
+            document.getElementById('userChange').textContent = data.userChange;
+            document.getElementById('messageChange').textContent = data.messageChange;
+            
+            // Update topics
+            const topicsList = document.getElementById('topicsList');
+            topicsList.innerHTML = data.topTopics.map(topic => `
+                <li class="topic-item">
+                    <span class="topic-name">${topic.name}</span>
+                    <span class="topic-count">${topic.count}</span>
+                </li>
+            `).join('');
+            
+            // Update channel activity
+            const channelActivity = document.getElementById('channelActivity');
+            const maxActivity = Math.max(...Object.values(data.channelActivity));
+            
+            channelActivity.innerHTML = Object.entries(data.channelActivity).map(([channel, count]) => `
+                <div class="channel-bar">
+                    <span class="channel-name">#${channel}</span>
+                    <div class="bar-container">
+                        <div class="bar" style="width: ${(count / maxActivity) * 100}%"></div>
+                    </div>
+                    <span class="bar-value">${count}</span>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
