@@ -111,6 +111,13 @@
         display: flex;
         flex-direction: column;
       }
+      
+      /* イベントとポッドキャストパネルの高さを統一 */
+      #dashboard-events .dashboard-card,
+      #dashboard-podcasts .dashboard-card {
+        height: 600px;
+        overflow-y: auto;
+      }
 
       .dashboard-card:hover {
         box-shadow: var(--shadow-large);
