@@ -125,10 +125,10 @@ Discordサーバー（Guild）の設定情報を管理。ボットの動作設�
 ```
 
 ### 主な用途
-- ボットの動作カスタマイズ
-- キャラクター性格設定
-- 機能のON/OFF制御
-- チャンネル設定管理
+- サーバーメタデータの記録と追跡
+- コミュニティサイズ分析
+- サーバー成長のモニタリング
+- ボット対応サーバーの管理
 
 ## 3. Interactions Collection
 
@@ -167,148 +167,204 @@ Discordサーバー（Guild）の設定情報を管理。ボットの動作設�
 - トレンド検出
 - ボット効果測定
 
-## 4. Topics Collection
+## 4. Discord_Analysis Collection
 
 ### 概要
-コミュニティ内で話題になっているトピックを管理。人気度やトレンドスコアを算出し、コンテンツ推薦に利用。
+Firebase Functionsの`analyzeDiscordLogs`関数によって生成されるDiscordコミュニティの分析結果。AIによる運営アドバイスやコミュニティ健康度スコアを含む。
 
 ### フィールド詳細
 
 | フィールド名 | 型 | 必須 | 説明 | 例 |
 |-------------|---|------|------|---|
-| `id` | string | ✓ | トピックID | "topic_react_001" |
-| `guildId` | string | ✓ | サーバーID | "987654321098765432" |
-| `name` | string | ✓ | トピック名 | "React開発" |
-| `keywords` | array | ✓ | 関連キーワード | ["React", "JavaScript", "hooks"] |
-| `channelIds` | array | | 関連チャンネル | ["channel_tech_talk_789"] |
-| `popularity` | number | ✓ | 人気度スコア（0-100） | 78.5 |
-| `trendScore` | number | ✓ | トレンドスコア（0-100） | 85.2 |
-| `createdAt` | string | ✓ | 作成日時 | "2024-01-10T00:00:00Z" |
-| `updatedAt` | string | ✓ | 最終更新日時 | "2024-05-24T14:22:00Z" |
-| `relatedTopics` | object | | 関連トピックとスコア | `{"topic_javascript_002": 0.8}` |
+| `id` | string | ✓ | 分析結果ID | "analysis_20241220_143000" |
+| `analysis` | object | ✓ | 分析結果オブジェクト | 下記参照 |
+| `aiAdvices` | array | ✓ | AI運営アドバイス配列 | 下記参照 |
+| `logCount` | number | ✓ | 分析対象ログ数 | 1247 |
+| `analysisDate` | timestamp | ✓ | 分析実行日時 | Firestore Timestamp |
+| `guildIds` | array | ✓ | 対象サーバーID群 | ["987654321098765432"] |
+| `channels` | array | ✓ | 分析対象チャンネル | ["general", "tech-talk"] |
 
-### スコア算出方法
+### analysisオブジェクト構造
 
 ```typescript
-// 人気度スコアの計算例
-popularity = (
-  mentionCount * 0.4 +          // 言及回数
-  uniqueUsersCount * 0.3 +      // 参加ユーザー数
-  recentActivity * 0.3          // 最近の活動度
-) / maxPossibleScore * 100;
-
-// トレンドスコアの計算例
-trendScore = (
-  recentGrowthRate * 0.5 +      // 最近の成長率
-  newUserEngagement * 0.3 +     // 新規ユーザーエンゲージメント
-  crossChannelSpread * 0.2      // クロスチャンネル拡散度
-) / maxPossibleScore * 100;
+interface AnalysisResult {
+  userPostRanking: Array<{
+    username: string;
+    count: number;
+    ratio: number;  // 全体に占める割合
+  }>;
+  channelActivity: Array<{
+    channel: string;
+    count: number;
+    ratio: number;
+  }>;
+  neglectedUsers: Array<{
+    username: string;
+    posts: number;
+    reactions: number;
+    neglectRate: number;  // リアクション/投稿数
+  }>;
+  suspiciousContent: Array<{
+    username: string;
+    content: string;
+    severity: 'low' | 'medium' | 'high';
+    words: string[];  // 不適切ワード
+  }>;
+  communityHealth: {
+    participation: number;    // 参加度 (0-100)
+    engagement: number;       // エンゲージメント (0-100)
+    safety: number;           // 安全性 (0-100)
+    overall: number;          // 総合スコア (0-100)
+  };
+}
 ```
 
-### 主な用途
-- コンテンツ推薦
-- ポッドキャストトピック選定
-- ユーザーマッチング
-- トレンド分析
-
-## 5. Podcasts Collection
-
-### 概要
-にゃんこキャラクターによる定期配信ポッドキャストの内容と統計情報を保存。
-
-### フィールド詳細
-
-| フィールド名 | 型 | 必須 | 説明 | 例 |
-|-------------|---|------|------|---|
-| `id` | string | ✓ | ポッドキャストID | "podcast_20240520_001" |
-| `guildId` | string | ✓ | サーバーID | "987654321098765432" |
-| `title` | string | ✓ | タイトル | "今週のテックトーク - React 19の新機能" |
-| `content` | string | ✓ | 内容（対話形式） | "🐈 トラにゃん: みなさん、こんにちは..." |
-| `topics` | array | ✓ | 取り上げたトピックID | ["topic_react_001", "topic_design_002"] |
-| `publishedAt` | string | ✓ | 公開日時 | "2024-05-20T18:00:00Z" |
-| `channelId` | string | ✓ | 公開チャンネル | "channel_podcast_456" |
-| `views` | number | | 閲覧数 | 45 |
-| `reactions` | array | | リアクション統計 | 下記参照 |
-| `metadata` | object | | 生成メタデータ | 下記参照 |
-
-### reactions 配列の構造
+### aiAdvices配列構造
 
 ```typescript
-[
-  {
-    emoji: string,    // 絵文字
-    count: number     // 数
-  }
-]
-```
-
-### metadata オブジェクトの構造
-
-```typescript
-{
-  generationTime: string,           // 生成日時
-  weeklyDataRange: {
-    start: string,                  // 対象期間開始
-    end: string                     // 対象期間終了
-  },
-  topContributors: string[],        // 主要貢献者
-  dataSourcesUsed: string[]         // 使用データソース
+interface AIAdvice {
+  type: 'participation' | 'engagement' | 'moderation' | 'structure' | 'health';
+  priority: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  title: string;
+  message: string;
+  action: string;
+  icon: string;
+  timestamp: Date;
 }
 ```
 
 ### 主な用途
-- 定期的なコミュニティ情報配信
-- エンゲージメント向上
-- コミュニティ活動の可視化
-- コンテンツ効果測定
+- Webダッシュボードでのリアルタイム分析表示
+- コミュニティ健康度の追跡と改善提案
+- AIアドバイスを通じた運営改善
+- 不適切コンテンツの検知とモデレーション
+- ユーザーエンゲージメントの分析
+- 長期的なトレンド分析
 
-## 6. User Matches Collection
+## 5. Weekly_Advice Collection
 
 ### 概要
-ユーザー同士のマッチング情報を管理。共通の関心事を持つユーザーの組み合わせとマッチング状況を追跡。
+Vertex AI (Gemini)によって生成される週次コミュニティ運営アドバイス。過去1週間のアクティビティデータを分析し、コミュニティ改善のための具体的な提案を提供。
 
 ### フィールド詳細
 
 | フィールド名 | 型 | 必須 | 説明 | 例 |
 |-------------|---|------|------|---|
-| `id` | string | ✓ | マッチID | "match_001" |
-| `guildId` | string | ✓ | サーバーID | "987654321098765432" |
-| `user1Id` | string | ✓ | ユーザー1のID | "123456789012345678" |
-| `user2Id` | string | ✓ | ユーザー2のID | "345678901234567890" |
-| `commonInterests` | array | ✓ | 共通の関心事 | ["React", "JavaScript", "Web開発"] |
-| `matchScore` | number | ✓ | マッチングスコア（0-1） | 0.85 |
-| `status` | string | ✓ | マッチング状態 | "suggested", "active", "declined", "expired" |
-| `createdAt` | string | ✓ | 作成日時 | "2024-05-24T09:30:00Z" |
-| `lastInteraction` | string | | 最終相互作用日時 | "2024-05-22T11:20:00Z" |
-| `isIntroduced` | boolean | ✓ | 紹介済みフラグ | false |
+| `adviceId` | string | ✓ | アドバイスID | "advice_20241220_143000" |
+| `weekOf` | string | ✓ | 対象週の開始日 | "2024-12-16" |
+| `weekStart` | timestamp | ✓ | 分析期間開始 | Firestore Timestamp |
+| `weekEnd` | timestamp | ✓ | 分析期間終了 | Firestore Timestamp |
+| `content` | string | ✓ | アドバイス内容 | "今週はアクティブユーザー数が增加し..." |
+| `activityStats` | object | ✓ | 対象期間のアクティビティ統計 | 下記参照 |
+| `createdAt` | timestamp | ✓ | 作成日時 | Firestore Timestamp |
+| `isActive` | boolean | ✓ | アクティブ状態 | true |
+| `guildId` | string | | 対象サーバーID | "987654321098765432" |
+| `generatedBy` | string | ✓ | 生成手段 | "vertex_ai_gemini" |
+| `version` | string | ✓ | バージョン | "1.0" |
 
-### マッチング状態
-
-| status | 説明 | 次のアクション |
-|--------|------|---------------|
-| `suggested` | マッチングが提案された | ボットが紹介メッセージを送信 |
-| `active` | 両者が交流している | 定期的な関係性チェック |
-| `declined` | どちらかが拒否 | マッチング終了 |
-| `expired` | 一定期間反応なし | アーカイブまたは削除 |
-| `successful` | 活発な交流が続いている | 成功事例として記録 |
-
-### マッチングスコア算出
+### activityStatsオブジェクト構造
 
 ```typescript
-matchScore = (
-  commonInterestsWeight * 0.4 +     // 共通関心事の重み
-  activityLevelSimilarity * 0.2 +   // 活動レベルの類似度
-  channelOverlap * 0.2 +            // チャンネル重複度
-  timezoneCompatibility * 0.1 +     // タイムゾーン互換性
-  personalityMatch * 0.1            // 性格マッチ度
-);
+interface ActivityStats {
+  total_messages: number;           // 総メッセージ数
+  active_users_count: number;       // アクティブユーザー数
+  active_channels_count: number;    // アクティブチャンネル数
+  events_count: number;             // イベント数
+  top_users: Array<[string, number]>; // [ユーザー名, メッセージ数]
+  popular_keywords: Array<[string, number]>; // [キーワード, 回数]
+  top_channels: string[];           // アクティブチャンネル名
+}
+
+// TypeScriptインターフェース
+interface WeeklyAdvice {
+  adviceId: string;
+  weekOf: string;
+  weekStart: Date;
+  weekEnd: Date;
+  content: string;
+  activityStats: ActivityStats;
+  createdAt: Date;
+  isActive: boolean;
+  guildId?: string;
+  generatedBy: string;
+  version: string;
+}
 ```
 
 ### 主な用途
-- ユーザー同士の紹介
-- コミュニティ内のネットワーク形成
-- マッチング効果測定
-- 孤立ユーザーの発見
+- WebダッシュボードでのAIアドバイス表示
+- コミュニティ運営の改善方向性提供
+- 週次レポートとしての活用
+- AIによる自動化された運営サポート
+- ユーザー設定による表示/非表示制御
+
+## 6. Bot_Actions Collection
+
+### 概要
+Discord Botが実行したすべてのアクション（自然会話、コマンド処理、週次アドバイス生成など）の履歴を記録。Botの効果測定やデバッグに利用。
+
+### フィールド詳細
+
+| フィールド名 | 型 | 必須 | 説明 | 例 |
+|-------------|---|------|------|---|
+| `id` | string | ✓ | アクションID | "bot_action_20241220_001" |
+| `actionType` | string | ✓ | アクションの種類 | "conversation", "admin_command", "natural_conversation" |
+| `userId` | string | ✓ | 対象ユーザーID | "123456789012345678" |
+| `guildId` | string | | サーバーID | "987654321098765432" |
+| `targetId` | string | | 対象ID（チャンネル、メッセージ等） | "1234567890123456789" |
+| `payload` | object | ✓ | アクション詳細データ | 下記参照 |
+| `timestamp` | timestamp | ✓ | 実行日時 | Firestore Timestamp |
+| `status` | string | ✓ | 実行状態 | "completed", "pending", "failed" |
+| `result` | object | | 実行結果 | 下記参照 |
+| `botCharacter` | string | ✓ | ボットキャラクター | "entertainment_bot", "miya", "eve" |
+| `version` | string | ✓ | バージョン | "1.0.0" |
+
+### actionTypeとpayload構造
+
+| actionType | 説明 | payload例 |
+|------------|------|----------|
+| `conversation` | メンション応答 | `{content: "...", response_type: "natural_conversation"}` |
+| `natural_conversation` | 自然会話 | `{content: "...", response_type: "casual"}` |
+| `admin_command` | 管理者コマンド | `{command: "analytics", options: ["--limit=20"]}` |
+| `weekly_advice_generation` | 週次アドバイス生成 | `{weekOf: "2024-12-16", stats: {...}}` |
+| `podcast_generation` | ポッドキャスト生成 | `{days: 7, success: true}` |
+
+### resultオブジェクト構造
+
+```typescript
+interface BotActionResult {
+  userResponse?: 'positive' | 'negative' | 'neutral';
+  engagementGenerated?: boolean;
+  errorCode?: string;
+  errorMessage?: string;
+  responseTime?: number;  // ミリ秒
+  aiTokensUsed?: number;
+  [key: string]: any;  // その他の結果データ
+}
+
+// TypeScriptインターフェース
+interface BotAction {
+  id?: string;
+  actionType: string;
+  userId: string;
+  guildId?: string;
+  targetId?: string;
+  payload: Record<string, any>;
+  timestamp: Date;
+  status: 'completed' | 'pending' | 'failed';
+  result?: BotActionResult;
+  botCharacter: string;
+  version: string;
+}
+```
+
+### 主な用途
+- Botの効果測定とパフォーマンス分析
+- ユーザーとのBotインタラクション追跡
+- エラー分析とデバッグ
+- AIレスポンス品質の改善
+- 管理者コマンド使用状況の監視
+- Botアクション履歴の監視とレポート
 
 ## 7. Events Collection
 
